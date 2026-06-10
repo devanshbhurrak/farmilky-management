@@ -1,0 +1,231 @@
+/* ─── Form Groups ────────────────────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.form-group label {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  padding-left: var(--space-1);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-soft);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: all var(--duration-base);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  background: #fff;
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: var(--line-height-relaxed);
+}
+
+/* ─── Form Rows ─────────────────────────────── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 640px) {
+  .form-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+.checkbox-group {
+  margin-top: var(--space-2);
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+/* ─── Validation States ──────────────────────── */
+.form-group.has-error input {
+  border-color: var(--danger);
+}
+
+.form-group.has-error input:focus {
+  box-shadow: 0 0 0 4px var(--danger-bg);
+}
+
+/* ─── Search Box ─────────────────────────────── */
+.search-box {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-3) 2.75rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-soft);
+  background: var(--surface-muted);
+  font-size: var(--font-size-sm);
+  transition: all var(--duration-base);
+}
+
+.search-box input:focus {
+  background: #fff;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+/* ─── Login Card Specifics ───────────────────── */
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background);
+  padding: var(--space-6);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-10);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-card h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  text-align: center;
+}
+
+.login-card .login-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.login-card .login-header .brand-mark {
+  font-size: 2rem;
+  color: var(--color-primary-dark);
+  font-weight: var(--font-weight-extrabold);
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.login-card .login-header .eyebrow {
+  color: var(--text-muted);
+}
+
+.login-card p {
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+/* ─── Input With Icon ─────────────────────────── */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding-left: 3.5rem;
+}
+
+/* ─── Login Responsive ────────────────────────── */
+@media (max-width: 480px) {
+  .login-card {
+    padding: var(--space-6);
+  }
+
+  .input-with-icon .input-icon {
+    left: 1rem;
+  }
+
+  .input-with-icon input {
+    padding-left: 2.75rem;
+  }
+
+  .login-card .brand-mark {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-card {
+    padding: var(--space-4);
+    border-radius: var(--radius-sm);
+  }
+
+  .input-with-icon .input-icon {
+    left: 0.75rem;
+  }
+
+  .input-with-icon input {
+    padding-left: 2.5rem;
+  }
+
+  .form-group input {
+    font-size: var(--font-size-sm);
+  }
+}

@@ -1,0 +1,529 @@
+/* ═══════════════════════════════════════════════
+   MANIFESTS — Page Styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Shared error state ─────────────────────── */
+.page-error {
+  margin-top: var(--space-3);
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+/* ─── Page-level gap overrides ───────────────── */
+/* Global view-stack gap is 2rem — manifests pages don't need that much */
+.manifests-page.view-stack,
+.manifest-detail-page.view-stack {
+  gap: var(--space-5); /* 1.25rem on mobile */
+}
+
+/* ─── Manifests list — filter bar ───────────── */
+.manifest-filter-row {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.manifest-date-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.manifest-date-input {
+  height: 36px;
+  padding: 0 var(--space-4);
+  border: 2px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--duration-base);
+}
+
+.manifest-date-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* ─── Header actions row ─────────────────────── */
+.manifest-header-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* ─── Empty state wrapper ────────────────────── */
+.manifest-empty-wrap {
+  padding: var(--space-10) var(--space-6);
+}
+
+/* ─── Manifest card grid ─────────────────────── */
+.manifest-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .manifest-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: var(--space-4) var(--space-5);
+  }
+}
+
+@media (min-width: 1024px) {
+  .manifest-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+    padding: var(--space-4) var(--space-6);
+    gap: var(--space-4);
+  }
+}
+
+/* ─── Individual manifest card ───────────────── */
+.manifest-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: border-color var(--duration-base), box-shadow var(--duration-base), transform var(--duration-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.manifest-card:hover  { border-color: var(--color-primary); box-shadow: var(--shadow-md); }
+.manifest-card:active { transform: scale(0.99); }
+
+.manifest-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.manifest-card-identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.manifest-card-agent {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+  .manifest-card-agent {
+    font-size: var(--font-size-lg);
+  }
+}
+
+.manifest-card-area {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+/* Stats row */
+.manifest-card-stats {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.manifest-card-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.manifest-card-stat > span {
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.manifest-card-stat > strong {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.manifest-card-stat.done > strong { color: var(--success-text); }
+.manifest-card-stat.fail > strong { color: var(--danger-text); }
+
+/* Progress bar */
+.manifest-card-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+
+.manifest-card-bar {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.manifest-card-pct {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-align: right;
+  margin: var(--space-1) 0 0;
+}
+
+/* ─── Manifest detail — progress panel ──────── */
+/* No margin-bottom — view-stack gap handles section spacing */
+.manifest-progress-panel {}
+
+.manifest-progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+/* Eyebrow inside progress head should not add its own bottom margin */
+.manifest-progress-head .eyebrow {
+  margin-bottom: 0;
+}
+
+/* Stats grid — 2×2 on mobile, 4-col on ≥480px */
+.manifest-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 480px) {
+  .manifest-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-3);
+  }
+}
+
+.manifest-stat {
+  text-align: center;
+}
+
+/* Override card-inset padding — the global 1.25rem is too tall for small stat cells */
+.manifest-stats-grid .card-inset {
+  padding: var(--space-3) var(--space-2);
+}
+
+.manifest-stat-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.manifest-stat-value {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+}
+
+.manifest-stat-value.done { color: var(--color-primary); }
+.manifest-stat-value.fail { color: var(--danger); }
+
+/* Progress bar (detail) */
+.manifest-detail-track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.manifest-detail-bar {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.8s ease;
+}
+
+.manifest-detail-pct {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-align: right;
+  margin: 0;
+}
+
+/* ─── Entry list ─────────────────────────────── */
+.manifest-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.manifest-queue-heading {
+  margin-bottom: var(--space-3);
+}
+
+/* ─── Individual entry card ──────────────────── */
+.manifest-entry {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3) var(--space-4);
+}
+
+.manifest-entry.next-stop {
+  background: var(--sidebar-active-bg);
+}
+
+.manifest-entry-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.manifest-entry-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.manifest-entry-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-1);
+}
+
+.manifest-next-badge {
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  background: var(--color-primary);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+
+.manifest-entry-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.manifest-entry-product {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--space-1);
+}
+
+.manifest-entry-address {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-2);
+}
+
+.manifest-entry-address svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.manifest-entry-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ─── Action form (expanded) ─────────────────── */
+.manifest-action-form {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface-inset);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.manifest-action-form .form-group {
+  margin-bottom: 0;
+}
+
+.manifest-action-buttons {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* Delivered + Failed stretch; Skip stays auto */
+.manifest-action-buttons > :nth-child(1),
+.manifest-action-buttons > :nth-child(2) {
+  flex: 1;
+  justify-content: center;
+  min-width: 90px;
+}
+
+/* ─── Entry footer (reason / notes) ─────────── */
+.manifest-entry-footer {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+}
+
+.manifest-entry-footer p { margin: 0; }
+.manifest-entry-reason   { color: var(--danger-text); }
+.manifest-entry-notes    { color: var(--text-muted); }
+
+/* ─── Completed section toggle ───────────────── */
+.manifest-completed-toggle {
+  width: 100%;
+  height: 44px;
+  border-radius: var(--radius);
+  margin-top: var(--space-5);
+}
+
+.manifest-completed-list {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ═══════════════════════════════════════════════
+   DESKTOP COMPACT OVERRIDES  (≥ 768px)
+   ═══════════════════════════════════════════════ */
+@media (min-width: 768px) {
+
+  /* Tighter gap between page sections */
+  .manifests-page.view-stack,
+  .manifest-detail-page.view-stack {
+    gap: var(--space-4); /* 1rem instead of global 2rem */
+  }
+
+  /* Global page-header has 2rem bottom padding on desktop — too much here */
+  .manifests-page .page-header,
+  .manifest-detail-page .page-header {
+    padding-bottom: var(--space-5);
+  }
+
+  /* Filter bar is just a date input — 1.5rem top/bottom is too roomy */
+  .manifests-page .surface-filters {
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-3);
+  }
+
+  /* Global .panel has 2.5rem padding on desktop — far too large for stat cards */
+  .panel.manifest-progress-panel {
+    padding: var(--space-5) var(--space-6);
+  }
+
+  /* Slightly larger entry cards on desktop */
+  .manifest-entry {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  /* Wider gap between action buttons */
+  .manifest-action-form {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+
+  /* Stat cells can afford a bit more padding on desktop */
+  .manifest-stats-grid .card-inset {
+    padding: var(--space-4) var(--space-3);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE COMPACT OVERRIDES  (≤ 767px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* Hide the date label — input alone is clear enough */
+  .manifest-date-label {
+    display: none;
+  }
+
+  /* Tighter filter bar padding */
+  .manifests-page .surface-filters {
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+  }
+
+  /* Global .panel has 1rem 1.25rem on mobile — reduce slightly */
+  .panel.manifest-progress-panel {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .manifest-progress-head {
+    margin-bottom: var(--space-3);
+  }
+
+  .manifest-stat-value {
+    font-size: var(--font-size-base);
+  }
+
+  .manifest-detail-pct {
+    margin-top: var(--space-1);
+  }
+
+  .manifest-entry-name {
+    font-size: var(--font-size-sm);
+  }
+
+  .manifest-entry-product {
+    font-size: var(--font-size-xs);
+  }
+
+  .manifest-entry-address {
+    font-size: var(--font-size-xs);
+    margin-top: var(--space-1);
+  }
+
+  .manifest-completed-toggle {
+    height: 40px;
+    margin-top: var(--space-4);
+    font-size: var(--font-size-sm);
+  }
+
+  .manifest-empty-wrap {
+    padding: var(--space-8) var(--space-4);
+  }
+}

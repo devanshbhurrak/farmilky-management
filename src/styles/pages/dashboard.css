@@ -1,0 +1,203 @@
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+}
+
+.mobile-metric-strip {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  margin: -0.5rem 0 0.5rem;
+  scrollbar-width: none;
+}
+
+.mobile-metric-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-metric-strip .metric-chip {
+  flex: 0 0 calc(33.333% - 0.5rem);
+  min-width: 100px;
+}
+
+.list-card.nav-link {
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.list-card.nav-link:active {
+  background: var(--surface-muted);
+}
+
+.panel-footer-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-top: 1px solid var(--border-soft);
+  transition: color var(--duration-base);
+}
+
+.panel-footer-link:hover {
+  color: var(--color-primary);
+}
+
+/* ─── Activity Feed (Recent Orders / Subscriptions) ─ */
+.feed-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-panel-header {
+  margin-bottom: var(--space-2);
+}
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.feed-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--duration-fast);
+}
+
+.feed-row:hover {
+  background: var(--surface-inset);
+}
+
+.feed-row:active {
+  background: var(--surface-muted);
+}
+
+.feed-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--success-bg);
+  color: var(--success-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  border: 1.5px solid rgba(22, 163, 74, 0.15);
+}
+
+.feed-avatar--sub {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.feed-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feed-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.feed-amount {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.feed-schedule {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+/* ─── Mobile tweaks ──────────────────────────── */
+@media (max-width: 480px) {
+  .feed-row {
+    padding: var(--space-2) var(--space-2);
+    gap: var(--space-2);
+  }
+
+  .feed-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .feed-amount {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Performance rate utilities */
+.rate-good {
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.rate-mid {
+  color: var(--warning-text);
+  font-weight: 600;
+}
+
+.rate-poor {
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.panel-divider {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}

@@ -1,0 +1,138 @@
+:root {
+  /* ─── Brand Colors ──────────────────────────────── */
+  --color-primary: #10b981;
+  --color-primary-dark: #059669;
+  --color-primary-deep: #064e3b;
+  --color-primary-light: #34d399;
+  --color-primary-muted: #6ee7b7;
+
+  --color-secondary: #f59e0b;
+  --color-secondary-bright: #fbbf24;
+  --color-secondary-soft: #fffbeb;
+
+  --color-accent: #8b5cf6;
+  --color-accent-soft: #ede9fe;
+
+  /* ─── Surfaces ──────────────────────────────────── */
+  --color-background: #f8fafc;
+  --color-background-alt: #f1f5f9;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-muted: #f1f5f9;
+  --surface-inset: #f8fafc;
+
+  /* ─── Sidebar & Chrome ──────────────────────────── */
+  --sidebar-bg: #f1f5f9;
+  --sidebar-border: transparent;
+  --sidebar-text: #475569;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-hover: rgba(0, 0, 0, 0.05);
+  --sidebar-active-bg: #ecfdf5;
+  --sidebar-active-accent: var(--color-primary);
+
+  --topbar-bg: #ffffff;
+  --topbar-border: transparent;
+  --topbar-text: var(--text-primary);
+  --topbar-muted: #64748b;
+
+  /* ─── Typography ────────────────────────────────── */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-on-primary: #ffffff;
+  --text-on-dark: #ffffff;
+
+  /* ─── Type Scale ────────────────────────────────── */
+  --font-size-xs:   0.75rem;     /* 12px */
+  --font-size-sm:   0.875rem;    /* 14px */
+  --font-size-base: 1rem;        /* 16px */
+  --font-size-lg:   1.125rem;    /* 18px */
+  --font-size-xl:   1.25rem;     /* 20px */
+  --font-size-2xl:  1.5rem;      /* 24px */
+  --font-size-3xl:  2rem;        /* 32px */
+
+  --font-weight-normal:    400;
+  --font-weight-medium:    500;
+  --font-weight-semibold:  600;
+  --font-weight-bold:      700;
+  --font-weight-extrabold: 800;
+
+  --line-height-tight:   1.25;
+  --line-height-snug:    1.375;
+  --line-height-normal:  1.5;
+  --line-height-relaxed: 1.625;
+
+  /* ─── Spacing Scale ─────────────────────────────── */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* ─── Touch & Mobile Chrome ─────────────────────── */
+  --touch-min: 44px;
+  --bottom-nav-height: 64px;
+  --mobile-header-height: 56px;
+
+  /* ─── Borders & Focus ───────────────────────────── */
+  --border-soft:   #e2e8f0;
+  --border-strong: #cbd5e1;
+  --focus-ring: rgba(16, 185, 129, 0.2);
+
+  /* ─── Semantic Colors ───────────────────────────── */
+  --danger:      #ef4444;
+  --danger-bg:   #fef2f2;
+  --danger-text: #991b1b;
+
+  --success:      #10b981;
+  --success-bg:   #ecfdf5;
+  --success-text: #065f46;
+
+  --warning:      #f59e0b;
+  --warning-bg:   #fffbeb;
+  --warning-text: #92400e;
+
+  --info:         #3b82f6;
+  --info-bg:      #eff6ff;
+  --info-text:    #1e40af;
+
+  /* ─── Layout Dimensions ─────────────────────────── */
+  --sidebar-width:           260px;
+  --sidebar-collapsed-width: 80px;
+  --topbar-height:           72px;
+
+  /* ─── Shape & Depth ─────────────────────────────── */
+  --radius:      1rem;          /* 16px */
+  --radius-sm:   0.75rem;       /* 12px */
+  --radius-lg:   1.5rem;        /* 24px */
+  --radius-pill: 9999px;
+
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow:     0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md:  0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-lg:  0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+  /* ─── Z-Index Hierarchy ─────────────────────────── */
+  --z-base:    0;
+  --z-raised:  10;
+  --z-sticky:  40;
+  --z-sidebar: 50;
+  --z-overlay: 100;
+  --z-toast:   200;
+
+  /* ─── Animation Tokens ──────────────────────────── */
+  --duration-fast:  0.1s;
+  --duration-base:  0.2s;
+  --duration-slow:  0.3s;
+  --duration-enter: 0.4s;
+  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ─── Gradients ─────────────────────────────────── */
+  --gradient-hero: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}

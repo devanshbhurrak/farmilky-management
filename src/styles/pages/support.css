@@ -1,0 +1,190 @@
+/* ═══════════════════════════════════════════════
+   SUPPORT — Complaints, Returns, Holidays
+   ═══════════════════════════════════════════════ */
+
+/* ─── Page-level gap overrides ───────────────── */
+.complaints-page.view-stack,
+.returns-page.view-stack,
+.holidays-page.view-stack {
+  gap: var(--space-5);
+}
+
+/* ─── Shared: text truncation in table cells ─── */
+.cell-truncate {
+  max-width: 260px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Shared: right-aligned filter row ───────── */
+.support-filter-row {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.support-filter-end {
+  margin-left: auto;
+}
+
+.support-filter-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+/* ─── Shared: modal detail stack ─────────────── */
+.support-detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.support-detail-stack .form-group {
+  margin-bottom: 0;
+}
+
+/* ─── Shared: customer info card in modals ───── */
+.support-customer-card .eyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.support-customer-name {
+  display: block;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.support-customer-sub {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+/* ─── Shared: detail section text ────────────── */
+.support-section-text {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.support-section-title {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  margin: 0;
+}
+
+/* ─── Shared: form stack in modals ───────────── */
+.support-form-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.support-form-stack .form-group {
+  margin-bottom: var(--space-4);
+}
+
+.support-form-stack .form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── Returns: 2-column order info grid ──────── */
+.returns-order-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* ─── Returns: mobile card reason footer ─────── */
+.returns-card-reason {
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border-soft);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* ─── Holidays: year select ──────────────────── */
+.holidays-year-select {
+  width: 120px;
+}
+
+/* ─── Holidays: table actions cell ───────────── */
+.holidays-actions-cell {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* ─── Holidays: mobile card actions ──────────── */
+.holidays-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-soft);
+  background: var(--surface-muted);
+}
+
+.holidays-card-toggle {
+  flex: 1;
+  justify-content: center;
+}
+
+.holidays-card-delete {
+  flex: 0 0 auto;
+  padding: 0 var(--space-4);
+}
+
+/* ═══════════════════════════════════════════════
+   DESKTOP COMPACT OVERRIDES  (≥ 768px)
+   ═══════════════════════════════════════════════ */
+@media (min-width: 768px) {
+
+  .complaints-page.view-stack,
+  .returns-page.view-stack,
+  .holidays-page.view-stack {
+    gap: var(--space-4);
+  }
+
+  .complaints-page .page-header,
+  .returns-page .page-header,
+  .holidays-page .page-header {
+    padding-bottom: var(--space-5);
+  }
+
+  .complaints-page .surface-filters,
+  .returns-page .surface-filters,
+  .holidays-page .surface-filters {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+
+  /* Compact table cells */
+  .complaints-page .table-shell th,
+  .complaints-page .table-shell td,
+  .returns-page .table-shell th,
+  .returns-page .table-shell td,
+  .holidays-page .table-shell th,
+  .holidays-page .table-shell td {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE COMPACT OVERRIDES  (≤ 767px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  .complaints-page .surface-filters,
+  .returns-page .surface-filters,
+  .holidays-page .surface-filters {
+    padding: var(--space-3);
+  }
+
+  .cell-truncate {
+    max-width: 200px;
+  }
+}

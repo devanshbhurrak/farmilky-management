@@ -1,0 +1,336 @@
+/* ═══════════════════════════════════════════════
+   AREAS + AGENTS — Page Styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Icon button (edit / delete row actions) ── */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-base);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-button:hover {
+  background: var(--surface-muted);
+  border-color: var(--border-soft);
+  color: var(--text-primary);
+}
+
+.icon-button.danger:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+/* ═══════════════════════════════════════════════
+   AREAS PAGE
+   ═══════════════════════════════════════════════ */
+
+.areas-page.view-stack {
+  gap: var(--space-5);
+}
+
+/* ─── Empty state wrapper ────────────────────── */
+.areas-empty-wrap {
+  padding: var(--space-10) var(--space-6);
+}
+
+/* ─── Card grid ──────────────────────────────── */
+.areas-card-grid {
+  padding: var(--space-4);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .areas-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: var(--space-5);
+  }
+}
+
+@media (min-width: 1024px) {
+  .areas-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    padding: var(--space-5) var(--space-6);
+    gap: var(--space-5);
+  }
+}
+
+/* ─── Individual area card ───────────────────── */
+.area-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: border-color var(--duration-base), box-shadow var(--duration-base);
+}
+
+.area-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.area-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.area-card-title-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.area-card-name {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.area-card-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+/* ─── Card body (pincodes, localities) ────────── */
+.area-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.area-card-body p {
+  margin: 0;
+}
+
+/* ─── Agent assignment row (card footer) ──────── */
+.area-card-agent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-soft);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.area-card-agent-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.area-card-agent-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+/* ─── Area modal form ────────────────────────── */
+.area-form-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.area-form-stack .form-group {
+  margin-bottom: var(--space-4);
+}
+
+.area-form-stack .form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   AGENTS PAGE
+   ═══════════════════════════════════════════════ */
+
+.agents-page.view-stack {
+  gap: var(--space-5);
+}
+
+/* ─── Empty state wrapper ────────────────────── */
+.agents-empty-wrap {
+  padding: var(--space-10) var(--space-6);
+}
+
+/* ─── Agent list container ───────────────────── */
+.agents-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+/* ─── Agent card ─────────────────────────────── */
+/* Mobile: stacked; desktop: horizontal row */
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-base), box-shadow var(--duration-base);
+}
+
+.agent-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.agent-card-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.agent-card-contact {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.agent-card-area-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ─── Area assignment select ─────────────────── */
+.agent-area-select-wrap {
+  width: 100%;
+}
+
+.agent-area-select-wrap select {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-soft);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--duration-base);
+}
+
+.agent-area-select-wrap select:hover {
+  border-color: var(--border-strong);
+}
+
+.agent-area-select-wrap select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.agent-area-select-wrap select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════
+   DESKTOP COMPACT OVERRIDES  (≥ 768px)
+   ═══════════════════════════════════════════════ */
+@media (min-width: 768px) {
+
+  .areas-page.view-stack,
+  .agents-page.view-stack {
+    gap: var(--space-4);
+  }
+
+  .areas-page .page-header,
+  .agents-page .page-header {
+    padding-bottom: var(--space-5);
+  }
+
+  .areas-page .surface-filters,
+  .agents-page .surface-filters {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+
+  /* Agent cards become horizontal on desktop */
+  .agent-card {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .agents-list {
+    padding: var(--space-5) var(--space-6);
+    gap: var(--space-3);
+  }
+
+  /* Fixed-width select on desktop */
+  .agent-area-select-wrap {
+    width: 220px;
+    flex-shrink: 0;
+  }
+
+  .agents-empty-wrap {
+    padding: var(--space-10) var(--space-6);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE COMPACT OVERRIDES  (≤ 767px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  .areas-page .surface-filters,
+  .agents-page .surface-filters {
+    padding: var(--space-3);
+  }
+
+  .areas-empty-wrap,
+  .agents-empty-wrap {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .area-card {
+    padding: var(--space-4);
+  }
+
+  .area-card-name {
+    font-size: var(--font-size-base);
+  }
+}

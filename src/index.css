@@ -1,0 +1,141 @@
+@import "./styles/variables.css";
+@import "./styles/responsive.css";
+
+:root {
+  color: var(--text-primary);
+  background: var(--color-background);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: var(--font-size-base);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+  background: var(--color-background);
+  color: var(--text-primary);
+  line-height: var(--line-height-normal);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ─── Heading Scale ──────────────────────────────── */
+h1, h2, h3, h4 {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); }
+h2 { font-size: var(--font-size-xl);  font-weight: var(--font-weight-semibold); }
+h3 { font-size: var(--font-size-lg);  font-weight: var(--font-weight-semibold); }
+h4 { font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); }
+
+p {
+  margin: 0;
+  line-height: var(--line-height-relaxed);
+}
+
+code {
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.45rem;
+  background: var(--success-bg);
+  color: var(--success-text);
+  font-size: 0.85em;
+}
+
+/* ─── Typography Utilities ───────────────────────── */
+.page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.025em;
+  line-height: var(--line-height-tight);
+  color: var(--text-primary);
+}
+
+.section-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+
+.page-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+  line-height: var(--line-height-normal);
+}
+
+.label-text {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.eyebrow {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.brand-mark {
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.03em;
+  color: inherit;
+}
+
+/* ─── App Shells ─────────────────────────────────── */
+.admin-page {
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.app-shell {
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .app-shell {
+    padding-inline: var(--space-6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

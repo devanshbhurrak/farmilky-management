@@ -1,0 +1,28 @@
+/* Responsive utilities */
+
+/* Visibility toggles */
+.hide-mobile {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: initial !important;
+  }
+  
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* Flex layout utilities */
+.stack-mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .stack-mobile {
+    flex-direction: row;
+  }
+}
