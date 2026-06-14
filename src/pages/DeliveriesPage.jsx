@@ -162,13 +162,18 @@ export default function DeliveriesPage() {
               onTypeChange={setTypeTab}
             />
           ) : (
-            <input
-              type="text"
-              className="search-input"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Search customer, phone, or product..."
-            />
+            <div className="search-input-wrap">
+              <input
+                type="text"
+                className="search-input"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder="Search customer, phone, or product..."
+              />
+              {searchValue && (
+                <button className="search-clear-btn" onClick={() => setSearchValue("")} aria-label="Clear search">&times;</button>
+              )}
+            </div>
           )}
         </div>
 

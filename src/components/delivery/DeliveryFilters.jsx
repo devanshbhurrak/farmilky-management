@@ -1,4 +1,4 @@
-import { Search, Calendar, Filter } from "lucide-react";
+import { Search, Calendar } from "lucide-react";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 export default function DeliveryFilters({ 
@@ -12,6 +12,8 @@ export default function DeliveryFilters({
   onTypeChange 
 }) {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const dateId = "route-date";
+  const searchId = "delivery-search";
 
   const statuses = [
     { value: "all", label: "All Status" },
@@ -24,10 +26,11 @@ export default function DeliveryFilters({
   const renderContent = () => (
     <div className="delivery-filters-content">
       <div className="form-group">
-        <label>Route Date</label>
-        <div className="input-with-icon">
-          <Calendar size={18} />
+        <label htmlFor={dateId}>Route Date</label>
+        <div className="input-wrapper">
+          <Calendar size={18} className="input-icon" aria-hidden />
           <input
+            id={dateId}
             type="date"
             value={date}
             onChange={(e) => onDateChange(e.target.value)}
@@ -67,8 +70,9 @@ export default function DeliveryFilters({
     <div className="delivery-filters-desktop">
       <div className="search-row">
         <div className="search-box">
-          <Search size={18} />
+          <Search size={18} aria-hidden />
           <input
+            id={searchId}
             type="text"
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -80,17 +84,21 @@ export default function DeliveryFilters({
           value={date}
           onChange={(e) => onDateChange(e.target.value)}
           className="date-input-desktop"
+          aria-label="Route date"
         />
-        <select value={statusFilter} onChange={(e) => onStatusChange(e.target.value)}>
+        <select value={statusFilter} onChange={(e) => onStatusChange(e.target.value)}
+          aria-label="Filter by status">
           {statuses.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
           ))}
         </select>
       </div>
-      <div className="tab-row">
+      <div role="tablist" aria-label="Delivery type" className="tab-row">
         {["all", "subscription", "order"].map((t) => (
           <button
             key={t}
+            role="tab"
+            aria-selected={typeTab === t}
             className={typeTab === t ? "tab active" : "tab"}
             onClick={() => onTypeChange(t)}
           >

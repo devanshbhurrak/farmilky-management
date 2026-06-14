@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Edit2 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { apiRequest, safeParseJson } from "../api/client";
@@ -9,6 +9,9 @@ import EmptyState from "../components/ui/EmptyState";
 import StickyActionBar from "../components/ui/StickyActionBar";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageHeader from "../components/ui/PageHeader";
+import Modal from "../components/ui/Modal";
+import BottomSheet from "../components/ui/BottomSheet";
+import OrderForm from "../components/order/OrderForm";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
@@ -21,6 +24,11 @@ export default function OrderDetailPage() {
   const [error, setError] = useState(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [form, setForm] = useState(null);
 
   const fetchOrder = useCallback(async () => {
     setLoading(true);
@@ -40,6 +48,15 @@ export default function OrderDetailPage() {
 
   useEffect(() => { fetchOrder(); }, [fetchOrder]);
 
+  useEffect(() => {
+    if (editModalOpen) {
+      apiRequest("/api/products")
+        .then(r => r.json())
+        .then(data => setProducts(data.products || data || []))
+        .catch(() => toast.error("Failed to load products"));
+    }
+  }, [editModalOpen]);
+
   async function handleStatusUpdate(status) {
     setStatusLoading(true);
     try {
@@ -57,6 +74,39 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function handleSave(e) {
+    if (e) e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await apiRequest(`/api/order/admin/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(form),
+      });
+      const payload = await safeParseJson(res);
+      if (!res.ok) throw new Error(payload?.message || "Failed to update order");
+      
+      toast.success("Order updated!");
+      setEditModalOpen(false);
+      await fetchOrder();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openEdit() {
+    setForm({
+      userId: order.userId?._id,
+      items: order.items.map(item => ({ productId: item.productId?._id || item.productId, quantity: item.quantity })),
+      address: order.address || { street: "", city: "", state: "Maharashtra", pincode: "" },
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      orderStatus: order.orderStatus
+    });
+    setEditModalOpen(true);
+  }
+
   if (loading) return <PageSkeleton />;
   if (error) return <EmptyState text={error} action={{ label: "Retry", onClick: fetchOrder }} />;
   if (!order) return <EmptyState text="Order not found." />;
@@ -70,19 +120,25 @@ export default function OrderDetailPage() {
 
   const actionButtons = (
     <>
+      {order.orderStatus !== "delivered" && order.orderStatus !== "cancelled" && (
+        <button className="action-btn action-btn-secondary" onClick={openEdit} disabled={statusLoading}>
+          <Edit2 size={14} />
+          <span>Edit</span>
+        </button>
+      )}
       {order.orderStatus === "placed" && (
-        <button className="primary-button" onClick={() => handleStatusUpdate("confirmed")} disabled={statusLoading}>
-          Confirm Order
+        <button className="action-btn action-btn-primary" onClick={() => handleStatusUpdate("confirmed")} disabled={statusLoading}>
+          Confirm
         </button>
       )}
       {(order.orderStatus === "placed" || order.orderStatus === "confirmed") && (
-        <button className="primary-button" onClick={() => handleStatusUpdate("delivered")} disabled={statusLoading}>
-          Mark Delivered
+        <button className="action-btn action-btn-primary" onClick={() => handleStatusUpdate("delivered")} disabled={statusLoading}>
+          Deliver
         </button>
       )}
       {(order.orderStatus === "placed" || order.orderStatus === "confirmed") && (
-        <button className="danger-button" onClick={() => setCancelConfirm(true)} disabled={statusLoading}>
-          Cancel Order
+        <button className="action-btn action-btn-danger" onClick={() => setCancelConfirm(true)} disabled={statusLoading}>
+          Cancel
         </button>
       )}
     </>
@@ -205,6 +261,58 @@ export default function OrderDetailPage() {
         confirmText="Cancel Order"
         loading={statusLoading}
       />
+
+      {isMobile ? (
+        <BottomSheet
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          title="Edit Order"
+        >
+          {form && (
+            <OrderForm
+              form={form}
+              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
+              products={products}
+              customers={[order.userId]}
+              onSubmit={handleSave}
+              saving={saving}
+            />
+          )}
+          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          title="Edit Order"
+          footer={
+            <div className="product-modal-footer">
+              <div />
+              <div className="product-modal-footer-right">
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditModalOpen(false)}>Cancel</button>
+                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          }
+        >
+          {form && (
+            <OrderForm
+              form={form}
+              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
+              products={products}
+              customers={[order.userId]}
+              onSubmit={handleSave}
+              saving={saving}
+            />
+          )}
+        </Modal>
+      )}
     </div>
   );
 }

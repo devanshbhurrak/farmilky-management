@@ -134,6 +134,53 @@ a.inv-customer-link {
   color: var(--danger-text) !important;
 }
 
+/* ─── History Ledger Modal ───────────────────── */
+.history-ledger {
+  display: flex;
+  flex-direction: column;
+}
+
+.ledger-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.ledger-table th {
+  text-align: left;
+  background: var(--surface-muted);
+  padding: var(--space-2) var(--space-3);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.ledger-table td {
+  padding: var(--space-3);
+  border-top: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+
+.ledger-ref {
+  display: block;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.ledger-by {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* ─── Form validation text ───────────────────── */
 /* (used across pages — defined here since it was missing) */
 .form-help {

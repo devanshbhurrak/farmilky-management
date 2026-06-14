@@ -16,7 +16,7 @@ export default function LoginPage() {
     try {
       const user = await login(form.email, form.password);
       toast.success("Signed in to the admin portal.");
-      if (user.role === "delivery_partner" || user.role === "delivery") {
+      if (user.role === "delivery_partner" || user.role === "delivery" || user.role === "agent") {
         navigate("/deliveries", { replace: true });
       } else {
         navigate("/", { replace: true });
@@ -37,10 +37,11 @@ export default function LoginPage() {
         </div>
 
         <div className="form-group">
-          <label>Email Address</label>
-          <div className="input-with-icon">
-            <Mail size={18} className="input-icon" />
+          <label htmlFor="login-email">Email Address</label>
+          <div className="input-wrapper">
+            <Mail size={18} className="input-icon" aria-hidden />
             <input
+              id="login-email"
               type="email"
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
@@ -51,10 +52,11 @@ export default function LoginPage() {
         </div>
 
         <div className="form-group">
-          <label>Password</label>
-          <div className="input-with-icon">
-            <Lock size={18} className="input-icon" />
+          <label htmlFor="login-password">Password</label>
+          <div className="input-wrapper">
+            <Lock size={18} className="input-icon" aria-hidden />
             <input
+              id="login-password"
               type="password"
               value={form.password}
               onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}

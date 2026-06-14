@@ -13,6 +13,7 @@ import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminRoute from "./components/layout/AdminRoute";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import PageSkeleton from "./components/ui/PageSkeleton";
+import { useMediaQuery } from "./hooks/useMediaQuery";
 
 // Lazy-loaded pages
 const LoginPage = lazy(() => import("./pages/LoginPage"));
@@ -25,13 +26,14 @@ const SubscriptionDetailPage = lazy(() => import("./pages/SubscriptionDetailPage
 const CustomersPage = lazy(() => import("./pages/CustomersPage"));
 const CustomerDetailPage = lazy(() => import("./pages/CustomerDetailPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
-const InvoicesPage = lazy(() => import("./pages/InvoicesPage"));
+const BalancesPage = lazy(() => import("./pages/BalancesPage"));
 const AreasPage = lazy(() => import("./pages/AreasPage"));
 const HolidaysPage = lazy(() => import("./pages/HolidaysPage"));
 const ManifestsPage = lazy(() => import("./pages/ManifestsPage"));
 const ManifestDetailPage = lazy(() => import("./pages/ManifestDetailPage"));
 const AgentDashboardPage = lazy(() => import("./pages/AgentDashboardPage"));
 const AgentsPage = lazy(() => import("./pages/AgentsPage"));
+const AgentDetailPage = lazy(() => import("./pages/AgentDetailPage"));
 const ComplaintsPage = lazy(() => import("./pages/ComplaintsPage"));
 const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 
@@ -48,6 +50,7 @@ import "./styles/pages/areas.css";
 import "./styles/pages/support.css";
 
 function App() {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: portalData, loading: portalLoading, lastUpdatedAt, refreshData } = usePortalData();
   const [collapsed, setCollapsed] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -60,9 +63,11 @@ function App() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || "Failed to update order.");
+      toast.success(`Order status updated to ${status}`);
       await refreshData(true);
     } catch (error) {
       console.error("Order update error:", error);
+      toast.error(error.message || "Failed to update order");
     }
   }
 
@@ -74,16 +79,18 @@ function App() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || "Failed to update subscription.");
+      toast.success(`Subscription status updated to ${status}`);
       await refreshData(true);
     } catch (error) {
       console.error("Subscription update error:", error);
+      toast.error(error.message || "Failed to update subscription");
     }
   }
 
   return (
     <ErrorBoundary>
       <Toaster
-        position="top-right"
+        position={isMobile ? "top-center" : "top-right"}
         toastOptions={{
           duration: 3000,
           style: {
@@ -141,6 +148,7 @@ function App() {
                               <OrdersPage
                                 orders={portalData?.orders || []}
                                 onUpdate={handleOrderStatusUpdate}
+                                onRefresh={() => refreshData(true)}
                               />
                             }
                           />
@@ -151,16 +159,25 @@ function App() {
                               <SubscriptionsPage
                                 subscriptions={portalData?.subscriptions || []}
                                 onUpdate={handleSubscriptionStatusUpdate}
+                                onRefresh={() => refreshData(true)}
                               />
                             }
                           />
                           <Route path="subscriptions/:id" element={<SubscriptionDetailPage />} />
-                          <Route path="customers" element={<CustomersPage />} />
+                          <Route 
+                            path="customers" 
+                            element={
+                              <CustomersPage 
+                                onRefresh={() => refreshData(true)} 
+                              />
+                            } 
+                          />
                           <Route path="customers/:id" element={<CustomerDetailPage />} />
                           <Route path="products" element={<ProductsPage />} />
-                          <Route path="invoices" element={<InvoicesPage />} />
+                          <Route path="invoices" element={<BalancesPage />} />
                           <Route path="areas" element={<AreasPage />} />
                           <Route path="agents" element={<AgentsPage />} />
+                          <Route path="agents/:id" element={<AgentDetailPage />} />
                           <Route path="complaints" element={<ComplaintsPage />} />
                           <Route path="returns" element={<ReturnsPage />} />
                           <Route path="holidays" element={<HolidaysPage />} />

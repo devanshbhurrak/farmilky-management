@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true);
 
   const isAdmin = user?.role === "admin";
-  const isDeliveryPartner = user?.role === "delivery_partner" || user?.role === "delivery";
+  const isDeliveryPartner = user?.role === "delivery_partner" || user?.role === "delivery" || user?.role === "agent";
 
   const logout = useCallback(async () => {
     await apiRequest("/api/user/logout", { method: "POST" });

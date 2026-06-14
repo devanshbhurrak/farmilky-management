@@ -11,13 +11,15 @@ import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
  */
 export default function BottomSheet({ isOpen, onClose, title, children }) {
   const sheetRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useBodyScrollLock(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
       if (e.key === "Tab") {
         const focusableElements = sheetRef.current.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -41,7 +43,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

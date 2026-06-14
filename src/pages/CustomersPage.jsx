@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Filter } from "lucide-react";
+import { Filter, Plus } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
 import EmptyState from "../components/ui/EmptyState";
@@ -8,18 +8,27 @@ import PageSkeleton from "../components/ui/PageSkeleton";
 import DataTable from "../components/ui/DataTable";
 import FilterSheet from "../components/ui/FilterSheet";
 import PageHeader from "../components/ui/PageHeader";
+import Modal from "../components/ui/Modal";
+import BottomSheet from "../components/ui/BottomSheet";
+import CustomerForm from "../components/customer/CustomerForm";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { apiRequest, safeParseJson } from "../api/client";
+import toast from "react-hot-toast";
 
 const fetchCustomers = createApiFetch("/api/user/admin/all");
 
-export default function CustomersPage() {
+export default function CustomersPage({ onRefresh }) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { data, loading, error, refetch } = useApiData(fetchCustomers);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", role: "customer", address: { street: "", city: "", state: "", pincode: "" }, isActive: true });
 
   const customers = useMemo(() => {
     if (!data) return [];
@@ -42,6 +51,36 @@ export default function CustomersPage() {
     }
     return items;
   }, [customers, roleFilter, search]);
+
+  function openCreate() {
+    setForm({ name: "", email: "", phone: "", password: "", role: "customer", address: { street: "", city: "", state: "", pincode: "" }, isActive: true });
+    setModalOpen(true);
+  }
+
+  async function handleSave(e) {
+    if (e) e.preventDefault();
+    setSaving(true);
+    try {
+      const body = { 
+        ...form, 
+        addresses: form.address.street ? [form.address] : [] 
+      };
+      const res = await apiRequest("/api/user/admin/create", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      const payload = await safeParseJson(res);
+      if (!res.ok) throw new Error(payload?.message || "Failed to create customer");
+      
+      toast.success("Customer created successfully!");
+      setModalOpen(false);
+      refetch();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const columns = [
     {
@@ -112,6 +151,7 @@ export default function CustomersPage() {
         <option value="customer">Customer</option>
         <option value="admin">Admin</option>
         <option value="delivery_partner">Delivery Partner</option>
+        <option value="agent">Agent</option>
       </select>
     </div>
   );
@@ -122,7 +162,16 @@ export default function CustomersPage() {
     setRoleFilter("all");
   };
 
-  if (loading) return <PageSkeleton />;
+  const formContent = (
+    <CustomerForm
+      form={form}
+      onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
+      onSubmit={handleSave}
+      saving={saving}
+    />
+  );
+
+  if (loading && customers.length === 0) return <PageSkeleton />;
   if (error) return <EmptyState text={error} action={{ label: "Retry", onClick: refetch }} />;
 
   return (
@@ -130,17 +179,27 @@ export default function CustomersPage() {
       <PageHeader 
         title="Customers" 
         subtitle={`Database contains ${customers.length} registered users`}
+        actions={
+          <button className="btn btn-primary btn-sm" onClick={openCreate}>
+            <Plus size={16} /> Add Customer
+          </button>
+        }
       />
 
       <div className="surface">
         <div className="surface-filters">
-          <input
-            type="text"
-            placeholder="Search name, email, phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
+          <div className="search-input-wrap">
+            <input
+              type="text"
+              placeholder="Search name, email, phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+            {search && (
+              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
+            )}
+          </div>
           {!isMobile && (
             <div className="desktop-filters">
               <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
@@ -180,6 +239,44 @@ export default function CustomersPage() {
       >
         {filters}
       </FilterSheet>
+
+      {isMobile ? (
+        <BottomSheet
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Add Customer"
+        >
+          {formContent}
+          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+            <button
+              className="btn btn-primary"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Creating..." : "Create Customer"}
+            </button>
+          </div>
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Add Customer"
+          footer={
+            <div className="product-modal-footer">
+              <div />
+              <div className="product-modal-footer-right">
+                <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
+                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                  {saving ? "Creating..." : "Create Customer"}
+                </button>
+              </div>
+            </div>
+          }
+        >
+          {formContent}
+        </Modal>
+      )}
     </div>
   );
 }

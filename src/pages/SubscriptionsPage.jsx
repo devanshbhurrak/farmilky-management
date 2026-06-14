@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Filter, Pause, Play } from "lucide-react";
+import { Filter, Pause, Play, Plus } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
 import ActionRow from "../components/ui/ActionRow";
@@ -8,12 +8,15 @@ import DataTable from "../components/ui/DataTable";
 import FilterSheet from "../components/ui/FilterSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageHeader from "../components/ui/PageHeader";
+import Modal from "../components/ui/Modal";
+import BottomSheet from "../components/ui/BottomSheet";
+import SubscriptionForm from "../components/subscription/SubscriptionForm";
 import { subscriptionStatusOptions } from "../utils/constants";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { apiRequest } from "../api/client";
+import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
 
-export default function SubscriptionsPage({ subscriptions, onUpdate }) {
+export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -23,6 +26,26 @@ export default function SubscriptionsPage({ subscriptions, onUpdate }) {
   const [selected, setSelected] = useState(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkConfirm, setBulkConfirm] = useState(null);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [form, setForm] = useState({ userId: "", productId: "", quantityPerDay: 1, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
+
+  useEffect(() => {
+    if (modalOpen) {
+      Promise.all([
+        apiRequest("/api/products").then(r => r.json()),
+        apiRequest("/api/user/admin/all").then(r => r.json())
+      ]).then(([pData, cData]) => {
+        setProducts(pData.products || pData || []);
+        setCustomers(cData.users || cData || []);
+      }).catch(err => {
+        toast.error("Failed to load dependency data");
+      });
+    }
+  }, [modalOpen]);
 
   const filtered = useMemo(() => {
     let items = subscriptions || [];
@@ -189,22 +212,69 @@ export default function SubscriptionsPage({ subscriptions, onUpdate }) {
     setSearch("");
   };
 
+  function openCreate() {
+    setForm({ userId: "", productId: "", quantityPerDay: 1, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
+    setModalOpen(true);
+  }
+
+  async function handleSave(e) {
+    if (e) e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await apiRequest("/api/subscriptions/admin/create", {
+        method: "POST",
+        body: JSON.stringify(form),
+      });
+      const payload = await safeParseJson(res);
+      if (!res.ok) throw new Error(payload?.message || "Failed to create subscription");
+      
+      toast.success("Subscription created successfully!");
+      setModalOpen(false);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const formContent = (
+    <SubscriptionForm
+      form={form}
+      onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
+      products={products}
+      customers={customers}
+      onSubmit={handleSave}
+      saving={saving}
+    />
+  );
+
   return (
     <div>
       <PageHeader 
         title="Subscriptions" 
         subtitle={`Total active subscriptions: ${subscriptions?.filter(s => s.status === "active").length || 0}`}
+        actions={
+          <button className="btn btn-primary btn-sm" onClick={openCreate}>
+            <Plus size={16} /> Add Subscription
+          </button>
+        }
       />
 
       <div className="surface">
         <div className="surface-filters">
-          <input
-            type="text"
-            placeholder="Search customer or product..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
+          <div className="search-input-wrap">
+            <input
+              type="text"
+              placeholder="Search customer or product..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+            {search && (
+              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
+            )}
+          </div>
           {!isMobile && (
             <div className="desktop-filters">
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -285,6 +355,44 @@ export default function SubscriptionsPage({ subscriptions, onUpdate }) {
         loading={bulkLoading}
         variant={bulkConfirm === "pause" ? "danger" : "primary"}
       />
+
+      {isMobile ? (
+        <BottomSheet
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Add Subscription"
+        >
+          {formContent}
+          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+            <button
+              className="btn btn-primary"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Creating..." : "Create Subscription"}
+            </button>
+          </div>
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Add Subscription"
+          footer={
+            <div className="product-modal-footer">
+              <div />
+              <div className="product-modal-footer-right">
+                <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
+                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                  {saving ? "Creating..." : "Create Subscription"}
+                </button>
+              </div>
+            </div>
+          }
+        >
+          {formContent}
+        </Modal>
+      )}
     </div>
   );
 }

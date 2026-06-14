@@ -9,6 +9,8 @@
   justify-content: center;
   width: 32px;
   height: 32px;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: transparent;
@@ -22,6 +24,12 @@
   background: var(--surface-muted);
   border-color: var(--border-soft);
   color: var(--text-primary);
+}
+
+.icon-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  border-color: var(--color-primary);
 }
 
 .icon-button.danger:hover {
@@ -172,98 +180,52 @@
   gap: var(--space-5);
 }
 
-/* ─── Empty state wrapper ────────────────────── */
-.agents-empty-wrap {
-  padding: var(--space-10) var(--space-6);
-}
-
-/* ─── Agent list container ───────────────────── */
-.agents-list {
+/* ─── Status filter tabs (between page header and DataTable) ── */
+.filter-tabs {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-}
-
-/* ─── Agent card ─────────────────────────────── */
-/* Mobile: stacked; desktop: horizontal row */
-.agent-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-  transition: border-color var(--duration-base), box-shadow var(--duration-base);
-}
-
-.agent-card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.agent-card-name-row {
-  display: flex;
-  align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-1);
+  flex-wrap: wrap;
 }
 
-.agent-card-name {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-}
-
-.agent-card-contact {
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-  margin: 0 0 var(--space-2);
-}
-
-.agent-card-area-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--text-secondary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-}
-
-/* ─── Area assignment select ─────────────────── */
-.agent-area-select-wrap {
-  width: 100%;
-}
-
-.agent-area-select-wrap select {
-  width: 100%;
-  padding: var(--space-3) var(--space-4);
+.filter-tab {
+  padding: 0.35rem 0.85rem;
   border-radius: var(--radius-pill);
   border: 2px solid var(--border-soft);
   background: var(--surface);
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
   font-family: inherit;
   cursor: pointer;
   transition: all var(--duration-base);
 }
 
-.agent-area-select-wrap select:hover {
+.filter-tab:hover {
   border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
-.agent-area-select-wrap select:focus {
-  outline: none;
+.filter-tab.active {
+  background: var(--color-primary);
+  color: white;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
-.agent-area-select-wrap select:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* ─── Action buttons row inside DataTable cells ───── */
+.table-actions {
+  display: flex;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+/* ─── Mobile card content inside DataTable renderCard ── */
+.agent-card-content {
+  padding: var(--space-2) 0;
+}
+
+/* ─── Mobile card fallback (when DataTable uses fallback on mobile) */
+.mobile-data-card .agent-card-content {
+  width: 100%;
 }
 
 /* ═══════════════════════════════════════════════
@@ -287,27 +249,9 @@
     padding-bottom: var(--space-4);
   }
 
-  /* Agent cards become horizontal on desktop */
-  .agent-card {
-    flex-direction: row;
-    align-items: center;
-    gap: var(--space-4);
-    padding: var(--space-4) var(--space-5);
-  }
-
-  .agents-list {
-    padding: var(--space-5) var(--space-6);
-    gap: var(--space-3);
-  }
-
-  /* Fixed-width select on desktop */
-  .agent-area-select-wrap {
-    width: 220px;
-    flex-shrink: 0;
-  }
-
-  .agents-empty-wrap {
-    padding: var(--space-10) var(--space-6);
+  /* DataTable inside agents page */
+  .agents-page .table-shell {
+    border-radius: 0 0 var(--radius) var(--radius);
   }
 }
 
@@ -321,8 +265,7 @@
     padding: var(--space-3);
   }
 
-  .areas-empty-wrap,
-  .agents-empty-wrap {
+  .areas-empty-wrap {
     padding: var(--space-8) var(--space-4);
   }
 
@@ -332,5 +275,11 @@
 
   .area-card-name {
     font-size: var(--font-size-base);
+  }
+
+  /* Stack filter tabs above search on mobile */
+  .agents-page .surface-filters {
+    flex-direction: column;
+    gap: var(--space-3);
   }
 }

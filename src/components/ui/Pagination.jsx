@@ -5,9 +5,8 @@ export default function Pagination({ page, totalPages, onPageChange }) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   if (totalPages <= 1) return null;
 
-  const getPageNumbers = () => {
+  const getPageNumbers = (maxVisible) => {
     const pages = [];
-    const maxVisible = 5;
 
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
@@ -35,17 +34,32 @@ export default function Pagination({ page, totalPages, onPageChange }) {
         disabled={page <= 1}
         onClick={() => onPageChange(page - 1)}
         type="button"
+        aria-label="Previous page"
       >
         <ChevronLeft size={20} />
       </button>
-      <span className="pagination-info">
-        Page <strong>{page}</strong> of {totalPages}
-      </span>
+      <div className="pagination-pages">
+        {getPageNumbers(3).map((p, i) => (
+          p === "..." ? (
+            <span key={`ellipsis-${i}`} className="pagination-ellipsis">…</span>
+          ) : (
+            <button
+              key={p}
+              className={p === page ? "mini-button active" : "mini-button"}
+              onClick={() => onPageChange(p)}
+              type="button"
+            >
+              {p}
+            </button>
+          )
+        ))}
+      </div>
       <button
         className="mini-button with-icon"
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
         type="button"
+        aria-label="Next page"
       >
         <ChevronRight size={20} />
       </button>
@@ -65,9 +79,9 @@ export default function Pagination({ page, totalPages, onPageChange }) {
         <span>Previous</span>
       </button>
       <div className="pagination-pages">
-        {getPageNumbers().map((p, i) => (
+        {getPageNumbers(5).map((p, i) => (
           p === "..." ? (
-            <span key={`ellipsis-${i}`} className="pagination-ellipsis">...</span>
+            <span key={`ellipsis-${i}`} className="pagination-ellipsis">…</span>
           ) : (
             <button
               key={p}

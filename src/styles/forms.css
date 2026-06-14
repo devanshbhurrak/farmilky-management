@@ -18,11 +18,12 @@
 .form-group textarea {
   border-radius: var(--radius-sm);
   border: 2px solid var(--border-soft);
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-4);
   background: var(--surface);
   color: var(--text-primary);
   font-size: var(--font-size-base);
   transition: all var(--duration-base);
+  width: 100%;
 }
 
 .form-group input:focus,
@@ -38,6 +39,100 @@
   min-height: 120px;
   resize: vertical;
   line-height: var(--line-height-relaxed);
+}
+
+/* ─── Form Sections ─────────────────────────── */
+.form-section {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-soft);
+}
+
+.form-section h3 {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-extrabold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.section-header h3 {
+  margin-bottom: 0;
+}
+
+/* ─── Item Rows (for orders) ────────────────── */
+.item-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
+.btn-icon {
+  padding: var(--space-3);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+}
+
+.btn-icon:hover {
+  background: var(--border-soft);
+  color: var(--text-primary);
+}
+
+.btn-icon.btn-danger:hover {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+/* ─── Days Selector (for subscriptions) ─────── */
+.days-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.day-chip {
+  position: relative;
+}
+
+.day-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.day-chip span {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-base);
+}
+
+.day-chip input:checked + span {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--color-primary);
 }
 
 /* ─── Form Rows ─────────────────────────────── */
@@ -86,6 +181,19 @@
   box-shadow: 0 0 0 4px var(--danger-bg);
 }
 
+/* ─── Screen-reader only ───────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ─── Search Box ─────────────────────────────── */
 .search-box {
   position: relative;
@@ -109,12 +217,28 @@
   box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
+.search-box-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .search-icon {
   position: absolute;
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ─── Login Card Specifics ───────────────────── */
@@ -167,7 +291,33 @@
   margin-bottom: var(--space-8);
 }
 
-/* ─── Input With Icon ─────────────────────────── */
+/* ─── Input Wrapper (relative parent for absolute icon) ── */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper .input-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.input-wrapper input,
+.input-wrapper select {
+  width: 100%;
+  padding-left: 3.5rem;
+}
+
+/* ─── Input With Icon (legacy alias) ──────────── */
 .input-with-icon {
   position: relative;
   display: flex;
@@ -192,16 +342,19 @@
   padding-left: 3.5rem;
 }
 
-/* ─── Login Responsive ────────────────────────── */
+/* ─── Login & Input Responsive ────────────────── */
 @media (max-width: 480px) {
   .login-card {
     padding: var(--space-6);
   }
 
+  .input-wrapper .input-icon,
   .input-with-icon .input-icon {
     left: 1rem;
   }
 
+  .input-wrapper input,
+  .input-wrapper select,
   .input-with-icon input {
     padding-left: 2.75rem;
   }
@@ -217,15 +370,23 @@
     border-radius: var(--radius-sm);
   }
 
+  .input-wrapper .input-icon,
   .input-with-icon .input-icon {
     left: 0.75rem;
   }
 
+  .input-wrapper input,
+  .input-wrapper select,
   .input-with-icon input {
     padding-left: 2.5rem;
   }
+}
 
-  .form-group input {
-    font-size: var(--font-size-sm);
+/* Prevent iOS Safari zoom on input focus — all inputs must be ≥16px on mobile */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }

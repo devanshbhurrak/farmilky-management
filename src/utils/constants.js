@@ -6,7 +6,7 @@ export const navItems = [
   { id: "subscriptions", label: "Subscriptions", path: "/subscriptions", icon: "subscriptions" },
   { id: "customers", label: "Customers", path: "/customers", icon: "customers" },
   { id: "products", label: "Products", path: "/products", icon: "products" },
-  { id: "invoices", label: "Invoices", path: "/invoices", icon: "invoices" },
+  { id: "balances", label: "Outstanding Balances", path: "/invoices", icon: "invoices" },
   { id: "areas", label: "Areas", path: "/areas", icon: "areas" },
   { id: "agents", label: "Agents", path: "/agents", icon: "agents" },
   { id: "complaints", label: "Complaints", path: "/complaints", icon: "complaints" },
@@ -31,4 +31,4 @@ export const paymentStatusOptions = ["unpaid", "partial", "paid"];
 
 export const deliveryTypeOptions = ["subscription", "order"];
 
-export const roleOptions = ["customer", "admin", "delivery_partner", "delivery"];
+export const roleOptions = ["customer", "admin", "agent"];

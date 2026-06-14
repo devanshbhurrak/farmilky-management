@@ -119,13 +119,18 @@ export default function AreasPage() {
 
       <div className="surface">
         <div className="surface-filters">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search by area name, pincode, or locality..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="search-input-wrap">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search by area name, pincode, or locality..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
+            )}
+          </div>
         </div>
 
         {filtered.length === 0 ? (

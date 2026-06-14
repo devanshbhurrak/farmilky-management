@@ -16,7 +16,7 @@ export default function SearchInput({ value, onChange, placeholder = "Search..."
   }, [local]);
 
   return (
-    <label className="search-box search-box-with-icon">
+    <label className="search-box">
       <span className="sr-only">{placeholder}</span>
       <Search size={18} className="search-box-icon" aria-hidden />
       <input

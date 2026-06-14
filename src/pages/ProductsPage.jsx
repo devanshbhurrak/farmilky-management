@@ -158,13 +158,18 @@ export default function ProductsPage() {
 
       <div className="surface">
         <div className="surface-filters">
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="search-input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="search-input-wrap">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="search-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
+            )}
+          </div>
           {!isMobile && (
             <div className="desktop-filters">
               <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>

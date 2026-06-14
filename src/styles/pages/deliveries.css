@@ -602,39 +602,36 @@
 }
 
 /* Input with icon (mobile date picker row) */
-.input-with-icon {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-3);
+.delivery-filters-content .input-wrapper {
   border: 2px solid var(--border-soft);
   border-radius: var(--radius-sm);
   background: var(--surface);
   transition: border-color var(--duration-base);
 }
 
-.input-with-icon:focus-within {
+.delivery-filters-content .input-wrapper:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
-.input-with-icon svg {
+.delivery-filters-content .input-wrapper .input-icon {
+  left: var(--space-3);
   color: var(--text-muted);
-  flex-shrink: 0;
 }
 
-.input-with-icon input {
+.delivery-filters-content .input-wrapper input {
   border: none !important;
   box-shadow: none !important;
-  padding: var(--space-3) 0 !important;
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) + 18px + var(--space-2)) !important;
   background: transparent !important;
   flex: 1;
   font-size: var(--font-size-base);
   color: var(--text-primary);
   font-family: inherit;
+  width: 100%;
 }
 
-.input-with-icon input:focus { outline: none !important; }
+.delivery-filters-content .input-wrapper input:focus { outline: none !important; }
 
 /* ─── Filter Pills (mobile sheet type toggle) ── */
 .filter-pill-group {

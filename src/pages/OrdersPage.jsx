@@ -1,22 +1,47 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Filter } from "lucide-react";
+import { Filter, Plus } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
 import ActionRow from "../components/ui/ActionRow";
 import DataTable from "../components/ui/DataTable";
 import FilterSheet from "../components/ui/FilterSheet";
 import PageHeader from "../components/ui/PageHeader";
+import Modal from "../components/ui/Modal";
+import BottomSheet from "../components/ui/BottomSheet";
+import OrderForm from "../components/order/OrderForm";
 import { orderStatusOptions } from "../utils/constants";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { apiRequest, safeParseJson } from "../api/client";
+import toast from "react-hot-toast";
 
-export default function OrdersPage({ orders, onUpdate }) {
+export default function OrdersPage({ orders, onUpdate, onRefresh }) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [form, setForm] = useState({ userId: "", items: [], address: { street: "", city: "", state: "Maharashtra", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed" });
+
+  useEffect(() => {
+    if (modalOpen) {
+      Promise.all([
+        apiRequest("/api/products").then(r => r.json()),
+        apiRequest("/api/user/admin/all").then(r => r.json())
+      ]).then(([pData, cData]) => {
+        setProducts(pData.products || pData || []);
+        setCustomers(cData.users || cData || []);
+      }).catch(err => {
+        toast.error("Failed to load dependency data");
+      });
+    }
+  }, [modalOpen]);
 
   const filtered = useMemo(() => {
     let items = orders || [];
@@ -37,6 +62,32 @@ export default function OrdersPage({ orders, onUpdate }) {
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [filtered]);
+
+  function openCreate() {
+    setForm({ userId: "", items: [{ productId: "", quantity: 1 }], address: { street: "", city: "", state: "Maharashtra", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed" });
+    setModalOpen(true);
+  }
+
+  async function handleSave(e) {
+    if (e) e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await apiRequest("/api/order/admin/create", {
+        method: "POST",
+        body: JSON.stringify(form),
+      });
+      const payload = await safeParseJson(res);
+      if (!res.ok) throw new Error(payload?.message || "Failed to create order");
+      
+      toast.success("Order created successfully!");
+      setModalOpen(false);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const columns = [
     {
@@ -129,22 +180,43 @@ export default function OrdersPage({ orders, onUpdate }) {
     setSearch("");
   };
 
+  const formContent = (
+    <OrderForm
+      form={form}
+      onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
+      products={products}
+      customers={customers}
+      onSubmit={handleSave}
+      saving={saving}
+    />
+  );
+
   return (
     <div>
       <PageHeader 
         title="Orders" 
         subtitle={`Showing ${sorted.length} orders total`}
+        actions={
+          <button className="btn btn-primary btn-sm" onClick={openCreate}>
+            <Plus size={16} /> Add Order
+          </button>
+        }
       />
 
       <div className="surface">
         <div className="surface-filters">
-          <input
-            type="text"
-            placeholder="Search name, email, phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
+          <div className="search-input-wrap">
+            <input
+              type="text"
+              placeholder="Search name, email, phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+            {search && (
+              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
+            )}
+          </div>
           {!isMobile && (
             <div className="desktop-filters">
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -190,6 +262,44 @@ export default function OrdersPage({ orders, onUpdate }) {
       >
         {filters}
       </FilterSheet>
+
+      {isMobile ? (
+        <BottomSheet
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Add Order"
+        >
+          {formContent}
+          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+            <button
+              className="btn btn-primary"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Creating..." : "Create Order"}
+            </button>
+          </div>
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Add Order"
+          footer={
+            <div className="product-modal-footer">
+              <div />
+              <div className="product-modal-footer-right">
+                <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
+                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                  {saving ? "Creating..." : "Create Order"}
+                </button>
+              </div>
+            </div>
+          }
+        >
+          {formContent}
+        </Modal>
+      )}
     </div>
   );
 }

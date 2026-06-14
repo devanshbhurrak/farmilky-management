@@ -124,13 +124,18 @@ export default function ComplaintsPage() {
 
       <div className="surface">
         <div className="surface-filters">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search subject or customer..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="search-input-wrap">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search subject or customer..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
+            )}
+          </div>
           {!isMobile && (
             <div className="desktop-filters">
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
