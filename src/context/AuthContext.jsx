@@ -1,7 +1,14 @@
 import { createContext, useContext, useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
+import { clearApiCache } from "../hooks/useApiData";
 
 const AuthContext = createContext(null);
+
+const PORTAL_ROLES = ["admin", "delivery_partner", "delivery", "agent"];
+
+function isPortalUser(user) {
+  return user && PORTAL_ROLES.includes(user.role);
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -12,6 +19,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     await apiRequest("/api/user/logout", { method: "POST" });
+    clearApiCache();
     setUser(null);
   }, []);
 
@@ -26,6 +34,10 @@ export function AuthProvider({ children }) {
     const profileResponse = await apiRequest("/api/user/profile");
     const profileData = await profileResponse.json();
     const loggedInUser = profileData.user || payload.user;
+    if (!isPortalUser(loggedInUser)) {
+      await apiRequest("/api/user/logout", { method: "POST" });
+      throw new Error("Access denied. This portal is for staff only.");
+    }
     setUser(loggedInUser);
     return loggedInUser;
   }, []);
@@ -40,7 +52,14 @@ export function AuthProvider({ children }) {
           return;
         }
         const profileData = await profileResponse.json();
-        setUser(profileData.user);
+        const sessionUser = profileData.user;
+        if (!isPortalUser(sessionUser)) {
+          await apiRequest("/api/user/logout", { method: "POST" });
+          clearApiCache();
+          setUser(null);
+          return;
+        }
+        setUser(sessionUser);
       } catch {
         setUser(null);
       } finally {

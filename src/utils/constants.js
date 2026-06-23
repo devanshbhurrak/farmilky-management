@@ -12,6 +12,7 @@ export const navItems = [
   { id: "complaints", label: "Complaints", path: "/complaints", icon: "complaints" },
   { id: "returns", label: "Returns", path: "/returns", icon: "returns" },
   { id: "holidays", label: "Holidays", path: "/holidays", icon: "holidays" },
+  { id: "messages", label: "Contact Messages", path: "/messages", icon: "messages" },
 ];
 
 export const deliveryNavItems = [

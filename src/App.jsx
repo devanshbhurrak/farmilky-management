@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { usePortalData } from "./context/PortalDataContext";
 import { apiRequest } from "./api/client";
 
@@ -36,6 +36,7 @@ const AgentsPage = lazy(() => import("./pages/AgentsPage"));
 const AgentDetailPage = lazy(() => import("./pages/AgentDetailPage"));
 const ComplaintsPage = lazy(() => import("./pages/ComplaintsPage"));
 const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
+const ContactMessagesPage = lazy(() => import("./pages/ContactMessagesPage"));
 
 import "./styles/layout.css";
 import "./styles/components.css";
@@ -181,6 +182,7 @@ function App() {
                           <Route path="complaints" element={<ComplaintsPage />} />
                           <Route path="returns" element={<ReturnsPage />} />
                           <Route path="holidays" element={<HolidaysPage />} />
+                          <Route path="messages" element={<ContactMessagesPage />} />
                           <Route path="manifests" element={<ManifestsPage />} />
                           <Route path="manifests/:id" element={<ManifestDetailPage />} />
                         </Route>
@@ -197,9 +199,9 @@ function App() {
                           <span className="footer-tagline">Fresh dairy, delivered daily.</span>
                         </div>
                         <div className="footer-links">
-                          <a href="#privacy">Privacy</a>
-                          <a href="#terms">Terms</a>
-                          <a href="#support">Support</a>
+                          <span>Privacy</span>
+                          <span>Terms</span>
+                          <span>Support</span>
                         </div>
                         <span className="footer-copy">&copy; {new Date().getFullYear()} Farmilky</span>
                       </div>

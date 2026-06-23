@@ -86,7 +86,7 @@ export default function CustomerDetailPage() {
   function openEditCustomer() {
     setForm({ 
       ...user, 
-      address: user.addresses?.[0] || { street: "", city: "", state: "Maharashtra", pincode: "" },
+      address: user.addresses?.[0] || { street: "", city: "", state: "", pincode: "" },
       password: "" 
     });
     setModalType("customer");
@@ -108,7 +108,7 @@ export default function CustomerDetailPage() {
     setForm({ 
       userId: id, 
       items: [{ productId: "", quantity: 1 }], 
-      address: user?.addresses?.[0] || { street: "", city: "", state: "Maharashtra", pincode: "" }, 
+      address: user?.addresses?.[0] || { street: "", city: "", state: "", pincode: "" }, 
       paymentMethod: "COD", 
       paymentStatus: "pending", 
       orderStatus: "confirmed" 

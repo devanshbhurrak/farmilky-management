@@ -7,7 +7,7 @@ export default function OrderForm({ form, onChange, products, customers, onSubmi
     const user = (customers || []).find(c => c._id === userId);
     onChange({ 
       userId, 
-      address: user?.addresses?.[0] || { street: "", city: "", state: "Maharashtra", pincode: "" } 
+      address: user?.addresses?.[0] || { street: "", city: "", state: "", pincode: "" }
     });
   };
 

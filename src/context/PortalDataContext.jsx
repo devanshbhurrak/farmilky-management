@@ -19,10 +19,17 @@ export function PortalDataProvider({ children }) {
     if (!user) return;
     if (!force && !isStale() && data) return;
 
+    if (force) {
+      window.dispatchEvent(new CustomEvent("portal:refresh"));
+    }
+
     setLoading(true);
     try {
       const deliveryBoardResponse = await apiRequest("/api/subscriptions/admin/delivery-board");
-      if (deliveryBoardResponse.status === 401) return;
+      if (deliveryBoardResponse.status === 401) {
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+        return;
+      }
       if (!deliveryBoardResponse.ok) {
         const errorPayload = await safeParseJson(deliveryBoardResponse);
         throw new Error(errorPayload?.message || "Failed to load delivery board.");
@@ -38,7 +45,10 @@ export function PortalDataProvider({ children }) {
           apiRequest("/api/subscriptions/admin/all"),
           apiRequest("/api/subscriptions/admin/today-supply"),
         ]);
-        if ([ordersResponse, subscriptionsResponse, supplyResponse].some((r) => r.status === 401)) return;
+        if ([ordersResponse, subscriptionsResponse, supplyResponse].some((r) => r.status === 401)) {
+          window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+          return;
+        }
         if (!ordersResponse.ok || !subscriptionsResponse.ok || !supplyResponse.ok) {
           const failing = [ordersResponse, subscriptionsResponse, supplyResponse].find((r) => !r.ok);
           const errorPayload = await safeParseJson(failing);

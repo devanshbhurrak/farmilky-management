@@ -11,6 +11,7 @@ import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import OrderForm from "../components/order/OrderForm";
 import { orderStatusOptions } from "../utils/constants";
+import { useDebounce } from "../hooks/useDebounce";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
@@ -27,7 +28,7 @@ export default function OrdersPage({ orders, onUpdate, onRefresh }) {
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState({ userId: "", items: [], address: { street: "", city: "", state: "Maharashtra", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed" });
+  const [form, setForm] = useState({ userId: "", items: [], address: { street: "", city: "", state: "", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed" });
 
   useEffect(() => {
     if (modalOpen) {
@@ -43,12 +44,14 @@ export default function OrdersPage({ orders, onUpdate, onRefresh }) {
     }
   }, [modalOpen]);
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const filtered = useMemo(() => {
     let items = orders || [];
     if (statusFilter !== "all") items = items.filter((o) => o.orderStatus === statusFilter);
     if (paymentFilter !== "all") items = items.filter((o) => o.paymentStatus === paymentFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       items = items.filter(
         (o) =>
           (o.userId?.name || "").toLowerCase().includes(q) ||
@@ -57,14 +60,14 @@ export default function OrdersPage({ orders, onUpdate, onRefresh }) {
       );
     }
     return items;
-  }, [orders, statusFilter, paymentFilter, search]);
+  }, [orders, statusFilter, paymentFilter, debouncedSearch]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [filtered]);
 
   function openCreate() {
-    setForm({ userId: "", items: [{ productId: "", quantity: 1 }], address: { street: "", city: "", state: "Maharashtra", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed" });
+    setForm({ userId: "", items: [{ productId: "", quantity: 1 }], address: { street: "", city: "", state: "", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed" });
     setModalOpen(true);
   }
 

@@ -12,6 +12,7 @@ import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import SubscriptionForm from "../components/subscription/SubscriptionForm";
 import { subscriptionStatusOptions } from "../utils/constants";
+import { useDebounce } from "../hooks/useDebounce";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
@@ -47,12 +48,14 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
     }
   }, [modalOpen]);
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const filtered = useMemo(() => {
     let items = subscriptions || [];
     if (statusFilter !== "all") items = items.filter((s) => s.status === statusFilter);
     if (scheduleFilter !== "all") items = items.filter((s) => s.deliverySchedule === scheduleFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       items = items.filter(
         (s) =>
           (s.userId?.name || "").toLowerCase().includes(q) ||
@@ -62,7 +65,7 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
       );
     }
     return items;
-  }, [subscriptions, statusFilter, scheduleFilter, search]);
+  }, [subscriptions, statusFilter, scheduleFilter, debouncedSearch]);
 
   const toggleSelect = (id) => setSelected((prev) => {
     const next = new Set(prev);

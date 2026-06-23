@@ -44,6 +44,7 @@ export default function CustomerForm({ form, onChange, onSubmit, saving }) {
           value={form.password}
           onChange={(e) => onChange({ password: e.target.value })}
           placeholder="Min 6 characters"
+          minLength={6}
           required={!form._id}
         />
       </div>
@@ -52,10 +53,8 @@ export default function CustomerForm({ form, onChange, onSubmit, saving }) {
         <label>Role</label>
         <select value={form.role} onChange={(e) => onChange({ role: e.target.value })}>
           <option value="customer">Customer</option>
+          <option value="agent">Delivery Agent</option>
           <option value="admin">Admin</option>
-          <option value="delivery">Delivery Boy</option>
-          <option value="delivery_partner">Delivery Partner</option>
-          <option value="agent">Agent</option>
         </select>
       </div>
 
@@ -84,6 +83,8 @@ export default function CustomerForm({ form, onChange, onSubmit, saving }) {
               value={form.address?.pincode || ""}
               onChange={(e) => onChange({ address: { ...form.address, pincode: e.target.value } })}
               placeholder="6 digits"
+              pattern="[0-9]{6}"
+              title="Enter a valid 6-digit pincode"
             />
           </div>
         </div>

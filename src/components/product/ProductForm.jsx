@@ -42,13 +42,14 @@ export default function ProductForm({ form, onChange, onSubmit }) {
       <div className="form-row">
         <div className="form-group">
           <label>Price</label>
-          <input 
-            type="number" 
-            step="0.01" 
-            value={form.price} 
-            onChange={(e) => onChange({ price: e.target.value })} 
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            value={form.price}
+            onChange={(e) => onChange({ price: e.target.value })}
             placeholder="0.00"
-            required 
+            required
           />
         </div>
         <div className="form-group">

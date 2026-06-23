@@ -99,7 +99,7 @@ export default function OrderDetailPage() {
     setForm({
       userId: order.userId?._id,
       items: order.items.map(item => ({ productId: item.productId?._id || item.productId, quantity: item.quantity })),
-      address: order.address || { street: "", city: "", state: "Maharashtra", pincode: "" },
+      address: order.address || { street: "", city: "", state: "", pincode: "" },
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
       orderStatus: order.orderStatus

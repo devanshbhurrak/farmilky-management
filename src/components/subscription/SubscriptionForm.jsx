@@ -47,6 +47,7 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
           <input
             type="date"
             value={form.startDate}
+            min={new Date().toISOString().split("T")[0]}
             onChange={(e) => onChange({ startDate: e.target.value })}
             required
           />

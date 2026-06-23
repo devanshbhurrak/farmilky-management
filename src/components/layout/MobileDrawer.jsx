@@ -8,10 +8,10 @@ import NavIcon from "../icons/NavIcon";
 
 export default function MobileDrawer({ isOpen, onClose }) {
   const drawerRef = useRef(null);
-  const { isAdmin, isDeliveryPartner } = useAuth();
+  const { isAdmin } = useAuth();
   useBodyScrollLock(isOpen);
 
-  const items = isAdmin ? navItems : isDeliveryPartner ? deliveryNavItems : navItems;
+  const items = isAdmin ? navItems : deliveryNavItems;
 
   useEffect(() => {
     if (!isOpen) return;

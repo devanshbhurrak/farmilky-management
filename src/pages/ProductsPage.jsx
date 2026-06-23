@@ -11,6 +11,7 @@ import PageHeader from "../components/ui/PageHeader";
 import ProductForm from "../components/product/ProductForm";
 import toast from "react-hot-toast";
 import { createApiFetch, useApiData } from "../hooks/useApiData";
+import { useDebounce } from "../hooks/useDebounce";
 import { categoryOptions } from "../utils/constants";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -39,17 +40,19 @@ export default function ProductsPage() {
     return [];
   }, [data]);
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const filtered = useMemo(() => {
     let items = products;
     if (categoryFilter !== "all") items = items.filter((p) => p.category === categoryFilter);
     if (availFilter === "available") items = items.filter((p) => p.isAvailable);
     else if (availFilter === "unavailable") items = items.filter((p) => !p.isAvailable);
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       items = items.filter((p) => p.name.toLowerCase().includes(q));
     }
     return items;
-  }, [products, categoryFilter, availFilter, search]);
+  }, [products, categoryFilter, availFilter, debouncedSearch]);
 
   function openCreate() {
     setEditingProduct(null);

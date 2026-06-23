@@ -3,9 +3,9 @@ import { LayoutDashboard, Truck, ShoppingCart, MoreHorizontal, ClipboardList } f
 import { useAuth } from "../../context/AuthContext";
 
 export default function BottomNav({ onMoreClick }) {
-  const { isDeliveryPartner, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
 
-  if (isDeliveryPartner && !isAdmin) {
+  if (!isAdmin) {
     return (
       <nav className="bottom-nav hide-desktop">
         <div className="bottom-nav-inner delivery-nav-inner">

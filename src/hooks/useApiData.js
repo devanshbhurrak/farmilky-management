@@ -3,17 +3,25 @@ import { apiRequest, safeParseJson } from "../api/client";
 
 const apiCache = new Map();
 
+export function clearApiCache() {
+  apiCache.clear();
+}
+
 export function useApiData(fetchFn, immediate = true, cacheKey = null) {
   const [data, setData] = useState(cacheKey ? apiCache.get(cacheKey) : null);
   const [loading, setLoading] = useState(immediate && (!cacheKey || !apiCache.has(cacheKey)));
   const [error, setError] = useState(null);
   const fetchFnRef = useRef(fetchFn);
+  const lastArgsRef = useRef([]);
+  const hasExecutedRef = useRef(false);
 
   useEffect(() => {
     fetchFnRef.current = fetchFn;
   }, [fetchFn]);
 
   const execute = useCallback(async (...args) => {
+    hasExecutedRef.current = true;
+    lastArgsRef.current = args;
     if (!cacheKey || !apiCache.has(cacheKey)) {
       setLoading(true);
     }
@@ -41,6 +49,19 @@ export function useApiData(fetchFn, immediate = true, cacheKey = null) {
       execute();
     }
   }, [immediate, execute]);
+
+  // Re-run with the last used args when a forced portal refresh is triggered.
+  // Only fires if this hook has already fetched at least once (avoids spurious
+  // fetches for hooks that are lazy / not yet called).
+  useEffect(() => {
+    function onPortalRefresh() {
+      if (hasExecutedRef.current) {
+        execute(...lastArgsRef.current);
+      }
+    }
+    window.addEventListener("portal:refresh", onPortalRefresh);
+    return () => window.removeEventListener("portal:refresh", onPortalRefresh);
+  }, [execute]);
 
   return { data, loading, error, refetch: execute };
 }

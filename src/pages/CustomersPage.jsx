@@ -12,6 +12,7 @@ import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import CustomerForm from "../components/customer/CustomerForm";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
+import { useDebounce } from "../hooks/useDebounce";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
@@ -37,11 +38,13 @@ export default function CustomersPage({ onRefresh }) {
     return [];
   }, [data]);
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const filtered = useMemo(() => {
     let items = customers;
     if (roleFilter !== "all") items = items.filter((u) => u.role === roleFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       items = items.filter(
         (u) =>
           (u.name || "").toLowerCase().includes(q) ||
@@ -50,7 +53,7 @@ export default function CustomersPage({ onRefresh }) {
       );
     }
     return items;
-  }, [customers, roleFilter, search]);
+  }, [customers, roleFilter, debouncedSearch]);
 
   function openCreate() {
     setForm({ name: "", email: "", phone: "", password: "", role: "customer", address: { street: "", city: "", state: "", pincode: "" }, isActive: true });
@@ -149,9 +152,8 @@ export default function CustomersPage({ onRefresh }) {
       <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
         <option value="all">All Roles</option>
         <option value="customer">Customer</option>
+        <option value="agent">Delivery Agent</option>
         <option value="admin">Admin</option>
-        <option value="delivery_partner">Delivery Partner</option>
-        <option value="agent">Agent</option>
       </select>
     </div>
   );
@@ -205,8 +207,8 @@ export default function CustomersPage({ onRefresh }) {
               <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
                 <option value="all">All Roles</option>
                 <option value="customer">Customer</option>
+                <option value="agent">Delivery Agent</option>
                 <option value="admin">Admin</option>
-                <option value="delivery_partner">Delivery Partner</option>
               </select>
             </div>
           )}

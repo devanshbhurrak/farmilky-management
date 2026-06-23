@@ -13,6 +13,7 @@ import {
   UserCheck,
   MessageSquare,
   RotateCcw,
+  Mail,
 } from "lucide-react";
 
 const NAV_ICONS = {
@@ -29,6 +30,7 @@ const NAV_ICONS = {
   agents: UserCheck,
   complaints: MessageSquare,
   returns: RotateCcw,
+  messages: Mail,
 };
 
 export default function NavIcon({ name, size = 20, strokeWidth = 1.75 }) {

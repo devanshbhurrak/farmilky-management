@@ -11,6 +11,7 @@ import OutcomeModal from "../components/delivery/OutcomeModal";
 import BulkActionsBar from "../components/delivery/BulkActionsBar";
 import DeliveryFilters from "../components/delivery/DeliveryFilters";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
+import { useDebounce } from "../hooks/useDebounce";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
@@ -31,6 +32,8 @@ export default function DeliveriesPage() {
   const [outcomeModal, setOutcomeModal] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   const queryParams = useMemo(() => ({ date, type: typeTab !== "all" ? typeTab : undefined, status: statusFilter !== "all" ? statusFilter : undefined }), [date, typeTab, statusFilter]);
   const fetchFn = useCallback(() => fetchBoard(queryParams), [queryParams]);
@@ -41,10 +44,11 @@ export default function DeliveriesPage() {
   const deliveryBoard = useMemo(() => data || {}, [data]);
   const summary = useMemo(() => deliveryBoard.summary || {}, [deliveryBoard]);
   const deliveries = useMemo(() => deliveryBoard.deliveries || [], [deliveryBoard]);
+  const debouncedSearch = useDebounce(searchValue, 300);
 
   const filteredDeliveries = useMemo(() => {
     let items = deliveries;
-    const query = searchValue.trim().toLowerCase();
+    const query = debouncedSearch.trim().toLowerCase();
     if (query) {
       items = items.filter((item) =>
         [item.customerName, item.phone, item.email, item.productLabel, item.schedule, item.address, item.type]
@@ -55,7 +59,13 @@ export default function DeliveriesPage() {
       );
     }
     return items;
-  }, [deliveries, searchValue]);
+  }, [deliveries, debouncedSearch]);
+
+  const totalPages = Math.ceil(filteredDeliveries.length / PAGE_SIZE);
+  const pagedDeliveries = useMemo(
+    () => filteredDeliveries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredDeliveries, page]
+  );
 
   function openOutcomeModal(item, mode) {
     setOutcomeModal({ item, mode, form: {} });
@@ -128,7 +138,10 @@ export default function DeliveriesPage() {
     setSearchValue("");
     setTypeTab("all");
     setStatusFilter("all");
+    setPage(1);
   };
+
+  useEffect(() => { setPage(1); }, [debouncedSearch, typeTab, statusFilter, date]);
 
   if (loading && (!data || deliveries.length === 0)) return <LoadingScreen text="Loading route..." />;
 
@@ -229,11 +242,11 @@ export default function DeliveriesPage() {
               action={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
             />
           ) : (
-            filteredDeliveries.map((item, index) => (
-              <DeliveryCard 
+            pagedDeliveries.map((item, index) => (
+              <DeliveryCard
                 key={`${item.type}-${item.id}`}
                 item={item}
-                index={index}
+                index={(page - 1) * PAGE_SIZE + index}
                 isSelected={selectedIds.has(item.id)}
                 onSelect={toggleSelect}
                 onAction={openOutcomeModal}
@@ -241,6 +254,13 @@ export default function DeliveriesPage() {
             ))
           )}
         </div>
+        {totalPages > 1 && (
+          <div className="pagination-row" style={{ display: "flex", gap: "8px", justifyContent: "center", padding: "16px 0" }}>
+            <button className="btn btn-secondary btn-sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
+            <span style={{ alignSelf: "center", fontSize: "var(--font-size-sm)" }}>{page} / {totalPages}</span>
+            <button className="btn btn-secondary btn-sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
+          </div>
+        )}
       </section>
 
       <FilterSheet isOpen={isFilterSheetOpen} onClose={() => setIsFilterSheetOpen(false)}>
