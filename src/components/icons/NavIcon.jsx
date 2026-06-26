@@ -14,6 +14,8 @@ import {
   MessageSquare,
   RotateCcw,
   Mail,
+  Users2,
+  Milk,
 } from "lucide-react";
 
 const NAV_ICONS = {
@@ -31,6 +33,8 @@ const NAV_ICONS = {
   complaints: MessageSquare,
   returns: RotateCcw,
   messages: Mail,
+  suppliers: Users2,
+  collections: Milk,
 };
 
 export default function NavIcon({ name, size = 20, strokeWidth = 1.75 }) {

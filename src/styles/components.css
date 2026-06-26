@@ -470,6 +470,11 @@
   color: var(--danger-text);
 }
 
+.status-inactive {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
 /* ═══════════════════════════════════════════════════
    CARDS & GRIDS
    ═══════════════════════════════════════════════════ */

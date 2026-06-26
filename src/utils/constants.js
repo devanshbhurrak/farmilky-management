@@ -9,6 +9,8 @@ export const navItems = [
   { id: "balances", label: "Outstanding Balances", path: "/invoices", icon: "invoices" },
   { id: "areas", label: "Areas", path: "/areas", icon: "areas" },
   { id: "agents", label: "Agents", path: "/agents", icon: "agents" },
+  { id: "suppliers", label: "Suppliers", path: "/suppliers", icon: "suppliers" },
+  { id: "milk-collections", label: "Milk Collections", path: "/milk-collections", icon: "collections" },
   { id: "complaints", label: "Complaints", path: "/complaints", icon: "complaints" },
   { id: "returns", label: "Returns", path: "/returns", icon: "returns" },
   { id: "holidays", label: "Holidays", path: "/holidays", icon: "holidays" },

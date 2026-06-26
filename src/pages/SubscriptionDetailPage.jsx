@@ -95,6 +95,7 @@ export default function SubscriptionDetailPage() {
       userId: sub.userId?._id,
       productId: sub.productId?._id,
       quantityPerDay: sub.quantityPerDay,
+      pricePerUnit: sub.pricePerUnit ?? sub.productId?.price ?? null,
       deliverySchedule: sub.deliverySchedule,
       customDays: sub.customDays || [],
       startDate: sub.startDate ? new Date(sub.startDate).toISOString().split("T")[0] : ""
@@ -108,6 +109,8 @@ export default function SubscriptionDetailPage() {
 
   const deliveryHistory = sub.deliveryHistory || [];
   const totalDelivered = deliveryHistory.length;
+  const effectivePricePerUnit = sub.pricePerUnit ?? (sub.totalPricePerDay / sub.quantityPerDay);
+  const isCustomPrice = sub.pricePerUnit != null && sub.productId && sub.pricePerUnit !== sub.productId.price;
   const getHistoryDate = (entry) => entry.deliveryDate || entry.date;
   const getHistoryStatus = (entry) => entry.status || "delivered";
   const getScheduledQuantity = (entry) => entry.scheduledQuantity ?? sub.quantityPerDay;
@@ -157,16 +160,27 @@ export default function SubscriptionDetailPage() {
         }
       />
 
-      <div className="card-grid" style={{ gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, 1fr)" }}>
+      <div className="card-grid" style={{ gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)" }}>
         <div className="card-inset" style={{ textAlign: "center" }}>
           <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>DAILY VALUE</span>
           <strong style={{ fontSize: "var(--font-size-xl)" }}>{formatCurrency(sub.totalPricePerDay)}</strong>
         </div>
         <div className="card-inset" style={{ textAlign: "center" }}>
+          <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>
+            RATE / {sub.productId?.unit?.toUpperCase() || "UNIT"}
+            {isCustomPrice && (
+              <span style={{ marginLeft: "5px", fontSize: "9px", color: "#b45309", background: "#fef3c7", borderRadius: "3px", padding: "1px 4px" }}>CUSTOM</span>
+            )}
+          </span>
+          <strong style={{ fontSize: "var(--font-size-xl)", color: isCustomPrice ? "var(--color-warning, #b45309)" : "inherit" }}>
+            {formatCurrency(effectivePricePerUnit)}
+          </strong>
+        </div>
+        <div className="card-inset" style={{ textAlign: "center" }}>
           <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>DELIVERIES</span>
           <strong style={{ fontSize: "var(--font-size-xl)", color: "var(--color-primary)" }}>{totalDelivered}</strong>
         </div>
-        <div className="card-inset" style={{ textAlign: "center", gridColumn: isMobile ? "span 2" : "auto" }}>
+        <div className="card-inset" style={{ textAlign: "center" }}>
           <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>PENDING</span>
           <strong style={{ fontSize: "var(--font-size-xl)", color: sub.pendingAmount > 0 ? "var(--danger)" : "inherit" }}>{formatCurrency(sub.pendingAmount)}</strong>
         </div>
@@ -192,6 +206,22 @@ export default function SubscriptionDetailPage() {
               </div>
               <div style={{ textAlign: "right" }}>
                 <strong>{sub.quantityPerDay} {sub.productId?.unit}</strong>
+              </div>
+            </div>
+            <div className="list-card">
+              <div>
+                <strong>Price per {sub.productId?.unit || "unit"}</strong>
+                <span>{isCustomPrice ? "Custom negotiated rate" : "Standard product rate"}</span>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <strong style={{ color: isCustomPrice ? "var(--color-warning, #b45309)" : "inherit" }}>
+                  {formatCurrency(effectivePricePerUnit)}
+                </strong>
+                {isCustomPrice && (
+                  <span style={{ display: "block", fontSize: "11px", color: "var(--text-muted)" }}>
+                    List: {formatCurrency(sub.productId?.price)}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -239,6 +269,7 @@ export default function SubscriptionDetailPage() {
                   <th>Status</th>
                   <th>Scheduled</th>
                   <th>Actual</th>
+                  <th>Rate</th>
                   <th>Reason</th>
                   <th>Amount</th>
                 </tr>
@@ -250,6 +281,7 @@ export default function SubscriptionDetailPage() {
                     <td><StatusTag value={getHistoryStatus(d)} /></td>
                     <td>{getScheduledQuantity(d)} {sub.productId?.unit}</td>
                     <td>{getActualQuantity(d)} {sub.productId?.unit}</td>
+                    <td>{d.pricePerUnit != null ? formatCurrency(d.pricePerUnit) : "-"}</td>
                     <td>{d.reason || "-"}</td>
                     <td><strong>{formatCurrency(d.totalAmount)}</strong></td>
                   </tr>

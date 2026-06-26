@@ -37,6 +37,9 @@ const AgentDetailPage = lazy(() => import("./pages/AgentDetailPage"));
 const ComplaintsPage = lazy(() => import("./pages/ComplaintsPage"));
 const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 const ContactMessagesPage = lazy(() => import("./pages/ContactMessagesPage"));
+const SuppliersPage = lazy(() => import("./pages/SuppliersPage"));
+const SupplierDetailPage = lazy(() => import("./pages/SupplierDetailPage"));
+const MilkCollectionsPage = lazy(() => import("./pages/MilkCollectionsPage"));
 
 import "./styles/layout.css";
 import "./styles/components.css";
@@ -185,6 +188,9 @@ function App() {
                           <Route path="messages" element={<ContactMessagesPage />} />
                           <Route path="manifests" element={<ManifestsPage />} />
                           <Route path="manifests/:id" element={<ManifestDetailPage />} />
+                          <Route path="suppliers" element={<SuppliersPage />} />
+                          <Route path="suppliers/:id" element={<SupplierDetailPage />} />
+                          <Route path="milk-collections" element={<MilkCollectionsPage />} />
                         </Route>
                         <Route path="deliveries" element={<DeliveriesPage />} />
                         <Route path="agent" element={<AgentDashboardPage />} />

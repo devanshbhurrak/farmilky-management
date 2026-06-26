@@ -32,7 +32,7 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState({ userId: "", productId: "", quantityPerDay: 1, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
+  const [form, setForm] = useState({ userId: "", productId: "", quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
 
   useEffect(() => {
     if (modalOpen) {
@@ -145,6 +145,23 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
     },
     { key: "startDate", label: "Started", render: (r) => formatDate(r.startDate) },
     {
+      key: "totalPricePerDay",
+      label: "Daily Value",
+      render: (r) => {
+        const isCustom = r.pricePerUnit != null && r.productId && r.pricePerUnit !== r.productId.price;
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <strong>{formatCurrency(r.totalPricePerDay)}</strong>
+            {isCustom && (
+              <span style={{ fontSize: "10px", fontWeight: "bold", color: "var(--color-warning, #b45309)", background: "var(--warning-bg, #fef3c7)", borderRadius: "4px", padding: "1px 5px", width: "fit-content" }}>
+                CUSTOM ₹{r.pricePerUnit}/{r.productId?.unit}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: "pendingAmount",
       label: "Pending",
       render: (r) => <strong style={{ color: r.pendingAmount > 0 ? "var(--danger)" : "inherit" }}>{formatCurrency(r.pendingAmount)}</strong>,
@@ -156,33 +173,39 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
     },
   ];
 
-  const renderSubscriptionCard = (sub) => (
-    <>
-      <div className="mc-head">
-        <div className="mc-identity">
-          <span className="mc-name">{sub.userId?.name || "Unknown"}</span>
-          <span className="mc-sub">{sub.productId?.name || "Unknown"} · {sub.quantityPerDay} {sub.productId?.unit} / {sub.deliverySchedule}</span>
+  const renderSubscriptionCard = (sub) => {
+    const isCustomPrice = sub.pricePerUnit != null && sub.productId && sub.pricePerUnit !== sub.productId.price;
+    return (
+      <>
+        <div className="mc-head">
+          <div className="mc-identity">
+            <span className="mc-name">{sub.userId?.name || "Unknown"}</span>
+            <span className="mc-sub">{sub.productId?.name || "Unknown"} · {sub.quantityPerDay} {sub.productId?.unit} / {sub.deliverySchedule}</span>
+          </div>
+          <StatusTag value={sub.status} />
         </div>
-        <StatusTag value={sub.status} />
-      </div>
-      <div className="mc-stats">
-        <div className="mc-stat">
-          <span className="mc-stat-label">Started</span>
-          <span className="mc-stat-value muted">{formatDate(sub.startDate)}</span>
+        <div className="mc-stats">
+          <div className="mc-stat">
+            <span className="mc-stat-label">Daily Value</span>
+            <span className="mc-stat-value">
+              {formatCurrency(sub.totalPricePerDay)}
+              {isCustomPrice && <span style={{ fontSize: "10px", fontWeight: "bold", color: "#b45309", marginLeft: "4px" }}>CUSTOM</span>}
+            </span>
+          </div>
+          <div className="mc-stat">
+            <span className="mc-stat-label">Schedule</span>
+            <span className="mc-stat-value">{sub.deliverySchedule}</span>
+          </div>
+          <div className="mc-stat">
+            <span className="mc-stat-label">Pending</span>
+            <span className={`mc-stat-value ${sub.pendingAmount > 0 ? "danger" : "muted"}`}>
+              {formatCurrency(sub.pendingAmount)}
+            </span>
+          </div>
         </div>
-        <div className="mc-stat">
-          <span className="mc-stat-label">Schedule</span>
-          <span className="mc-stat-value">{sub.deliverySchedule}</span>
-        </div>
-        <div className="mc-stat">
-          <span className="mc-stat-label">Pending</span>
-          <span className={`mc-stat-value ${sub.pendingAmount > 0 ? "danger" : "muted"}`}>
-            {formatCurrency(sub.pendingAmount)}
-          </span>
-        </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   const filters = (
     <>
@@ -216,7 +239,7 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
   };
 
   function openCreate() {
-    setForm({ userId: "", productId: "", quantityPerDay: 1, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
+    setForm({ userId: "", productId: "", quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
     setModalOpen(true);
   }
 
