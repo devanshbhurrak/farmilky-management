@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { apiRequest } from "../api/client";
 import Modal from "../components/ui/Modal";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
+import EmptyState from "../components/ui/EmptyState";
+import PageHeader from "../components/ui/PageHeader";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
 function formatCurrency(val) {
@@ -25,17 +27,16 @@ export default function SupplierDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [supplier, setSupplier] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("collections");
 
-  // Collections
   const [collections, setCollections] = useState([]);
   const [collectionFilters, setCollectionFilters] = useState({ from: "", to: "" });
   const [collectionsLoading, setCollectionsLoading] = useState(false);
   const [collectionTotals, setCollectionTotals] = useState({ liters: 0, amount: 0 });
 
-  // Payments
   const [payments, setPayments] = useState([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [paymentModal, setPaymentModal] = useState(false);
@@ -95,8 +96,6 @@ export default function SupplierDetailPage() {
 
   useEffect(() => { fetchSupplier(); }, [fetchSupplier]);
 
-  // Use refs so the tab-switch effect always calls the latest version of
-  // these functions without re-triggering when filter state changes mid-session.
   const fetchCollectionsRef = useRef(fetchCollections);
   const fetchPaymentsRef = useRef(fetchPayments);
   useEffect(() => { fetchCollectionsRef.current = fetchCollections; }, [fetchCollections]);
@@ -112,7 +111,6 @@ export default function SupplierDetailPage() {
       toast.error("Amount, from date, and to date are required.");
       return;
     }
-
     setSavingPayment(true);
     try {
       const res = await apiRequest("/api/supplier-payments", {
@@ -144,189 +142,266 @@ export default function SupplierDetailPage() {
   if (loading) return <LoadingScreen />;
   if (!supplier) {
     return (
-      <div style={{ padding: 32, textAlign: "center" }}>
-        <p>Supplier not found.</p>
-        <button className="mini-button" onClick={() => navigate("/suppliers")} style={{ marginTop: 12 }}>
-          <ArrowLeft size={14} /> Back to Suppliers
-        </button>
-      </div>
+      <EmptyState
+        text="Supplier not found."
+        action={<button className="mini-button" onClick={() => navigate("/suppliers")}>Back to Suppliers</button>}
+      />
     );
   }
 
+  const hasBankDetails = supplier.bankDetails &&
+    (supplier.bankDetails.accountNo || supplier.bankDetails.bankName);
+
   return (
     <div className="view-stack">
-      {/* Back + Profile Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-        <button
-          className="mini-button"
-          onClick={() => navigate("/suppliers")}
-          style={{ display: "flex", alignItems: "center", gap: 6 }}
-        >
-          <ArrowLeft size={14} /> Suppliers
-        </button>
-      </div>
 
-      <div className="surface" style={{ marginBottom: 0 }}>
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <h2 style={{ margin: 0, fontSize: "1.3em" }}>{supplier.name}</h2>
-              {supplier.isActive ? <StatusTag value="active" /> : <StatusTag value="inactive" />}
+      {/* ── Page Header (breadcrumb only) ───────────── */}
+      <PageHeader
+        className="supplier-breadcrumb-only"
+        breadcrumb={[
+          { label: "Suppliers", path: "/suppliers" },
+          { label: supplier.name },
+        ]}
+      />
+
+      {/* ── Profile Card ─────────────────────────────── */}
+      <div className="panel supplier-profile-panel">
+
+        {/* Name row + outstanding */}
+        <div className="supplier-profile-top">
+          <div className="supplier-identity">
+            <div className="supplier-name-row">
+              <h2>{supplier.name}</h2>
+              <StatusTag value={supplier.isActive ? "active" : "inactive"} />
             </div>
-            <div className="text-muted" style={{ fontSize: "0.9em", display: "flex", flexWrap: "wrap", gap: 16 }}>
+            <div className="supplier-contact-row">
               <span>{supplier.phone}</span>
               {supplier.email && <span>{supplier.email}</span>}
-              {supplier.location && <span>{supplier.location}{supplier.pincode ? ` — ${supplier.pincode}` : ""}</span>}
-              {supplier.joiningDate && <span>Since {formatDate(supplier.joiningDate)}</span>}
+              {supplier.location && (
+                <span>{supplier.location}{supplier.pincode ? ` — ${supplier.pincode}` : ""}</span>
+              )}
+              {supplier.joiningDate && (
+                <span>Since {formatDate(supplier.joiningDate)}</span>
+              )}
             </div>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "0.8em", color: "var(--text-muted, #888)", marginBottom: 2 }}>Outstanding</div>
-            <div style={{
-              fontSize: "1.4em",
-              fontWeight: 700,
-              color: supplier.outstandingAmount > 0 ? "var(--color-warning, #d97706)" : "inherit",
-            }}>
+
+          <div className="supplier-outstanding">
+            <p className="eyebrow">Outstanding</p>
+            <span
+              className={`supplier-outstanding-amount ${supplier.outstandingAmount > 0 ? "danger-text" : "success-text"}`}
+            >
               {formatCurrency(supplier.outstandingAmount)}
+            </span>
+          </div>
+        </div>
+
+        {/* Defaults strip */}
+        <div className="supplier-defaults-strip">
+          <div className="supplier-default-chip">
+            <span>Rate / L</span>
+            <strong>₹{Number(supplier.defaultRatePerLiter || 0).toFixed(2)}</strong>
+          </div>
+          <div className="supplier-default-chip">
+            <span>Sessions</span>
+            <strong>{(supplier.collectionSessions || []).join(" & ") || "—"}</strong>
+          </div>
+          {supplier.collectionSessions?.includes("morning") && (
+            <div className="supplier-default-chip">
+              <span>Morning Qty</span>
+              <strong>{supplier.defaultMorningQty ?? 0} L</strong>
             </div>
-          </div>
+          )}
+          {supplier.collectionSessions?.includes("evening") && (
+            <div className="supplier-default-chip">
+              <span>Evening Qty</span>
+              <strong>{supplier.defaultEveningQty ?? 0} L</strong>
+            </div>
+          )}
         </div>
 
-        {/* Collection defaults */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 24, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-color, #e5e7eb)", fontSize: "0.88em" }}>
-          <div>
-            <span className="text-muted">Sessions: </span>
-            <span style={{ textTransform: "capitalize" }}>
-              {(supplier.collectionSessions || []).join(", ") || "—"}
-            </span>
-          </div>
-          <div>
-            <span className="text-muted">Morning Default: </span>
-            <span>{supplier.defaultMorningQty ?? 0} L</span>
-          </div>
-          <div>
-            <span className="text-muted">Evening Default: </span>
-            <span>{supplier.defaultEveningQty ?? 0} L</span>
-          </div>
-          <div>
-            <span className="text-muted">Rate: </span>
-            <span>₹{Number(supplier.defaultRatePerLiter || 0).toFixed(2)} / L</span>
-          </div>
-        </div>
-
-        {/* Bank Details */}
-        {supplier.bankDetails && (supplier.bankDetails.accountNo || supplier.bankDetails.bankName) && (
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-color, #e5e7eb)", fontSize: "0.88em" }}>
-            <span className="text-muted" style={{ display: "block", marginBottom: 6, fontWeight: 600, fontSize: "0.85em", letterSpacing: "0.05em" }}>
-              BANK DETAILS
-            </span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
-              {supplier.bankDetails.holderName && <div><span className="text-muted">Holder: </span>{supplier.bankDetails.holderName}</div>}
-              {supplier.bankDetails.accountNo && <div><span className="text-muted">Account: </span>{supplier.bankDetails.accountNo}</div>}
-              {supplier.bankDetails.ifscCode && <div><span className="text-muted">IFSC: </span>{supplier.bankDetails.ifscCode}</div>}
-              {supplier.bankDetails.bankName && <div><span className="text-muted">Bank: </span>{supplier.bankDetails.bankName}</div>}
+        {/* Bank details */}
+        {hasBankDetails && (
+          <div className="supplier-bank-section">
+            <p className="eyebrow">Bank Details</p>
+            <div className="supplier-bank-grid">
+              {supplier.bankDetails.holderName && (
+                <div className="supplier-bank-item">
+                  <span>Holder</span>
+                  <strong>{supplier.bankDetails.holderName}</strong>
+                </div>
+              )}
+              {supplier.bankDetails.accountNo && (
+                <div className="supplier-bank-item">
+                  <span>Account No.</span>
+                  <strong>{supplier.bankDetails.accountNo}</strong>
+                </div>
+              )}
+              {supplier.bankDetails.ifscCode && (
+                <div className="supplier-bank-item">
+                  <span>IFSC</span>
+                  <strong>{supplier.bankDetails.ifscCode}</strong>
+                </div>
+              )}
+              {supplier.bankDetails.bankName && (
+                <div className="supplier-bank-item">
+                  <span>Bank</span>
+                  <strong>{supplier.bankDetails.bankName}</strong>
+                </div>
+              )}
             </div>
           </div>
         )}
 
+        {/* Notes */}
         {supplier.notes && (
-          <div style={{ marginTop: 12, fontSize: "0.88em" }}>
-            <span className="text-muted">Notes: </span>{supplier.notes}
+          <div className="supplier-notes">
+            <p className="eyebrow">Notes</p>
+            <p>{supplier.notes}</p>
           </div>
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="surface" style={{ padding: 0 }}>
-        <div className="filter-tabs" style={{ borderBottom: "1px solid var(--border-color, #e5e7eb)", padding: "0 16px" }}>
+      {/* ── Tabs ─────────────────────────────────────── */}
+      <section className="panel detail-tabs-panel">
+        <div className="scrollable-tab-bar">
           <button
-            className={`filter-tab ${activeTab === "collections" ? "active" : ""}`}
+            className={`tab-pill ${activeTab === "collections" ? "active" : ""}`}
             onClick={() => setActiveTab("collections")}
           >
             Collections
           </button>
           <button
-            className={`filter-tab ${activeTab === "payments" ? "active" : ""}`}
+            className={`tab-pill ${activeTab === "payments" ? "active" : ""}`}
             onClick={() => setActiveTab("payments")}
           >
             Payments
           </button>
         </div>
 
-        {/* Collections Tab */}
+        {/* ── Collections Tab ──────────────────────── */}
         {activeTab === "collections" && (
-          <div style={{ padding: 16 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-end", marginBottom: 14 }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85em" }}>
+          <div className="tab-content">
+
+            {/* Date filters */}
+            <div className="supplier-col-filters">
+              <label className="form-field">
                 <span>From</span>
                 <input
                   type="date"
-                  className="search-input"
                   value={collectionFilters.from}
                   onChange={(e) => setCollectionFilters((f) => ({ ...f, from: e.target.value }))}
-                  style={{ width: 160 }}
                 />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "0.85em" }}>
+              <label className="form-field">
                 <span>To</span>
                 <input
                   type="date"
-                  className="search-input"
                   value={collectionFilters.to}
                   onChange={(e) => setCollectionFilters((f) => ({ ...f, to: e.target.value }))}
-                  style={{ width: 160 }}
                 />
               </label>
-              <button className="mini-button" onClick={fetchCollections} disabled={collectionsLoading}>
-                {collectionsLoading ? "Loading..." : "Apply"}
+              <button className="mini-button sc-apply-btn" onClick={fetchCollections} disabled={collectionsLoading}>
+                {collectionsLoading ? "Loading…" : "Apply"}
               </button>
             </div>
 
+            {/* Totals */}
             {collections.length > 0 && (
-              <div style={{ display: "flex", gap: 24, marginBottom: 14, fontSize: "0.9em", fontWeight: 600 }}>
-                <span>Total collected: {Number(collectionTotals.liters).toFixed(1)} L</span>
-                <span>Total amount: {formatCurrency(collectionTotals.amount)}</span>
+              <div className="supplier-totals-strip">
+                <div className="supplier-total-chip">
+                  <span>Total Collected</span>
+                  <strong>{Number(collectionTotals.liters).toFixed(1)} L</strong>
+                </div>
+                <div className="supplier-total-chip">
+                  <span>Total Amount</span>
+                  <strong>{formatCurrency(collectionTotals.amount)}</strong>
+                </div>
               </div>
             )}
 
             {collectionsLoading ? (
-              <div style={{ textAlign: "center", padding: 32, color: "var(--text-muted, #888)" }}>Loading...</div>
+              <div className="tab-loading">Loading collections…</div>
             ) : collections.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 32, color: "var(--text-muted, #888)" }}>No collections found.</div>
+              <EmptyState text="No collections found for this period." />
+            ) : isMobile ? (
+              /* ── Mobile: collection cards ── */
+              <div className="sc-list">
+                {collections.map((c) => (
+                  <div key={c._id} className="sc-card">
+                    {/* Header: date + session + badges */}
+                    <div className="sc-card-head">
+                      <div className="sc-card-date">
+                        <strong>{formatDate(c.date)}</strong>
+                        <span className="sc-session">{c.session}</span>
+                      </div>
+                      <div className="sc-card-badges">
+                        <StatusTag value={c.status} />
+                        {c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}
+                      </div>
+                    </div>
+                    {/* Row 1: Actual · Fat · SNF */}
+                    <div className="sc-card-stats">
+                      <div className="sc-stat">
+                        <span>Actual</span>
+                        <strong>{c.actualQty != null ? `${c.actualQty} L` : "—"}</strong>
+                      </div>
+                      <div className="sc-stat">
+                        <span>Fat %</span>
+                        <strong>{c.fatContent != null ? c.fatContent : "—"}</strong>
+                      </div>
+                      <div className="sc-stat">
+                        <span>SNF %</span>
+                        <strong>{c.snf != null ? c.snf : "—"}</strong>
+                      </div>
+                    </div>
+                    {/* Row 2: Rate · Amount */}
+                    <div className="sc-card-stats sc-card-stats--bottom">
+                      <div className="sc-stat">
+                        <span>Rate / L</span>
+                        <strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong>
+                      </div>
+                      <div className="sc-stat sc-stat--amount">
+                        <span>Amount</span>
+                        <strong>{c.totalAmount != null ? formatCurrency(c.totalAmount) : "—"}</strong>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88em" }}>
+              /* ── Desktop: scroll table ── */
+              <div className="scroll-table">
+                <table>
                   <thead>
-                    <tr style={{ borderBottom: "2px solid var(--border-color, #e5e7eb)", textAlign: "left" }}>
-                      <th style={{ padding: "8px 10px" }}>Date</th>
-                      <th style={{ padding: "8px 10px" }}>Session</th>
-                      <th style={{ padding: "8px 10px" }}>Exp. Qty</th>
-                      <th style={{ padding: "8px 10px" }}>Actual Qty</th>
-                      <th style={{ padding: "8px 10px" }}>Fat %</th>
-                      <th style={{ padding: "8px 10px" }}>SNF %</th>
-                      <th style={{ padding: "8px 10px" }}>Rate / L</th>
-                      <th style={{ padding: "8px 10px" }}>Amount</th>
-                      <th style={{ padding: "8px 10px" }}>Status</th>
-                      <th style={{ padding: "8px 10px" }}>Payment</th>
+                    <tr>
+                      <th>Date</th>
+                      <th>Session</th>
+                      <th>Exp.</th>
+                      <th>Actual</th>
+                      <th>Fat %</th>
+                      <th>SNF %</th>
+                      <th>Rate/L</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Payment</th>
                     </tr>
                   </thead>
                   <tbody>
                     {collections.map((c) => (
-                      <tr key={c._id} style={{ borderBottom: "1px solid var(--border-color, #e5e7eb)" }}>
-                        <td style={{ padding: "8px 10px" }}>{formatDate(c.date)}</td>
-                        <td style={{ padding: "8px 10px", textTransform: "capitalize" }}>{c.session}</td>
-                        <td style={{ padding: "8px 10px" }}>{c.expectedQty ?? "—"}</td>
-                        <td style={{ padding: "8px 10px" }}>{c.actualQty != null ? c.actualQty : <span className="text-muted">—</span>}</td>
-                        <td style={{ padding: "8px 10px" }}>{c.fatContent != null ? c.fatContent : <span className="text-muted">—</span>}</td>
-                        <td style={{ padding: "8px 10px" }}>{c.snf != null ? c.snf : <span className="text-muted">—</span>}</td>
-                        <td style={{ padding: "8px 10px" }}>₹{Number(c.ratePerLiter || 0).toFixed(2)}</td>
-                        <td style={{ padding: "8px 10px", fontWeight: 600 }}>
-                          {c.totalAmount != null ? formatCurrency(c.totalAmount) : <span className="text-muted">—</span>}
+                      <tr key={c._id}>
+                        <td>{formatDate(c.date)}</td>
+                        <td style={{ textTransform: "capitalize" }}>{c.session}</td>
+                        <td>{c.expectedQty ?? "—"}</td>
+                        <td>{c.actualQty != null ? c.actualQty : <span className="muted-text">—</span>}</td>
+                        <td>{c.fatContent != null ? c.fatContent : <span className="muted-text">—</span>}</td>
+                        <td>{c.snf != null ? c.snf : <span className="muted-text">—</span>}</td>
+                        <td>₹{Number(c.ratePerLiter || 0).toFixed(2)}</td>
+                        <td style={{ fontWeight: 600 }}>
+                          {c.totalAmount != null ? formatCurrency(c.totalAmount) : <span className="muted-text">—</span>}
                         </td>
-                        <td style={{ padding: "8px 10px" }}><StatusTag value={c.status} /></td>
-                        <td style={{ padding: "8px 10px" }}>
-                          {c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}
-                        </td>
+                        <td><StatusTag value={c.status} /></td>
+                        <td>{c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -336,53 +411,76 @@ export default function SupplierDetailPage() {
           </div>
         )}
 
-        {/* Payments Tab */}
+        {/* ── Payments Tab ─────────────────────────── */}
         {activeTab === "payments" && (
-          <div style={{ padding: 16 }}>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+          <div className="tab-content">
+            <div className="tab-action-row">
               <button
                 className="primary-button"
-                onClick={() => {
-                  setPaymentForm({ ...PAYMENT_EMPTY });
-                  setPaymentModal(true);
-                }}
+                onClick={() => { setPaymentForm({ ...PAYMENT_EMPTY }); setPaymentModal(true); }}
               >
                 Record Payment
               </button>
             </div>
 
             {paymentsLoading ? (
-              <div style={{ textAlign: "center", padding: 32, color: "var(--text-muted, #888)" }}>Loading...</div>
+              <div className="tab-loading">Loading payments…</div>
             ) : payments.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 32, color: "var(--text-muted, #888)" }}>No payments recorded yet.</div>
+              <EmptyState text="No payments recorded yet." />
+            ) : isMobile ? (
+              /* ── Mobile: payment cards ── */
+              <div className="sc-list">
+                {payments.map((p) => (
+                  <div key={p._id} className="sp-card">
+                    <div className="sp-card-head">
+                      <strong className="sp-amount">{formatCurrency(p.amount)}</strong>
+                      <span className="sp-method">{p.paymentMethod?.replace("_", " ")}</span>
+                    </div>
+                    <div className="sp-card-body">
+                      <div className="sp-card-period">
+                        Period: {formatDate(p.fromDate)} – {formatDate(p.toDate)}
+                      </div>
+                      <div className="sp-card-foot">
+                        <span className="sp-meta">{p.collectionCount} collections</span>
+                        <span className="sp-meta">Paid {formatDate(p.paidAt)}</span>
+                        {p.transactionRef && <span className="sp-ref">{p.transactionRef}</span>}
+                      </div>
+                    </div>
+                    {p.recordedBy?.name && (
+                      <div className="sp-recorded-by">Recorded by {p.recordedBy.name}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88em" }}>
+              /* ── Desktop: scroll table ── */
+              <div className="scroll-table">
+                <table>
                   <thead>
-                    <tr style={{ borderBottom: "2px solid var(--border-color, #e5e7eb)", textAlign: "left" }}>
-                      <th style={{ padding: "8px 10px" }}>Paid On</th>
-                      <th style={{ padding: "8px 10px" }}>Period</th>
-                      <th style={{ padding: "8px 10px" }}>Collections</th>
-                      <th style={{ padding: "8px 10px" }}>Amount</th>
-                      <th style={{ padding: "8px 10px" }}>Method</th>
-                      <th style={{ padding: "8px 10px" }}>Ref</th>
-                      <th style={{ padding: "8px 10px" }}>Recorded By</th>
+                    <tr>
+                      <th>Paid On</th>
+                      <th>Period</th>
+                      <th>Collections</th>
+                      <th>Amount</th>
+                      <th>Method</th>
+                      <th>Ref</th>
+                      <th>Recorded By</th>
                     </tr>
                   </thead>
                   <tbody>
                     {payments.map((p) => (
-                      <tr key={p._id} style={{ borderBottom: "1px solid var(--border-color, #e5e7eb)" }}>
-                        <td style={{ padding: "8px 10px" }}>{formatDate(p.paidAt)}</td>
-                        <td style={{ padding: "8px 10px" }}>
+                      <tr key={p._id}>
+                        <td>{formatDate(p.paidAt)}</td>
+                        <td style={{ whiteSpace: "nowrap" }}>
                           {formatDate(p.fromDate)} – {formatDate(p.toDate)}
                         </td>
-                        <td style={{ padding: "8px 10px" }}>{p.collectionCount}</td>
-                        <td style={{ padding: "8px 10px", fontWeight: 600 }}>{formatCurrency(p.amount)}</td>
-                        <td style={{ padding: "8px 10px", textTransform: "capitalize" }}>
+                        <td>{p.collectionCount}</td>
+                        <td style={{ fontWeight: 600 }}>{formatCurrency(p.amount)}</td>
+                        <td style={{ textTransform: "capitalize" }}>
                           {p.paymentMethod?.replace("_", " ")}
                         </td>
-                        <td style={{ padding: "8px 10px" }}>{p.transactionRef || <span className="text-muted">—</span>}</td>
-                        <td style={{ padding: "8px 10px" }}>{p.recordedBy?.name || <span className="text-muted">—</span>}</td>
+                        <td>{p.transactionRef || <span className="muted-text">—</span>}</td>
+                        <td>{p.recordedBy?.name || <span className="muted-text">—</span>}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -391,31 +489,34 @@ export default function SupplierDetailPage() {
             )}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Record Payment Modal */}
+      {/* ── Record Payment Modal ─────────────────────── */}
       <Modal
         open={paymentModal}
         onClose={() => setPaymentModal(false)}
         title="Record Payment"
         footer={
           <div className="modal-actions">
-            <button className="mini-button" onClick={() => setPaymentModal(false)} disabled={savingPayment}>Cancel</button>
+            <button className="mini-button" onClick={() => setPaymentModal(false)} disabled={savingPayment}>
+              Cancel
+            </button>
             <button className="mini-button active" onClick={handleRecordPayment} disabled={savingPayment}>
-              {savingPayment ? "Saving..." : "Record"}
+              {savingPayment ? "Saving…" : "Record"}
             </button>
           </div>
         }
       >
         <div className="form-grid">
           <label className="form-field">
-            <span>Amount (₹) <em className="required">*</em></span>
+            <span>Amount (₹) <em>*</em></span>
             <input
               type="number"
               min="0"
               step="0.01"
               value={paymentForm.amount}
               onChange={(e) => setPaymentForm((f) => ({ ...f, amount: e.target.value }))}
+              placeholder="0.00"
               required
             />
           </label>
@@ -431,7 +532,7 @@ export default function SupplierDetailPage() {
             </select>
           </label>
           <label className="form-field">
-            <span>From Date <em className="required">*</em></span>
+            <span>From Date <em>*</em></span>
             <input
               type="date"
               value={paymentForm.fromDate}
@@ -440,7 +541,7 @@ export default function SupplierDetailPage() {
             />
           </label>
           <label className="form-field">
-            <span>To Date <em className="required">*</em></span>
+            <span>To Date <em>*</em></span>
             <input
               type="date"
               value={paymentForm.toDate}

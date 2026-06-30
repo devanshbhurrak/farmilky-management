@@ -48,14 +48,13 @@ export default function MobileDrawer({ isOpen, onClose }) {
   return (
     <div className="mobile-drawer-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="drawer-title">
       <div className="mobile-drawer-content" onClick={(e) => e.stopPropagation()} ref={drawerRef}>
-        <div className="mobile-drawer-inner">
           <div className="drawer-header">
             <h2 id="drawer-title">Menu</h2>
             <button onClick={onClose} className="drawer-close" aria-label="Close menu">
               <X size={24} />
             </button>
           </div>
-
+        <div className="mobile-drawer-inner">
           <div className="drawer-nav">
             {items.map((item) => (
               <NavLink

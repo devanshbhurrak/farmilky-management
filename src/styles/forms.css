@@ -26,6 +26,17 @@
   width: 100%;
 }
 
+.form-group select {
+  padding-right: 2.5rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  cursor: pointer;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -68,12 +79,146 @@
   margin-bottom: 0;
 }
 
-/* ─── Item Rows (for orders) ────────────────── */
-.item-row {
+/* ─── Order Form ────────────────────────────── */
+.order-form {
   display: flex;
+  flex-direction: column;
+}
+
+.order-form .form-group {
+  margin-bottom: var(--space-4);
+}
+
+.order-form .form-section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+}
+
+.form-empty-hint {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--space-4);
+  background: var(--surface-muted);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-soft);
+}
+
+/* ─── Item Cards (for orders) ────────────────── */
+.item-card {
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.item-card:last-of-type {
+  margin-bottom: 0;
+}
+
+.item-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.item-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  font-size: 10px;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.item-card-top select {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-1) 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+  padding-right: 1.25rem;
+  cursor: pointer;
+}
+
+.item-card-top select:focus {
+  outline: none;
+}
+
+.item-card-bottom {
+  display: flex;
+  align-items: center;
   gap: var(--space-3);
-  align-items: flex-start;
-  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+}
+
+.item-qty-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.item-qty-group label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.item-qty-group input {
+  width: 64px;
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: 14px;
+  text-align: center;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.item-qty-group input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.item-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border: none;
+  cursor: pointer;
+  transition: background var(--duration-base), color var(--duration-base);
+}
+
+.item-remove-btn:hover {
+  background: var(--danger);
+  color: #fff;
 }
 
 .flex-1 { flex: 1; }
@@ -83,6 +228,7 @@
   padding: var(--space-3);
   width: 44px;
   height: 44px;
+  flex-shrink: 0;
   border-radius: var(--radius-sm);
   background: var(--surface-muted);
   color: var(--text-secondary);
@@ -93,9 +239,22 @@
   color: var(--text-primary);
 }
 
-.btn-icon.btn-danger:hover {
+.btn-icon-danger {
   background: var(--danger-bg);
   color: var(--danger-text);
+  border-radius: var(--radius-sm);
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.btn-icon-danger:hover {
+  background: var(--danger);
+  color: #fff;
 }
 
 /* ─── Days Selector (for subscriptions) ─────── */
@@ -139,7 +298,7 @@
 .form-row {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0;
+  gap: var(--space-1);
 }
 
 @media (min-width: 640px) {
@@ -388,5 +547,92 @@
   select,
   textarea {
     font-size: 16px !important;
+  }
+}
+
+/* ─── Form Stack (single-column vertical form) ─── */
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-stack .form-group {
+  margin-bottom: 0;
+}
+
+/* ─── Form Grid ─────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Form Field ────────────────────────────────── */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.form-field > span:first-child,
+.form-field > label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-soft);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all var(--duration-base);
+  width: 100%;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  background: #fff;
+}
+
+.form-field textarea {
+  resize: vertical;
+  line-height: var(--line-height-relaxed);
+}
+
+/* ─── Modal Actions ─────────────────────────────── */
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .modal-actions {
+    flex-direction: column-reverse;
+    width: 100%;
+  }
+
+  .modal-actions .mini-button {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
   }
 }

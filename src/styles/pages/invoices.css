@@ -142,8 +142,34 @@ a.inv-customer-link {
 
 .ledger-table-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
+}
+
+/* Cancel global mobile block-display for the ledger table */
+@media (max-width: 768px) {
+  .ledger-table-wrapper table,
+  .ledger-table-wrapper thead,
+  .ledger-table-wrapper tbody,
+  .ledger-table-wrapper tr,
+  .ledger-table-wrapper th,
+  .ledger-table-wrapper td {
+    display: revert;
+    width: auto;
+  }
+
+  .ledger-table-wrapper tr {
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 0;
+    box-shadow: none;
+  }
+
+  .ledger-table-wrapper td::before {
+    content: none;
+  }
 }
 
 .ledger-table {

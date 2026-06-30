@@ -275,16 +275,21 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="view-stack">
-      <PageHeader 
-        title={user.name}
+      <PageHeader
+        title={
+          <span className="customer-title-row">
+            {user.name}
+            <StatusTag value={user.role} />
+          </span>
+        }
         subtitle={`${user.email} · ${user.phone || "No phone"}`}
         breadcrumb={[
           { label: "Customers", path: "/customers" },
           { label: user.name }
         ]}
+        className="customer-page-header"
         actions={
           <div className="detail-actions">
-            <StatusTag value={user.role} />
             <div className="detail-actions-buttons">
               <button className="btn btn-secondary btn-sm" onClick={openEditCustomer}>
                 <Edit2 size={14} /> Edit Profile
@@ -300,29 +305,27 @@ export default function CustomerDetailPage() {
         }
       />
 
-      <div className="panel">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <p className="eyebrow" style={{ marginBottom: "var(--space-1)" }}>Customer Since</p>
+      <div className="panel customer-detail-panel">
+        <div className="customer-detail-meta">
+          <div className="customer-detail-meta-left">
+            <p className="eyebrow">Customer Since</p>
             <strong>{formatDate(user.createdAt)}</strong>
           </div>
-          <span className="info-chip" style={{ background: "var(--surface-muted)", padding: "var(--space-2) var(--space-4)", borderRadius: "var(--radius-pill)", fontSize: "var(--font-size-xs)", fontWeight: "bold" }}>
-            ID: #{user._id?.slice(-6).toUpperCase()}
-          </span>
+          <span className="customer-id-chip">ID #{user._id?.slice(-6).toUpperCase()}</span>
         </div>
-        
+
         {user.addresses?.length > 0 && (
-          <div className="customer-addresses" style={{ marginTop: "var(--space-6)", paddingTop: "var(--space-6)", borderTop: "1px solid var(--border-soft)" }}>
-            <p className="eyebrow" style={{ marginBottom: "var(--space-3)" }}>Saved Addresses</p>
-            <div style={{ display: "grid", gap: "var(--space-3)" }}>
+          <div className="customer-addresses-section">
+            <p className="eyebrow">Saved Addresses</p>
+            <div className="customer-addresses-list">
               {user.addresses.map((addr, i) => (
-                <div key={i} className="list-card" style={{ background: "var(--surface-muted)", boxShadow: "none" }}>
-                  <div>
-                    <strong>{addr.type}</strong>
+                <div key={i} className="customer-address-card">
+                  <div className="customer-address-main">
+                    <strong>{addr.type || `Address ${i + 1}`}</strong>
                     <span>{addr.street}, {addr.city}</span>
                   </div>
-                  <div style={{ textAlign: "right", fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
-                    {addr.state} - {addr.pincode}
+                  <div className="customer-address-sub">
+                    {addr.state} — {addr.pincode}
                   </div>
                 </div>
               ))}
@@ -361,7 +364,7 @@ export default function CustomerDetailPage() {
           ))}
         </div>
 
-        <div className="tab-content" style={{ marginTop: "1.5rem" }}>
+        <div className="tab-content">
           {tab === "ledger" && (
             <DataTable 
               columns={[
@@ -390,9 +393,9 @@ export default function CustomerDetailPage() {
                   </div>
                 </div>
               )} 
-              emptyText="No transactions found." 
-              pageSize={20} 
-              isLoading={passbookLoading}
+              emptyText="No transactions found."
+              pageSize={20}
+              loading={passbookLoading}
             />
           )}
           {tab === "orders" && (

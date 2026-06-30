@@ -163,6 +163,17 @@
   }
 }
 
+.customer-page-header .page-header-title {
+  margin-top: var(--space-3);
+}
+
+.customer-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 .page-header-subtitle {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
@@ -194,15 +205,9 @@
 }
 
 .detail-actions-buttons {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .detail-actions-buttons {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* ─── Surface Filter Bar ─────────────────────────── */
@@ -540,7 +545,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   flex: 1;
-  padding: var(--space-6) var(--space-6) calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
+  padding: var(--space-5) var(--space-6) calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
 }
 
 @keyframes slide-up {
@@ -552,16 +557,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-6);
-  position: sticky;
-  top: 0;
-  background: var(--surface);
-  z-index: 1;
-  padding-top: var(--space-2);
-  margin-inline: calc(-1 * var(--space-6));
-  padding-inline: var(--space-6);
-  padding-bottom: var(--space-4);
+  padding: var(--space-6) var(--space-6) var(--space-4);
   border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
 }
 
 .drawer-header h2 {
@@ -1128,6 +1126,13 @@
   border-top: 1px solid var(--border-soft);
   background: var(--color-background-alt);
   padding: 0 var(--space-3);
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .portal-footer {
+    padding-bottom: 0;
+  }
 }
 
 .footer-inner {

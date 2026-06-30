@@ -242,7 +242,7 @@ export default function SuppliersPage() {
   ], [openEdit]);
 
   const renderCard = useCallback((row) => (
-    <div>
+    <div style={{ padding: "var(--space-4) var(--space-5)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
         <strong>{row.name}</strong>
         {row.isActive ? <StatusTag value="active" /> : <StatusTag value="inactive" />}

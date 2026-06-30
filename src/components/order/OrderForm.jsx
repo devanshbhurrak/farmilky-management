@@ -28,53 +28,63 @@ export default function OrderForm({ form, onChange, products, customers, onSubmi
   };
 
   return (
-    <form id="order-form" onSubmit={onSubmit} className="product-form-stack">
+    <form id="order-form" onSubmit={onSubmit} className="order-form">
+
       <div className="form-group">
         <label>Customer</label>
         <select value={form.userId} onChange={handleUserChange} required>
-          <option value="">Select Customer</option>
+          <option value="">Select customer</option>
           {(customers || []).map(c => (
-            <option key={c._id} value={c._id}>{c.name} ({c.phone})</option>
+            <option key={c._id} value={c._id}>{c.name}{c.phone ? ` · ${c.phone}` : ""}</option>
           ))}
         </select>
       </div>
 
       <div className="form-section">
         <div className="section-header">
-          <h3>Order Items</h3>
+          <h3>Items</h3>
           <button type="button" className="btn btn-secondary btn-sm" onClick={addItem}>
-            <Plus size={14} /> Add Item
+            <Plus size={14} /> Add
           </button>
         </div>
-        
+
         {(form.items || []).map((item, index) => (
-          <div key={index} className="form-row item-row">
-            <div className="form-group flex-2">
-              <select 
-                value={item.productId} 
+          <div key={index} className="item-card">
+            <div className="item-card-top">
+              <span className="item-badge">{index + 1}</span>
+              <select
+                value={item.productId}
                 onChange={(e) => updateItem(index, { productId: e.target.value })}
                 required
               >
-                <option value="">Select Product</option>
+                <option value="">Select product</option>
                 {(products || []).map(p => (
-                  <option key={p._id} value={p._id}>{p.name} - {p.price}/{p.unit}</option>
+                  <option key={p._id} value={p._id}>{p.name} — ₹{p.price}/{p.unit}</option>
                 ))}
               </select>
             </div>
-            <div className="form-group flex-1">
-              <input
-                type="number"
-                min="1"
-                value={item.quantity}
-                onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
-                required
-              />
+            <div className="item-card-bottom">
+              <div className="item-qty-group">
+                <label>Qty</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={item.quantity}
+                  onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
+                  placeholder="1"
+                  required
+                />
+              </div>
+              <button type="button" className="item-remove-btn" onClick={() => removeItem(index)} aria-label="Remove item">
+                <Trash2 size={14} />
+              </button>
             </div>
-            <button type="button" className="btn btn-icon btn-danger" onClick={() => removeItem(index)}>
-              <Trash2 size={16} />
-            </button>
           </div>
         ))}
+
+        {(form.items || []).length === 0 && (
+          <p className="form-empty-hint">No items added yet. Tap Add to begin.</p>
+        )}
       </div>
 
       <div className="form-section">
@@ -84,7 +94,7 @@ export default function OrderForm({ form, onChange, products, customers, onSubmi
           <input
             value={form.address?.street || ""}
             onChange={(e) => onChange({ address: { ...form.address, street: e.target.value } })}
-            placeholder="Street address"
+            placeholder="e.g. 12 Main Road"
             required
           />
         </div>
@@ -101,42 +111,47 @@ export default function OrderForm({ form, onChange, products, customers, onSubmi
           <div className="form-group">
             <label>Pincode</label>
             <input
+              type="text"
+              inputMode="numeric"
               value={form.address?.pincode || ""}
               onChange={(e) => onChange({ address: { ...form.address, pincode: e.target.value } })}
-              placeholder="Pincode"
+              placeholder="000000"
               required
             />
           </div>
         </div>
       </div>
 
-      <div className="form-row">
+      <div className="form-section">
+        <h3>Payment</h3>
         <div className="form-group">
-          <label>Payment Method</label>
+          <label>Method</label>
           <select value={form.paymentMethod} onChange={(e) => onChange({ paymentMethod: e.target.value })}>
             <option value="COD">Cash on Delivery</option>
-            <option value="Online">Online Payment</option>
+            <option value="Online">Online</option>
           </select>
         </div>
-        <div className="form-group">
-          <label>Payment Status</label>
-          <select value={form.paymentStatus} onChange={(e) => onChange({ paymentStatus: e.target.value })}>
-            <option value="pending">Pending</option>
-            <option value="paid">Paid</option>
-            <option value="failed">Failed</option>
-          </select>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Payment Status</label>
+            <select value={form.paymentStatus} onChange={(e) => onChange({ paymentStatus: e.target.value })}>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Order Status</label>
+            <select value={form.orderStatus} onChange={(e) => onChange({ orderStatus: e.target.value })}>
+              <option value="placed">Placed</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div className="form-group">
-        <label>Order Status</label>
-        <select value={form.orderStatus} onChange={(e) => onChange({ orderStatus: e.target.value })}>
-          <option value="placed">Placed</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
     </form>
   );
 }

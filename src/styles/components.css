@@ -273,6 +273,48 @@
   padding: 0.375rem 0.875rem;
   font-size: var(--font-size-xs);
   min-height: 32px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+}
+
+.mini-button:hover:not(:disabled) {
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.mini-button.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.mini-button.active:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.mini-button.warning {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning);
+}
+
+.mini-button.warning:hover:not(:disabled) {
+  background: var(--warning);
+  color: #fff;
+}
+
+.mini-button.danger {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger);
+}
+
+.mini-button.danger:hover:not(:disabled) {
+  background: var(--danger);
+  color: #fff;
 }
 
 .btn-ghost {
@@ -372,13 +414,21 @@
 @media (max-width: 767px) {
   .detail-actions-buttons {
     display: flex;
+    flex-wrap: wrap;
     width: 100%;
     margin-top: var(--space-2);
   }
 
-  .detail-actions-buttons .action-btn {
-    flex: 1;
+  .detail-actions-buttons .btn {
+    flex: 1 1 auto;
     justify-content: center;
+    min-width: 0;
+  }
+
+  .detail-actions-buttons .action-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
   }
 }
 
@@ -517,6 +567,194 @@
   color: var(--text-muted);
   font-size: var(--font-size-sm);
   margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════
+   CUSTOMER DETAIL PANEL
+   ═══════════════════════════════════════════════════ */
+
+.customer-detail-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.customer-detail-meta-left .eyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.customer-id-chip {
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+}
+
+.customer-addresses-section {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-soft);
+}
+
+.customer-addresses-section > .eyebrow {
+  margin-bottom: var(--space-4);
+}
+
+.customer-addresses-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .customer-addresses-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.customer-address-card {
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.customer-address-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.customer-address-main strong {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.customer-address-main span {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.customer-address-sub {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+/* ═══════════════════════════════════════════════════
+   SUB-TABLE CARDS (mobile row cards in DataTable)
+   ═══════════════════════════════════════════════════ */
+
+.sub-table-card {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.st-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.st-card-header strong,
+.st-card-header code {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-card-header code {
+  font-family: var(--font-mono, monospace);
+  background: var(--surface-muted);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-xs, 4px);
+  font-size: 11px;
+}
+
+.st-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.st-card-body strong {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ─── Color Utility Classes ──────────────────── */
+.danger-text  { color: var(--danger-text); }
+.success-text { color: var(--success-text); }
+.warning-text { color: var(--warning-text); }
+.muted-text   { color: var(--text-muted); }
+
+/* ─── Detail Tabs Panel ──────────────────────── */
+.detail-tabs-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.detail-tabs-panel .scrollable-tab-bar {
+  padding: var(--space-4) var(--space-5) 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.tab-content {
+  padding: var(--space-5);
+}
+
+@media (min-width: 768px) {
+  .tab-content {
+    padding: var(--space-6);
+  }
+}
+
+/* ─── Mobile Metric Strip (customer/delivery stat cards) ── */
+.mobile-metric-strip {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding: var(--space-1) 0;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-metric-strip::-webkit-scrollbar { display: none; }
+
+/* When panel/info-card items are used inside the strip */
+.mobile-metric-strip .panel {
+  flex: 0 0 auto;
+  min-width: 130px;
+  padding: var(--space-4);
+}
+
+.mobile-metric-strip .panel .eyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.mobile-metric-strip .panel strong {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
 }
 
 .card-grid {
@@ -779,6 +1017,53 @@
 .mc-stat-value.danger  { color: var(--danger-text); }
 .mc-stat-value.success { color: var(--success-text); }
 .mc-stat-value.muted   { color: var(--text-muted); font-weight: var(--font-weight-medium); }
+
+/* ─── Scroll Table (wide tables that scroll horizontally on mobile) ── */
+.scroll-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Cancel the global mobile block-display stacking for scroll tables */
+@media (max-width: 768px) {
+  .scroll-table table,
+  .scroll-table thead,
+  .scroll-table tbody,
+  .scroll-table tr,
+  .scroll-table th,
+  .scroll-table td {
+    display: revert;
+    width: auto;
+  }
+
+  .scroll-table tr {
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 0;
+    box-shadow: none;
+  }
+
+  .scroll-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: var(--font-size-xs);
+  }
+
+  .scroll-table td::before {
+    content: none;
+  }
+
+  .scroll-table th {
+    padding: 8px 10px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .scroll-table table {
+    min-width: max-content;
+  }
+}
 
 /* ─── View Stack (page-level vertical rhythm) ── */
 .view-stack {
