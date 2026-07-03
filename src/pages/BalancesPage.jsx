@@ -130,24 +130,25 @@ export default function BalancesPage() {
           data={filteredUsers}
           emptyText="No customers with outstanding balances found."
           renderCard={(u) => (
-            <div className="sub-table-card">
-               <div className="st-card-header">
-                  <strong>{u.name}</strong>
-                  <strong className={u.accountBalance > 0 ? "danger-text" : "success-text"}>
-                    {formatCurrency(u.accountBalance)}
-                  </strong>
-               </div>
-               <div className="st-card-body">
-                  <span className="text-muted">{u.phone}</span>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    style={{ marginTop: 'var(--space-2)', width: '100%' }}
-                    onClick={() => { setPayModal(u); setPayForm(f => ({ ...f, amount: Math.max(0, u.accountBalance) })); }}
-                  >
-                    Collect Payment
-                  </button>
-               </div>
-            </div>
+            <>
+              <div className="mc-head">
+                <div className="mc-identity">
+                  <span className="mc-name">{u.name}</span>
+                  <span className="mc-sub">{u.phone}</span>
+                </div>
+                <strong className={u.accountBalance > 0 ? "danger-text" : "success-text"} style={{ fontSize: "var(--font-size-lg)", whiteSpace: "nowrap" }}>
+                  {formatCurrency(u.accountBalance)}
+                </strong>
+              </div>
+              <div className="inv-card-action">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => { setPayModal(u); setPayForm(f => ({ ...f, amount: Math.max(0, u.accountBalance) })); }}
+                >
+                  Collect Payment
+                </button>
+              </div>
+            </>
           )}
           pageSize={20}
         />

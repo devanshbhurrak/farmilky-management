@@ -18,10 +18,13 @@ export default function AgentDashboardPage() {
     ? Math.round(((manifest.summary.delivered + manifest.summary.failed) / manifest.summary.total) * 100)
     : 0;
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+
   return (
     <div className="view-stack" style={{ maxWidth: 600, margin: "0 auto" }}>
       <div style={{ marginBottom: "var(--space-6)" }}>
-        <h1 className="page-header-title">Good Morning!</h1>
+        <h1 className="page-header-title">{greeting}!</h1>
         <p className="page-header-subtitle">{formatDate(new Date())}</p>
       </div>
 

@@ -211,14 +211,6 @@
 }
 
 /* ─── Surface Filter Bar ─────────────────────────── */
-.surface {
-  background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-soft);
-  overflow: hidden;
-  margin-top: var(--space-2);
-}
-
 .surface-filters {
   display: flex;
   align-items: center;

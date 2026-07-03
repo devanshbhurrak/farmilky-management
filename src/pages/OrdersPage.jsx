@@ -195,9 +195,9 @@ export default function OrdersPage({ orders, onUpdate, onRefresh }) {
   );
 
   return (
-    <div>
-      <PageHeader 
-        title="Orders" 
+    <div className="view-stack">
+      <PageHeader
+        title="Orders"
         subtitle={`Showing ${sorted.length} orders total`}
         actions={
           <button className="btn btn-primary btn-sm" onClick={openCreate}>

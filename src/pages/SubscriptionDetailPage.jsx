@@ -251,10 +251,10 @@ export default function SubscriptionDetailPage() {
               <div key={i} className="list-card">
                 <div>
                   <strong>{formatDate(getHistoryDate(d))}</strong>
-                  <StatusTag value={getHistoryStatus(d)} />
+                  <span>{getActualQuantity(d)} {(sub.variantUnit || sub.productId?.unit)}</span>
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <span style={{ display: "block", fontSize: "12px", color: "var(--text-muted)" }}>{getActualQuantity(d)} {(sub.variantUnit || sub.productId?.unit)}</span>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                  <StatusTag value={getHistoryStatus(d)} />
                   <strong>{formatCurrency(d.totalAmount)}</strong>
                 </div>
               </div>

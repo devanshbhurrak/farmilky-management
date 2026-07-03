@@ -276,9 +276,9 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
   );
 
   return (
-    <div>
-      <PageHeader 
-        title="Subscriptions" 
+    <div className="view-stack">
+      <PageHeader
+        title="Subscriptions"
         subtitle={`Total active subscriptions: ${subscriptions?.filter(s => s.status === "active").length || 0}`}
         actions={
           <button className="btn btn-primary btn-sm" onClick={openCreate}>

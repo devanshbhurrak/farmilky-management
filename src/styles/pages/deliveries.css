@@ -117,13 +117,13 @@
     align-self: start;
   }
 
-  .delivery-actions-mobile .action-btn-primary {
+  .delivery-card .delivery-actions-mobile .action-btn-primary {
     font-size: var(--font-size-sm);
     padding: 0.55rem var(--space-3);
   }
 
-  .delivery-actions-mobile .action-btn-secondary,
-  .delivery-actions-mobile .action-btn-danger {
+  .delivery-card .delivery-actions-mobile .action-btn-secondary,
+  .delivery-card .delivery-actions-mobile .action-btn-danger {
     font-size: var(--font-size-xs);
     padding: 0.4rem var(--space-2);
   }
@@ -247,7 +247,7 @@
   gap: var(--space-2);
 }
 
-.action-btn-primary {
+.delivery-card .action-btn-primary {
   background: var(--color-secondary);
   color: white;
   border: none;
@@ -261,8 +261,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.action-btn-primary:hover  { background: #d97706; }
-.action-btn-primary:active { opacity: 0.8; }
+.delivery-card .action-btn-primary:hover  { background: #d97706; }
+.delivery-card .action-btn-primary:active { opacity: 0.8; }
 
 .action-row-secondary {
   display: grid;
@@ -270,7 +270,7 @@
   gap: var(--space-2);
 }
 
-.action-btn-secondary {
+.delivery-card .action-btn-secondary {
   background: var(--surface-muted);
   color: var(--text-primary);
   border: 1px solid var(--border-soft);
@@ -284,10 +284,10 @@
   white-space: nowrap;
 }
 
-.action-btn-secondary:hover  { background: var(--surface-inset); border-color: var(--border-strong); }
-.action-btn-secondary:active { transform: scale(0.97); }
+.delivery-card .action-btn-secondary:hover  { background: var(--surface-inset); border-color: var(--border-strong); }
+.delivery-card .action-btn-secondary:active { transform: scale(0.97); }
 
-.action-btn-danger {
+.delivery-card .action-btn-danger {
   background: var(--danger-bg);
   color: var(--danger-text);
   border: 1px solid rgba(220, 38, 38, 0.25);
@@ -301,8 +301,8 @@
   white-space: nowrap;
 }
 
-.action-btn-danger:hover  { background: rgba(239, 68, 68, 0.15); border-color: rgba(220, 38, 38, 0.4); }
-.action-btn-danger:active { transform: scale(0.97); }
+.delivery-card .action-btn-danger:hover  { background: rgba(239, 68, 68, 0.15); border-color: rgba(220, 38, 38, 0.4); }
+.delivery-card .action-btn-danger:active { transform: scale(0.97); }
 
 
 /* ─── Bulk Actions Bar ───────────────────────── */
@@ -778,7 +778,7 @@
     margin-top: 0.1rem;
   }
 
-  .action-btn-primary {
+  .delivery-card .action-btn-primary {
     padding: 0.55rem var(--space-3);
     font-size: var(--font-size-sm);
     border-radius: var(--radius-sm);
@@ -788,8 +788,8 @@
     gap: var(--space-1);
   }
 
-  .action-btn-secondary,
-  .action-btn-danger {
+  .delivery-card .action-btn-secondary,
+  .delivery-card .action-btn-danger {
     padding: 0.35rem var(--space-2);
     font-size: 0.75rem;
   }

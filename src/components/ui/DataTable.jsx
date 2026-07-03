@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import EmptyState from "./EmptyState";
 import Pagination from "./Pagination";
 import LoadingSkeleton from "./LoadingSkeleton";
@@ -105,10 +106,14 @@ export default function DataTable({
               <th
                 key={col.key}
                 onClick={() => col.sortable !== false && handleSort(col.key)}
-                style={col.sortable !== false ? { cursor: "pointer" } : undefined}
+                style={col.sortable !== false ? { cursor: "pointer", userSelect: "none" } : undefined}
               >
-                {col.label}
-                {sortKey === col.key ? (sortDir === "asc" ? " ASC" : " DESC") : ""}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  {col.label}
+                  {sortKey === col.key && (
+                    sortDir === "asc" ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+                  )}
+                </span>
               </th>
             ))}
           </tr>

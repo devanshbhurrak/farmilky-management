@@ -896,10 +896,22 @@
   color: var(--text-primary);
 }
 
+.tab-pill:active {
+  transform: scale(0.96);
+}
+
 .tab-pill.active {
   background: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
+}
+
+@media (max-width: 767px) {
+  .tab-pill {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 .nav-link {
@@ -933,6 +945,10 @@
   overflow: hidden;
   transition: box-shadow var(--duration-base), transform var(--duration-base);
   -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-data-card:hover {
+  border-color: var(--border-strong);
 }
 
 .mobile-data-card:active {
@@ -1101,10 +1117,16 @@
   /* list-card — tighter padding, no translate hover (causes overflow) */
   .list-card {
     padding: var(--space-3) var(--space-4);
+    -webkit-tap-highlight-color: transparent;
   }
 
   .list-card:hover {
     transform: none;
+  }
+
+  .list-card:active {
+    background: var(--surface-muted);
+    transform: scale(0.99);
   }
 
   /* info-card — smaller on mobile */
@@ -1210,4 +1232,50 @@
     min-height: 40px;
     font-size: var(--font-size-base);
   }
+}
+
+/* ═══════════════════════════════════════════════════
+   CONFIRM DIALOG
+   ═══════════════════════════════════════════════════ */
+
+.confirm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .confirm-actions .mini-button {
+    width: 100%;
+    justify-content: center;
+    min-height: var(--touch-min);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   FALLBACK CARD ROW (DataTable mobile fallback)
+   ═══════════════════════════════════════════════════ */
+
+.fallback-card-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+}
+
+.fallback-card-row strong {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.fallback-card-row span {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
 }
