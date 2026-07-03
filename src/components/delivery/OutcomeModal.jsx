@@ -8,6 +8,7 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
 
   const { item, mode, form } = outcomeModal;
   const scheduled = item?.scheduledQuantity || item?.quantity || 0;
+  const unit = item?.unit || "units";
 
   function handleConfirm() {
     let status, actualQuantity;
@@ -36,6 +37,7 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
     <OutcomeForm
       mode={mode}
       scheduled={scheduled}
+      unit={unit}
       form={form || {}}
       onChange={onFormChange}
     />

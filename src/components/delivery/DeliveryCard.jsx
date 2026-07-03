@@ -50,7 +50,7 @@ export default function DeliveryCard({ item, index, onSelect, isSelected, onActi
         {item.outcome && (
           <div className="outcome-summary">
             {item.outcome.actualQuantity != null && (
-              <span>Delivered: {item.outcome.actualQuantity} </span>
+              <span>Delivered: {item.outcome.actualQuantity} {item.unit || ""}</span>
             )}
             {item.outcome.reason && <span>Reason: {item.outcome.reason}</span>}
           </div>

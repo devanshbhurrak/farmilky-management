@@ -32,7 +32,7 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState({ userId: "", productId: "", quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
+  const [form, setForm] = useState({ userId: "", productId: "", variantId: null, quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
 
   useEffect(() => {
     if (modalOpen) {
@@ -239,7 +239,7 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
   };
 
   function openCreate() {
-    setForm({ userId: "", productId: "", quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
+    setForm({ userId: "", productId: "", variantId: null, quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
     setModalOpen(true);
   }
 

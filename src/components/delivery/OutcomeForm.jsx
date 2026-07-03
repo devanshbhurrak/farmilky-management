@@ -1,7 +1,7 @@
 import { useState } from "react";
 import QuickChips from "../ui/QuickChips";
 
-export default function OutcomeForm({ mode, scheduled, form, onChange }) {
+export default function OutcomeForm({ mode, scheduled, unit, form, onChange }) {
   const [showOther, setShowOther] = useState(false);
 
   const skipReasons = [
@@ -34,7 +34,7 @@ export default function OutcomeForm({ mode, scheduled, form, onChange }) {
     <div className="outcome-form-container">
       <div className="form-group readonly">
         <label>Scheduled quantity</label>
-        <div className="readonly-value">{scheduled} units</div>
+        <div className="readonly-value">{scheduled} {unit || "units"}</div>
       </div>
 
       {mode === "change" && (
@@ -46,7 +46,7 @@ export default function OutcomeForm({ mode, scheduled, form, onChange }) {
             step="0.1"
             value={form.actualQuantity || ""}
             onChange={(e) => onChange({ actualQuantity: e.target.value })}
-            placeholder="Enter quantity"
+            placeholder={`Enter quantity in ${unit || "units"}`}
             required
             autoFocus
           />

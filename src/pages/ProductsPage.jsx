@@ -27,7 +27,7 @@ export default function ProductsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", category: "milk", price: "", unit: "L", fatContent: "", stock: "", image: "", isAvailable: true });
+  const [form, setForm] = useState({ name: "", description: "", category: "milk", price: "", unit: "L", fatContent: "", stock: "", image: "", isAvailable: true, variants: [] });
   const [saving, setSaving] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -56,7 +56,7 @@ export default function ProductsPage() {
 
   function openCreate() {
     setEditingProduct(null);
-    setForm({ name: "", description: "", category: "milk", price: "", unit: "L", fatContent: "", stock: "", image: "", isAvailable: true });
+    setForm({ name: "", description: "", category: "milk", price: "", unit: "L", fatContent: "", stock: "", image: "", isAvailable: true, variants: [] });
     setModalOpen(true);
   }
 
@@ -72,6 +72,7 @@ export default function ProductsPage() {
       stock: product.stock ?? "",
       image: product.image || "",
       isAvailable: product.isAvailable ?? true,
+      variants: product.variants || [],
     });
     setModalOpen(true);
   }
@@ -80,7 +81,18 @@ export default function ProductsPage() {
     if (e) e.preventDefault();
     setSaving(true);
     try {
-      const body = { ...form, price: Number(form.price), stock: form.stock ? Number(form.stock) : undefined };
+      const body = {
+        ...form,
+        price: Number(form.price),
+        stock: form.stock ? Number(form.stock) : undefined,
+        variants: (form.variants || []).map(v => ({
+          ...v,
+          quantity: Number(v.quantity) || 0,
+          price: Number(v.price) || 0,
+          discountedPrice: v.discountedPrice !== '' && v.discountedPrice != null ? Number(v.discountedPrice) : null,
+          stock: Number(v.stock) || 100,
+        })),
+      };
       const isUpdate = !!editingProduct;
       const res = await apiRequest(
         isUpdate ? `/api/products/${editingProduct._id}` : "/api/products",
@@ -126,11 +138,11 @@ export default function ProductsPage() {
       <div className="pm-card-body">
         <div className="pm-stat">
           <span>Price</span>
-          <strong>{formatCurrency(p.price)} / {p.unit}</strong>
+          <strong>{p.variants?.length > 0 ? `from ${formatCurrency(Math.min(...p.variants.map(v => v.discountedPrice ?? v.price)))}` : `${formatCurrency(p.price)} / ${p.unit}`}</strong>
         </div>
         <div className="pm-stat">
           <span>Stock</span>
-          <strong>{p.stock ?? "-"}</strong>
+          <strong>{p.variants?.length > 0 ? `${p.variants.length} variant${p.variants.length > 1 ? 's' : ''}` : (p.stock ?? "-")}</strong>
         </div>
       </div>
     </div>
@@ -213,7 +225,7 @@ export default function ProductsPage() {
                   <th>Name</th>
                   <th>Category</th>
                   <th>Price</th>
-                  <th>Unit</th>
+                  <th>Unit / Variants</th>
                   <th>Stock</th>
                   <th>Status</th>
                 </tr>
@@ -226,9 +238,9 @@ export default function ProductsPage() {
                     </td>
                     <td><strong>{p.name}</strong></td>
                     <td>{p.category}</td>
-                    <td><strong>{formatCurrency(p.price)}</strong></td>
-                    <td>{p.unit}</td>
-                    <td>{p.stock ?? "—"}</td>
+                    <td><strong>{p.variants?.length > 0 ? `from ${formatCurrency(Math.min(...p.variants.map(v => v.discountedPrice ?? v.price)))}` : formatCurrency(p.price)}</strong></td>
+                    <td>{p.variants?.length > 0 ? `${p.variants.length} variant${p.variants.length > 1 ? 's' : ''}` : p.unit}</td>
+                    <td>{p.variants?.length > 0 ? p.variants.map(v => `${v.label}: ${v.stock}`).join(', ') : (p.stock ?? "—")}</td>
                     <td>
                       <StatusTag value={p.isAvailable ? "active" : "cancelled"} />
                     </td>

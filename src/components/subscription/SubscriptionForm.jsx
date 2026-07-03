@@ -3,19 +3,40 @@ import React from 'react';
 export default function SubscriptionForm({ form, onChange, products, customers, onSubmit, saving }) {
   const selectedProduct = (products || []).find(p => p._id === form.productId);
 
+  const selectedProductVariants = selectedProduct?.variants || [];
+  const selectedVariant = selectedProductVariants.length > 0 && form.variantId
+    ? selectedProductVariants.find(v => v._id === form.variantId)
+    : null;
+  const variantDefaultPrice = selectedVariant
+    ? (selectedVariant.discountedPrice ?? selectedVariant.price)
+    : null;
+
   function handleProductChange(e) {
     const product = (products || []).find(p => p._id === e.target.value);
+    const def = product?.variants?.length > 0
+      ? (product.variants.find(v => v.isDefault) || product.variants[0])
+      : null;
     onChange({
       productId: e.target.value,
-      // Auto-fill with product price when product is selected; admin can override
-      pricePerUnit: product ? product.price : null,
+      variantId: def ? def._id : null,
+      pricePerUnit: def ? (def.discountedPrice ?? def.price) : (product ? product.price : null),
     });
   }
 
+  function handleVariantChange(e) {
+    const variantId = e.target.value || null;
+    const variant = variantId ? selectedProductVariants.find(v => v._id === variantId) : null;
+    onChange({
+      variantId,
+      pricePerUnit: variant ? (variant.discountedPrice ?? variant.price) : (selectedProduct?.price ?? null),
+    });
+  }
+
+  const standardPrice = variantDefaultPrice ?? selectedProduct?.price;
   const isCustomPrice =
     selectedProduct &&
     form.pricePerUnit != null &&
-    Number(form.pricePerUnit) !== selectedProduct.price;
+    Number(form.pricePerUnit) !== standardPrice;
 
   return (
     <form id="subscription-form" onSubmit={onSubmit} className="product-form-stack">
@@ -47,6 +68,19 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
         </select>
       </div>
 
+      {selectedProductVariants.length > 0 && (
+        <div className="form-group">
+          <label>Variant</label>
+          <select value={form.variantId || ''} onChange={handleVariantChange}>
+            {selectedProductVariants.map(v => (
+              <option key={v._id} value={v._id}>
+                {v.label} — ₹{v.discountedPrice ?? v.price}/{v.unit}{v.discountedPrice != null ? ` (was ₹${v.price})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="form-row">
         <div className="form-group">
           <label>Quantity per Day</label>
@@ -73,11 +107,11 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
             step="0.01"
             value={form.pricePerUnit ?? ''}
             onChange={(e) => onChange({ pricePerUnit: e.target.value !== '' ? Number(e.target.value) : null })}
-            placeholder={selectedProduct ? `Default: ₹${selectedProduct.price}` : 'Select a product first'}
+            placeholder={selectedProduct ? `Default: ₹${standardPrice}` : 'Select a product first'}
           />
           {selectedProduct && (
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', display: 'block' }}>
-              Standard rate: ₹{selectedProduct.price}/{selectedProduct.unit}
+              {selectedVariant ? `Variant rate: ₹${standardPrice}/${selectedVariant.unit}` : `Standard rate: ₹${standardPrice}/${selectedProduct.unit}`}
               {isCustomPrice && ' — custom rate will override'}
             </span>
           )}

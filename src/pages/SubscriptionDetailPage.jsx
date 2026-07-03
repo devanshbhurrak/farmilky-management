@@ -167,7 +167,7 @@ export default function SubscriptionDetailPage() {
         </div>
         <div className="card-inset" style={{ textAlign: "center" }}>
           <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>
-            RATE / {sub.productId?.unit?.toUpperCase() || "UNIT"}
+            RATE / {(sub.variantUnit || sub.productId?.unit)?.toUpperCase() || "UNIT"}
             {isCustomPrice && (
               <span style={{ marginLeft: "5px", fontSize: "9px", color: "#b45309", background: "#fef3c7", borderRadius: "3px", padding: "1px 4px" }}>CUSTOM</span>
             )}
@@ -205,12 +205,12 @@ export default function SubscriptionDetailPage() {
                 <span>Standard daily amount</span>
               </div>
               <div style={{ textAlign: "right" }}>
-                <strong>{sub.quantityPerDay} {sub.productId?.unit}</strong>
+                <strong>{sub.quantityPerDay} {(sub.variantUnit || sub.productId?.unit)}</strong>
               </div>
             </div>
             <div className="list-card">
               <div>
-                <strong>Price per {sub.productId?.unit || "unit"}</strong>
+                <strong>Price per {(sub.variantUnit || sub.productId?.unit) || "unit"}</strong>
                 <span>{isCustomPrice ? "Custom negotiated rate" : "Standard product rate"}</span>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -254,7 +254,7 @@ export default function SubscriptionDetailPage() {
                   <StatusTag value={getHistoryStatus(d)} />
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <span style={{ display: "block", fontSize: "12px", color: "var(--text-muted)" }}>{getActualQuantity(d)} {sub.productId?.unit}</span>
+                  <span style={{ display: "block", fontSize: "12px", color: "var(--text-muted)" }}>{getActualQuantity(d)} {(sub.variantUnit || sub.productId?.unit)}</span>
                   <strong>{formatCurrency(d.totalAmount)}</strong>
                 </div>
               </div>
@@ -279,8 +279,8 @@ export default function SubscriptionDetailPage() {
                   <tr key={i}>
                     <td>{formatDate(getHistoryDate(d))}</td>
                     <td><StatusTag value={getHistoryStatus(d)} /></td>
-                    <td>{getScheduledQuantity(d)} {sub.productId?.unit}</td>
-                    <td>{getActualQuantity(d)} {sub.productId?.unit}</td>
+                    <td>{getScheduledQuantity(d)} {(sub.variantUnit || sub.productId?.unit)}</td>
+                    <td>{getActualQuantity(d)} {(sub.variantUnit || sub.productId?.unit)}</td>
                     <td>{d.pricePerUnit != null ? formatCurrency(d.pricePerUnit) : "-"}</td>
                     <td>{d.reason || "-"}</td>
                     <td><strong>{formatCurrency(d.totalAmount)}</strong></td>
