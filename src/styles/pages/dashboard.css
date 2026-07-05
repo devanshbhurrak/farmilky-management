@@ -201,3 +201,205 @@
   padding-top: 1rem;
   margin-top: 1rem;
 }
+
+/* ─── Premium Dashboard UI Enhancements ──────── */
+
+/* 1. Hero Welcome Banner */
+.dashboard-hero-banner {
+  background: linear-gradient(135deg, var(--color-primary-deep) 0%, var(--color-primary-dark) 100%);
+  border-radius: var(--radius);
+  padding: var(--space-5) var(--space-6);
+  color: #ffffff;
+  margin-bottom: var(--space-6);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px -6px rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hero-banner-content {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+}
+
+.hero-banner-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: var(--space-3);
+}
+
+.hero-banner-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: #ffffff !important;
+  margin-bottom: var(--space-2);
+  line-height: var(--line-height-tight);
+}
+
+.hero-banner-subtitle {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0;
+  line-height: var(--line-height-normal);
+}
+
+.dashboard-hero-banner::after {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.dashboard-hero-banner::before {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  left: 15%;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* 2. Modernized Info Cards */
+.info-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-soft) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-soft) !important;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s, border-color 0.3s !important;
+}
+
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--color-primary);
+  opacity: 0.8;
+}
+
+.info-card--warning::before { background: var(--color-secondary); }
+.info-card--danger::before  { background: var(--danger); }
+.info-card--info::before    { background: var(--color-accent); }
+
+.info-card:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  box-shadow: 0 12px 24px -10px rgba(15, 23, 42, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.info-card--warning:hover { border-color: rgba(245, 158, 11, 0.3) !important; }
+.info-card--danger:hover  { border-color: rgba(239, 68, 68, 0.3) !important; }
+.info-card--info:hover    { border-color: rgba(139, 92, 246, 0.3) !important; }
+
+.info-card-icon {
+  border-radius: 50% !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  background: rgba(16, 185, 129, 0.08) !important;
+  color: var(--color-primary) !important;
+  transition: transform 0.3s var(--ease-out);
+}
+
+.info-card--warning .info-card-icon {
+  background: rgba(245, 158, 11, 0.08) !important;
+  color: var(--color-secondary) !important;
+}
+
+.info-card--danger .info-card-icon {
+  background: #fef2f2 !important;
+  color: var(--danger) !important;
+}
+
+.info-card--info .info-card-icon {
+  background: rgba(139, 92, 246, 0.08) !important;
+  color: var(--color-accent) !important;
+}
+
+.info-card:hover .info-card-icon {
+  transform: scale(1.1);
+}
+
+.info-card-chevron {
+  transition: transform 0.2s, color 0.2s, opacity 0.2s !important;
+}
+
+.info-card:hover .info-card-chevron {
+  transform: translateX(4px);
+  color: var(--color-primary) !important;
+  opacity: 1 !important;
+}
+
+/* 3. Panel/Eyebrow Adjustments */
+.panel {
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: var(--shadow-soft) !important;
+  background: var(--surface) !important;
+}
+
+.panel .eyebrow {
+  position: relative;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4) !important;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-primary) !important;
+  font-weight: var(--font-weight-bold) !important;
+  font-size: var(--font-size-sm) !important;
+  letter-spacing: 0.05em !important;
+  display: flex !important;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.panel .eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--sidebar-active-bg);
+}
+
+/* 4. List Cards hover animations */
+.list-card {
+  border: 1px solid var(--border-soft) !important;
+  background: var(--surface) !important;
+  transition: border-color 0.2s, background-color 0.2s, transform 0.2s, box-shadow 0.2s !important;
+}
+
+.list-card.nav-link:hover {
+  background: var(--surface-inset) !important;
+  border-color: var(--color-primary-muted) !important;
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .dashboard-hero-banner {
+    padding: var(--space-4) var(--space-5);
+  }
+  .hero-banner-title {
+    font-size: var(--font-size-xl);
+  }
+  .hero-banner-subtitle {
+    font-size: var(--font-size-xs);
+  }
+}

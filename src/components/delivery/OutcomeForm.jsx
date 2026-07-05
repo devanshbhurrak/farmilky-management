@@ -32,29 +32,26 @@ export default function OutcomeForm({ mode, scheduled, unit, form, onChange }) {
 
   return (
     <div className="outcome-form-container">
-      <div className="form-group readonly">
-        <label>Scheduled quantity</label>
-        <div className="readonly-value">{scheduled} {unit || "units"}</div>
-      </div>
-
-      {mode === "change" && (
+      {(mode === "change" || mode === "delivered") && (
         <div className="form-group">
-          <label>Actual quantity delivered</label>
+          <label>Quantity ({unit || "units"})</label>
           <input
             type="number"
-            min="1"
+            min="0"
             step="0.1"
-            value={form.actualQuantity || ""}
+            value={form.actualQuantity !== undefined ? form.actualQuantity : scheduled}
             onChange={(e) => onChange({ actualQuantity: e.target.value })}
             placeholder={`Enter quantity in ${unit || "units"}`}
             required
             autoFocus
           />
-          <div className="qty-helper-text">
-            {Number(form.actualQuantity) > scheduled
-              ? "Extra - billing will reflect the higher quantity."
-              : "Partial - billing will reflect the lower quantity."}
-          </div>
+          {Number(form.actualQuantity !== undefined ? form.actualQuantity : scheduled) !== scheduled && (
+            <div className="qty-helper-text">
+              {Number(form.actualQuantity !== undefined ? form.actualQuantity : scheduled) > scheduled
+                ? "Extra - billing will reflect the higher quantity."
+                : "Partial - billing will reflect the lower quantity."}
+            </div>
+          )}
         </div>
       )}
 

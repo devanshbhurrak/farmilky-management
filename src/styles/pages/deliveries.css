@@ -304,6 +304,61 @@
 .delivery-card .action-btn-danger:hover  { background: rgba(239, 68, 68, 0.15); border-color: rgba(220, 38, 38, 0.4); }
 .delivery-card .action-btn-danger:active { transform: scale(0.97); }
 
+/* ─── Actions Dropdown Menu ───────────────────── */
+.delivery-dropdown-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.delivery-dropdown-container .dropdown-toggle {
+  width: 100%;
+}
+
+.delivery-dropdown-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: var(--space-1);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  z-index: 100;
+  overflow: hidden;
+  animation: slide-up var(--duration-fast) var(--ease-out);
+}
+
+.delivery-dropdown-menu .dropdown-item {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+  white-space: nowrap;
+}
+
+.delivery-dropdown-menu .dropdown-item:hover {
+  background: var(--surface-muted);
+  color: var(--text-primary);
+}
+
+.delivery-dropdown-menu .dropdown-item.danger {
+  color: var(--danger-text);
+  border-top: 1px solid var(--border-soft);
+}
+
+.delivery-dropdown-menu .dropdown-item.danger:hover {
+  background: var(--danger-bg);
+}
 
 /* ─── Bulk Actions Bar ───────────────────────── */
 .bulk-actions-bar {
@@ -774,24 +829,35 @@
 
   /* ─── Card actions ──────────────────────── */
   .delivery-actions-mobile {
-    gap: var(--space-1);
-    margin-top: 0.1rem;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: var(--space-2) !important;
+    margin-top: var(--space-2) !important;
+    width: 100% !important;
+    align-items: stretch !important;
   }
 
   .delivery-card .action-btn-primary {
-    padding: 0.55rem var(--space-3);
-    font-size: var(--font-size-sm);
-    border-radius: var(--radius-sm);
+    flex: 1 !important;
+    width: auto !important;
+    padding: 0.55rem var(--space-3) !important;
+    font-size: var(--font-size-sm) !important;
+    border-radius: var(--radius-sm) !important;
   }
 
-  .action-row-secondary {
-    gap: var(--space-1);
+  .delivery-dropdown-container {
+    position: relative;
+    display: flex;
+    align-items: stretch;
   }
 
-  .delivery-card .action-btn-secondary,
-  .delivery-card .action-btn-danger {
-    padding: 0.35rem var(--space-2);
-    font-size: 0.75rem;
+  .delivery-dropdown-container .dropdown-toggle {
+    height: 100% !important;
+    min-height: 38px !important;
+    font-size: var(--font-size-sm) !important;
+    padding: 0 var(--space-3) !important;
+    border-radius: var(--radius-sm) !important;
+    white-space: nowrap;
   }
 
   /* ─── List section header ───────────────── */

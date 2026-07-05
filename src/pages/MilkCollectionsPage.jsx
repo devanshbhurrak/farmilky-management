@@ -765,6 +765,7 @@ export default function MilkCollectionsPage() {
                       <div className="mc-card-head">
                         <div className="mc-card-identity">
                           <span className="mc-card-name">{c.supplierId?.name || "—"}</span>
+                          {isPending && c.supplierId?.phone && <span className="mc-card-phone">{c.supplierId.phone}</span>}
                         </div>
                         <div className="mc-card-badges">
                           <span className={`mc-session-pill ${c.session}`}>{c.session}</span>

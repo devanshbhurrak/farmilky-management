@@ -1,54 +1,107 @@
+import { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import BottomSheet from "../ui/BottomSheet";
 import OutcomeForm from "./OutcomeForm";
 import toast from "react-hot-toast";
 
 export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfirm, onFormChange }) {
-  if (!outcomeModal) return null;
+  const [localMode, setLocalMode] = useState(null);
 
-  const { item, mode, form } = outcomeModal;
+  // Sync localMode when the modal opens
+  useEffect(() => {
+    if (outcomeModal) {
+      setLocalMode(outcomeModal.mode);
+    } else {
+      setLocalMode(null);
+    }
+  }, [outcomeModal]);
+
+  if (!outcomeModal || !localMode) return null;
+
+  const { item, form } = outcomeModal;
   const scheduled = item?.scheduledQuantity || item?.quantity || 0;
   const unit = item?.unit || "units";
 
   function handleConfirm() {
     let status, actualQuantity;
 
-    if (mode === "delivered") { status = "delivered"; actualQuantity = scheduled; }
-    else if (mode === "skip") { status = "skipped"; actualQuantity = 0; }
-    else if (mode === "change") {
-      const formQty = Number(form?.actualQuantity || 0);
-      status = formQty > scheduled ? "extra" : "partial";
+    if (localMode === "delivered" || localMode === "change") {
+      const formQty = form?.actualQuantity !== undefined ? Number(form.actualQuantity) : scheduled;
+      if (isNaN(formQty) || formQty < 0) {
+        toast.error("Invalid quantity.");
+        return;
+      }
+      status = formQty === scheduled ? "delivered" : (formQty > scheduled ? "extra" : "partial");
       actualQuantity = formQty;
-    } else { status = "failed"; actualQuantity = 0; }
+    }
+    else if (localMode === "skip") {
+      status = "skipped";
+      actualQuantity = 0;
+    }
+    else {
+      status = "failed";
+      actualQuantity = 0;
+    }
 
-    if ((mode === "skip" || mode === "failed") && !form?.reason?.trim()) { toast.error("Reason required."); return; }
-    if (mode === "change" && (!Number(form?.actualQuantity) || Number(form?.actualQuantity) <= 0)) { toast.error("Invalid quantity."); return; }
+    if ((localMode === "skip" || localMode === "failed") && !form?.reason?.trim()) {
+      toast.error("Reason required.");
+      return;
+    }
 
     onConfirm({ status, actualQuantity, reason: form.reason, notes: form.notes });
   }
 
   const title =
-    mode === "delivered" ? "Confirm Delivery" :
-    mode === "skip" ? "Skip Delivery" :
-    mode === "change" ? "Change Quantity" :
-    mode === "failed" ? "Report Failed" : "Outcome";
+    localMode === "delivered" ? "Confirm Delivery" :
+    localMode === "skip" ? "Skip Delivery" :
+    localMode === "failed" ? "Report Failed" : "Outcome";
+
+  const modeOptions = [
+    { value: "delivered", label: "Delivered" },
+    ...(item?.type === "subscription" ? [{ value: "skip", label: "Skip" }] : []),
+    { value: "failed", label: "Failed" }
+  ];
+
+  const modeSelector = (
+    <div className="outcome-mode-selector" style={{ marginBottom: "var(--space-4)" }}>
+      <label style={{ display: "block", marginBottom: "var(--space-2)", fontSize: "var(--font-size-xs)", fontWeight: "var(--font-weight-bold)", textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
+        Delivery Outcome
+      </label>
+      <div style={{ display: "flex", gap: "var(--space-2)" }}>
+        {modeOptions.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            className={`chip ${localMode === opt.value ? "active" : ""}`}
+            style={{ flex: 1, height: "38px", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: "600" }}
+            onClick={() => setLocalMode(opt.value)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   const formEl = (
-    <OutcomeForm
-      mode={mode}
-      scheduled={scheduled}
-      unit={unit}
-      form={form || {}}
-      onChange={onFormChange}
-    />
+    <>
+      {modeSelector}
+      <OutcomeForm
+        mode={localMode}
+        scheduled={scheduled}
+        unit={unit}
+        form={form || {}}
+        onChange={onFormChange}
+      />
+    </>
   );
 
   if (isMobile) {
     return (
       <BottomSheet isOpen={!!outcomeModal} onClose={onClose} title={title}>
         {formEl}
-        <button className="btn btn-primary outcome-confirm-btn" onClick={handleConfirm}>
-          Confirm Outcome
+        <button className="btn btn-primary outcome-confirm-btn" onClick={handleConfirm} style={{ width: "100%", marginTop: "var(--space-4)" }}>
+          Confirm
         </button>
       </BottomSheet>
     );

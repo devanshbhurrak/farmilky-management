@@ -68,12 +68,19 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
 
   return (
     <div className="view-stack">
-      <header className="page-header">
+      <header className="page-header" style={{ marginBottom: "var(--space-4)" }}>
         <div className="page-header-left">
           <h1 className="page-header-title">Dashboard</h1>
-          <p className="page-header-subtitle">Welcome back! Here's what's happening today.</p>
         </div>
       </header>
+
+      <div className="dashboard-hero-banner">
+        <div className="hero-banner-content">
+          <span className="hero-banner-tag">Live Overview</span>
+          <h1 className="hero-banner-title">Welcome back, Admin!</h1>
+          <p className="hero-banner-subtitle">Here is a quick summary of today's logistics, subscription plans, and supplier collections.</p>
+        </div>
+      </div>
 
       <div className="card-grid">
         <InfoCard title="Revenue Booked" value={formatCurrency(overview.revenue)} icon={TrendingUp} to="/orders" />

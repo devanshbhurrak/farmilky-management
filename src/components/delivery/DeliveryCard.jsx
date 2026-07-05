@@ -65,30 +65,6 @@ export default function DeliveryCard({ item, index, onSelect, isSelected, onActi
           >
             Deliver
           </button>
-          <div className="action-row-secondary">
-            {item.type === "subscription" && (
-              <>
-                <button
-                  className="action-btn-secondary"
-                  onClick={() => onAction(item, "skip")}
-                >
-                  Skip
-                </button>
-                <button
-                  className="action-btn-secondary"
-                  onClick={() => onAction(item, "change")}
-                >
-                  Change Qty
-                </button>
-              </>
-            )}
-            <button
-              className="action-btn-danger"
-              onClick={() => onAction(item, "failed")}
-            >
-              Failed
-            </button>
-          </div>
         </div>
       )}
     </div>
