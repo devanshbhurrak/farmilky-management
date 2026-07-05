@@ -76,12 +76,12 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
       </header>
 
       <div className="card-grid">
-        <InfoCard title="Revenue Booked" value={formatCurrency(overview.revenue)} icon={TrendingUp} />
-        <InfoCard title="Today's Orders" value={overview.todaysOrders} icon={ShoppingCart} />
-        <InfoCard title="Active Subscriptions" value={overview.activeSubscriptions} icon={Repeat} />
-        <InfoCard title="Pending Deliveries" value={overview.pendingDeliveries} icon={Truck} color="warning" />
-        <InfoCard title="Pending COD" value={overview.pendingCodOrders} icon={AlertCircle} color="danger" />
-        <InfoCard title="Total Customers" value={overview.totalCustomers} icon={Users} color="info" />
+        <InfoCard title="Revenue Booked" value={formatCurrency(overview.revenue)} icon={TrendingUp} to="/orders" />
+        <InfoCard title="Today's Orders" value={overview.todaysOrders} icon={ShoppingCart} to="/orders" />
+        <InfoCard title="Active Subscriptions" value={overview.activeSubscriptions} icon={Repeat} to="/subscriptions" />
+        <InfoCard title="Pending Deliveries" value={overview.pendingDeliveries} icon={Truck} color="warning" to="/deliveries" />
+        <InfoCard title="Pending COD" value={overview.pendingCodOrders} icon={AlertCircle} color="danger" to="/orders" />
+        <InfoCard title="Total Customers" value={overview.totalCustomers} icon={Users} color="info" to="/customers" />
       </div>
 
       <div className="two-column-grid">
@@ -114,7 +114,7 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
         <section className="panel">
           <p className="eyebrow">Watchlist</p>
           <div className="stack-list">
-            <div className="list-card">
+            <Link to="/subscriptions" className="list-card nav-link">
               <div>
                 <strong>Paused subscriptions</strong>
                 <span>Customers temporarily off route</span>
@@ -122,8 +122,8 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
               <div className="card-figure">
                 <strong style={{ fontSize: "var(--font-size-xl)" }}>{overview.pausedSubscriptions}</strong>
               </div>
-            </div>
-            <div className="list-card">
+            </Link>
+            <Link to="/subscriptions" className="list-card nav-link">
               <div>
                 <strong>Cancelled subscriptions</strong>
                 <span>Churn you may want to review</span>
@@ -131,8 +131,8 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
               <div className="card-figure">
                 <strong style={{ fontSize: "var(--font-size-xl)" }}>{overview.cancelledSubscriptions}</strong>
               </div>
-            </div>
-            <div className="list-card">
+            </Link>
+            <Link to="/invoices" className="list-card nav-link">
               <div>
                 <strong>Pending subscription amount</strong>
                 <span>Open postpaid balance</span>
@@ -142,7 +142,7 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
                   {formatCurrency(overview.pendingSubscriptionAmount)}
                 </strong>
               </div>
-            </div>
+            </Link>
           </div>
         </section>
       </div>

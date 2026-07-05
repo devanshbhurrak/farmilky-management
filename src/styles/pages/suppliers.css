@@ -1,4 +1,114 @@
 /* ═══════════════════════════════════════════════
+   SUPPLIER LIST — MOBILE CARD
+   ═══════════════════════════════════════════════ */
+
+.supplier-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.supplier-card-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-base);
+  flex-shrink: 0;
+}
+
+.supplier-card-edit-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--success-bg);
+}
+
+.supplier-card-edit-btn:active {
+  transform: scale(0.92);
+}
+
+/* ═══════════════════════════════════════════════
+   SUPPLIER FORM (edit drawer / modal)
+   ═══════════════════════════════════════════════ */
+
+.supplier-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.supplier-form-section {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.supplier-form-section:first-child {
+  padding-top: 0;
+}
+
+.supplier-form-section:last-of-type {
+  border-bottom: none;
+}
+
+.supplier-form-section > .eyebrow {
+  margin-bottom: var(--space-2);
+}
+
+.supplier-form-section .form-grid {
+  gap: var(--space-2);
+}
+
+.supplier-form-section .full-span {
+  grid-column: 1 / -1;
+}
+
+.supplier-session-toggles {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-1);
+}
+
+.supplier-session-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  text-transform: capitalize;
+}
+
+.supplier-form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+}
+
+.supplier-form-actions .primary-button {
+  width: 100%;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.supplier-form-actions-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.supplier-form-actions-row .mini-button {
+  flex: 1;
+  justify-content: center;
+  min-height: 44px;
+}
+
+/* ═══════════════════════════════════════════════
    SUPPLIER DETAIL PAGE
    ═══════════════════════════════════════════════ */
 
@@ -61,10 +171,6 @@
   align-items: flex-end;
   gap: 2px;
   flex-shrink: 0;
-}
-
-.supplier-outstanding .eyebrow {
-  margin-bottom: 0;
 }
 
 .supplier-outstanding-amount {
@@ -166,6 +272,34 @@
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
   line-height: var(--line-height-relaxed);
+}
+
+/* ─── Tab: Collections Filter Toggle ────────── */
+.supplier-filter-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  width: 100%;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  padding: 0;
+  margin-bottom: var(--space-2);
+  user-select: none;
+}
+
+.supplier-filter-toggle:hover {
+  opacity: 0.75;
+}
+
+.supplier-filter-chevron {
+  transition: transform var(--duration-base);
+}
+
+.supplier-filter-chevron.open {
+  transform: rotate(180deg);
 }
 
 /* ─── Tab: Collections Filter Row ───────────── */
@@ -437,16 +571,26 @@
 @media (max-width: 767px) {
   /* Tighter panel padding */
   .supplier-profile-panel.panel {
-    padding: var(--space-3);
+    padding: var(--space-2);
   }
 
-  /* Tighter tab content padding */
   .detail-tabs-panel .tab-content {
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-1);
   }
 
   .supplier-profile-panel {
-    gap: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .detail-tabs-panel .scrollable-tab-bar {
+    padding: var(--space-1) var(--space-2) 0;
+    border-bottom: none;
+  }
+
+  .detail-tabs-panel .tab-pill {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
   }
 
   .supplier-profile-top {
@@ -457,11 +601,11 @@
   .supplier-outstanding {
     flex-direction: row;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--space-2);
     background: var(--surface-muted);
     border: 1px solid var(--border-soft);
     border-radius: var(--radius-sm);
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-1) var(--space-2);
     width: 100%;
   }
 
@@ -481,36 +625,34 @@
 
   /* Totals always fill width on mobile (already grid) */
   .supplier-total-chip {
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-3) var(--space-4);
   }
 
-  /* Date filters: 2-col grid, Apply button spans full width */
+  /* Date filters: single-column stack so date inputs get full width */
   .supplier-col-filters {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: var(--space-2);
-    align-items: end;
     padding: var(--space-2);
     margin-bottom: var(--space-2);
   }
 
   .supplier-col-filters .form-field {
     flex: unset;
+    width: 100%;
   }
 
   .supplier-col-filters .mini-button,
   .sc-apply-btn {
-    grid-column: 1 / -1;
     width: 100%;
     justify-content: center;
     min-height: 40px;
     font-size: var(--font-size-sm);
   }
 
-  /* Record Payment button: full width on mobile */
   .tab-action-row {
     justify-content: stretch;
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-2);
   }
 
   .tab-action-row .primary-button {
@@ -519,7 +661,15 @@
   }
 
   /* Smaller heading on narrow screens */
-  .supplier-name-row h2 {
+.supplier-name-row {
+  width: 100%;
+}
+
+.supplier-name-edit {
+  margin-left: auto;
+}
+
+.supplier-name-row h2 {
     font-size: var(--font-size-base);
   }
 
@@ -533,9 +683,9 @@
     padding: var(--space-5) var(--space-3);
   }
 
-  /* Totals strip — tighter margin */
+  /* Totals strip */
   .supplier-totals-strip {
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
   }
 
   /* Payment card amount slightly smaller on narrow screens */
@@ -543,14 +693,57 @@
     font-size: var(--font-size-base);
   }
 
-  /* Tighter card padding on mobile */
-  .sc-card-head,
-  .sp-card-head {
+  /* ── Collection cards: structured grid layout ── */
+  .sc-card {
+    border-radius: var(--radius-md);
+  }
+
+  .sc-card-head {
+    padding: var(--space-2);
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .sc-card-badges {
+    gap: 4px;
+  }
+
+  .sc-card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: var(--space-2);
+    gap: 0;
+  }
+
+  .sc-card-stats--bottom {
+    grid-template-columns: 1fr 1fr;
     padding: var(--space-2);
   }
 
-  .sc-card-stats,
-  .sc-card-stats--bottom {
+  .sc-stat {
+    padding: var(--space-1) var(--space-2);
+    text-align: center;
+    align-items: center;
+  }
+
+  .sc-stat:first-child {
+    padding-left: var(--space-2);
+    text-align: center;
+    align-items: center;
+  }
+
+  .sc-stat:last-child {
+    padding-right: var(--space-2);
+    text-align: center;
+    align-items: center;
+  }
+
+  /* ── Payment cards ── */
+  .sp-card {
+    border-radius: var(--radius-md);
+  }
+
+  .sp-card-head {
     padding: var(--space-2);
   }
 
@@ -558,8 +751,18 @@
     padding: var(--space-2);
   }
 
+  .sp-card-period {
+    font-size: var(--font-size-xs);
+  }
+
+  .sp-card-foot {
+    gap: var(--space-1);
+    font-size: var(--font-size-xs);
+  }
+
   .sp-recorded-by {
     padding: var(--space-1) var(--space-2);
+    font-size: 11px;
   }
 
   .sc-list {

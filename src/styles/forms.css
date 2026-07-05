@@ -624,15 +624,27 @@
   gap: var(--space-3);
 }
 
+.modal-actions-sep {
+  width: 1px;
+  height: 32px;
+  background: var(--border-soft);
+  flex-shrink: 0;
+}
+
 @media (max-width: 480px) {
   .modal-actions {
     flex-direction: column-reverse;
     width: 100%;
   }
 
-  .modal-actions .mini-button {
+  .modal-actions .mini-button,
+  .modal-actions .primary-button {
     width: 100%;
     justify-content: center;
     min-height: 44px;
+  }
+
+  .modal-actions-sep {
+    display: none;
   }
 }

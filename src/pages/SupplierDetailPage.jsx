@@ -1,7 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Pencil, ChevronDown } from "lucide-react";
 import { apiRequest } from "../api/client";
 import Modal from "../components/ui/Modal";
+import BottomSheet from "../components/ui/BottomSheet";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import EmptyState from "../components/ui/EmptyState";
@@ -36,12 +39,18 @@ export default function SupplierDetailPage() {
   const [collectionFilters, setCollectionFilters] = useState({ from: "", to: "" });
   const [collectionsLoading, setCollectionsLoading] = useState(false);
   const [collectionTotals, setCollectionTotals] = useState({ liters: 0, amount: 0 });
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [payments, setPayments] = useState([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [paymentModal, setPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ ...PAYMENT_EMPTY });
   const [savingPayment, setSavingPayment] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const fetchSupplier = useCallback(async () => {
     setLoading(true);
@@ -139,6 +148,94 @@ export default function SupplierDetailPage() {
     }
   }, [id, paymentForm, fetchSupplier, fetchPayments]);
 
+  const openEdit = useCallback(() => {
+    if (!supplier) return;
+    setEditForm({
+      name: supplier.name || "",
+      phone: supplier.phone || "",
+      email: supplier.email || "",
+      location: supplier.location || "",
+      pincode: supplier.pincode || "",
+      joiningDate: supplier.joiningDate ? new Date(supplier.joiningDate).toISOString().split("T")[0] : "",
+      collectionSessions: supplier.collectionSessions || ["morning", "evening"],
+      defaultMorningQty: supplier.defaultMorningQty?.toString() || "",
+      defaultEveningQty: supplier.defaultEveningQty?.toString() || "",
+      defaultRatePerLiter: supplier.defaultRatePerLiter?.toString() || "",
+      bankDetails: supplier.bankDetails || { accountNo: "", ifscCode: "", bankName: "", holderName: "" },
+      notes: supplier.notes || "",
+    });
+    setEditOpen(true);
+  }, [supplier]);
+
+  const closeEdit = useCallback(() => {
+    setEditOpen(false);
+    setEditForm(null);
+  }, []);
+
+  const handleSessionToggle = useCallback((session) => {
+    setEditForm((prev) => {
+      const sessions = prev.collectionSessions.includes(session)
+        ? prev.collectionSessions.filter((s) => s !== session)
+        : [...prev.collectionSessions, session];
+      return { ...prev, collectionSessions: sessions };
+    });
+  }, []);
+
+  const handleBankChange = useCallback((field, value) => {
+    setEditForm((prev) => ({ ...prev, bankDetails: { ...prev.bankDetails, [field]: value } }));
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (!editForm.name || !editForm.phone) { toast.error("Name and phone are required."); return; }
+    if (editForm.collectionSessions.length === 0) { toast.error("Select at least one session."); return; }
+    setSaving(true);
+    try {
+      const payload = {
+        name: editForm.name, phone: editForm.phone, email: editForm.email,
+        location: editForm.location, pincode: editForm.pincode,
+        joiningDate: editForm.joiningDate || null,
+        collectionSessions: editForm.collectionSessions,
+        defaultMorningQty: editForm.defaultMorningQty ? parseFloat(editForm.defaultMorningQty) : 0,
+        defaultEveningQty: editForm.defaultEveningQty ? parseFloat(editForm.defaultEveningQty) : 0,
+        defaultRatePerLiter: editForm.defaultRatePerLiter ? parseFloat(editForm.defaultRatePerLiter) : 0,
+        bankDetails: editForm.bankDetails, notes: editForm.notes,
+      };
+      const res = await apiRequest(`/api/suppliers/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+      toast.success("Supplier updated.");
+      closeEdit();
+      fetchSupplier();
+    } catch (err) { toast.error(err.message); }
+    finally { setSaving(false); }
+  }, [id, editForm, closeEdit, fetchSupplier]);
+
+  const handleToggleStatus = useCallback(async () => {
+    if (!confirmAction || confirmAction.type !== "toggle") return;
+    try {
+      const res = await apiRequest(`/api/suppliers/${id}/status`, {
+        method: "PATCH", body: JSON.stringify({ isActive: !supplier.isActive }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+      toast.success(result.message);
+      setConfirmAction(null);
+      fetchSupplier();
+    } catch (err) { toast.error(err.message); }
+  }, [id, supplier, confirmAction, fetchSupplier]);
+
+  const handleDelete = useCallback(async () => {
+    if (!confirmAction || confirmAction.type !== "delete") return;
+    try {
+      const res = await apiRequest(`/api/suppliers/${id}`, { method: "DELETE" });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+      toast.success(result.message);
+      setConfirmAction(null);
+      navigate("/suppliers");
+    } catch (err) { toast.error(err.message); }
+  }, [id, confirmAction, navigate]);
+
   if (loading) return <LoadingScreen />;
   if (!supplier) {
     return (
@@ -173,6 +270,9 @@ export default function SupplierDetailPage() {
             <div className="supplier-name-row">
               <h2>{supplier.name}</h2>
               <StatusTag value={supplier.isActive ? "active" : "inactive"} />
+              <button className="mini-button supplier-name-edit" onClick={openEdit}>
+                <Pencil size={14} /> Edit
+              </button>
             </div>
             <div className="supplier-contact-row">
               <span>{supplier.phone}</span>
@@ -284,27 +384,33 @@ export default function SupplierDetailPage() {
           <div className="tab-content">
 
             {/* Date filters */}
-            <div className="supplier-col-filters">
-              <label className="form-field">
-                <span>From</span>
-                <input
-                  type="date"
-                  value={collectionFilters.from}
-                  onChange={(e) => setCollectionFilters((f) => ({ ...f, from: e.target.value }))}
-                />
-              </label>
-              <label className="form-field">
-                <span>To</span>
-                <input
-                  type="date"
-                  value={collectionFilters.to}
-                  onChange={(e) => setCollectionFilters((f) => ({ ...f, to: e.target.value }))}
-                />
-              </label>
-              <button className="mini-button sc-apply-btn" onClick={fetchCollections} disabled={collectionsLoading}>
-                {collectionsLoading ? "Loading…" : "Apply"}
-              </button>
+            <div className="supplier-filter-toggle" onClick={() => setFiltersOpen((o) => !o)}>
+              <span>Filter by date</span>
+              <ChevronDown size={14} className={`supplier-filter-chevron ${filtersOpen ? "open" : ""}`} />
             </div>
+            {filtersOpen && (
+              <div className="supplier-col-filters">
+                <label className="form-field">
+                  <span>From</span>
+                  <input
+                    type="date"
+                    value={collectionFilters.from}
+                    onChange={(e) => setCollectionFilters((f) => ({ ...f, from: e.target.value }))}
+                  />
+                </label>
+                <label className="form-field">
+                  <span>To</span>
+                  <input
+                    type="date"
+                    value={collectionFilters.to}
+                    onChange={(e) => setCollectionFilters((f) => ({ ...f, to: e.target.value }))}
+                  />
+                </label>
+                <button className="mini-button sc-apply-btn" onClick={fetchCollections} disabled={collectionsLoading}>
+                  {collectionsLoading ? "Loading…" : "Apply"}
+                </button>
+              </div>
+            )}
 
             {/* Totals */}
             {collections.length > 0 && (
@@ -568,6 +674,142 @@ export default function SupplierDetailPage() {
           </label>
         </div>
       </Modal>
+
+      {/* ── Edit Supplier Modal / Sheet ─────────────── */}
+      {editForm && (isMobile ? (
+        <BottomSheet isOpen={editOpen} onClose={closeEdit} title="Edit Supplier">
+          <div className="supplier-form">
+            <div className="supplier-form-section">
+              <p className="eyebrow">Basic Information</p>
+              <div className="form-grid">
+                <label className="form-field"><span>Name <em className="required">*</em></span><input type="text" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} /></label>
+                <label className="form-field"><span>Phone <em className="required">*</em></span><input type="tel" value={editForm.phone} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} /></label>
+                <label className="form-field"><span>Email</span><input type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} /></label>
+                <label className="form-field"><span>Location</span><input type="text" value={editForm.location} onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))} /></label>
+                <label className="form-field"><span>Pincode</span><input type="text" value={editForm.pincode} onChange={(e) => setEditForm((f) => ({ ...f, pincode: e.target.value }))} /></label>
+                <label className="form-field"><span>Joining Date</span><input type="date" value={editForm.joiningDate} onChange={(e) => setEditForm((f) => ({ ...f, joiningDate: e.target.value }))} /></label>
+              </div>
+            </div>
+            <div className="supplier-form-section">
+              <p className="eyebrow">Collection Settings</p>
+              <div className="form-grid">
+                <div className="form-field full-span">
+                  <span>Sessions <em className="required">*</em></span>
+                  <div className="supplier-session-toggles">
+                    {["morning", "evening"].map((s) => (
+                      <label key={s} className="supplier-session-option"><input type="checkbox" checked={editForm.collectionSessions.includes(s)} onChange={() => handleSessionToggle(s)} /><span>{s}</span></label>
+                    ))}
+                  </div>
+                </div>
+                <label className="form-field"><span>Morning Qty (L)</span><input type="number" min="0" step="0.1" value={editForm.defaultMorningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultMorningQty: e.target.value }))} placeholder="0" /></label>
+                <label className="form-field"><span>Evening Qty (L)</span><input type="number" min="0" step="0.1" value={editForm.defaultEveningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultEveningQty: e.target.value }))} placeholder="0" /></label>
+                <label className="form-field"><span>Rate / Liter (₹)</span><input type="number" min="0" step="0.01" value={editForm.defaultRatePerLiter} onChange={(e) => setEditForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))} placeholder="0.00" /></label>
+              </div>
+            </div>
+            <div className="supplier-form-section">
+              <p className="eyebrow">Bank Details</p>
+              <div className="form-grid">
+                <label className="form-field"><span>Account Holder</span><input type="text" value={editForm.bankDetails.holderName} onChange={(e) => handleBankChange("holderName", e.target.value)} /></label>
+                <label className="form-field"><span>Account Number</span><input type="text" value={editForm.bankDetails.accountNo} onChange={(e) => handleBankChange("accountNo", e.target.value)} /></label>
+                <label className="form-field"><span>IFSC Code</span><input type="text" value={editForm.bankDetails.ifscCode} onChange={(e) => handleBankChange("ifscCode", e.target.value.toUpperCase())} /></label>
+                <label className="form-field"><span>Bank Name</span><input type="text" value={editForm.bankDetails.bankName} onChange={(e) => handleBankChange("bankName", e.target.value)} /></label>
+              </div>
+            </div>
+            <div className="supplier-form-section">
+              <label className="form-field"><span>Notes</span><textarea value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} rows={2} /></label>
+            </div>
+            <div className="supplier-form-actions">
+              <button className="primary-button" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
+              <div className="supplier-form-actions-row">
+                <button className={`mini-button ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
+                  {supplier.isActive ? "Deactivate" : "Activate"}
+                </button>
+                <button className="mini-button danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
+              </div>
+            </div>
+          </div>
+        </BottomSheet>
+      ) : (
+        <Modal open={editOpen} onClose={closeEdit} title="Edit Supplier" footer={
+          <div className="modal-actions">
+            <button className="mini-button" onClick={closeEdit} disabled={saving}>Cancel</button>
+            <button className="primary-button" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
+            <span className="modal-actions-sep" />
+            <button className={`mini-button ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
+              {supplier.isActive ? "Deactivate" : "Activate"}
+            </button>
+            <button className="mini-button danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
+          </div>
+        }>
+          <div className="supplier-form">
+            <div className="supplier-form-section">
+              <p className="eyebrow">Basic Information</p>
+              <div className="form-grid">
+                <label className="form-field"><span>Name <em className="required">*</em></span><input type="text" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} /></label>
+                <label className="form-field"><span>Phone <em className="required">*</em></span><input type="tel" value={editForm.phone} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} /></label>
+                <label className="form-field"><span>Email</span><input type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} /></label>
+                <label className="form-field"><span>Location</span><input type="text" value={editForm.location} onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))} /></label>
+                <label className="form-field"><span>Pincode</span><input type="text" value={editForm.pincode} onChange={(e) => setEditForm((f) => ({ ...f, pincode: e.target.value }))} /></label>
+                <label className="form-field"><span>Joining Date</span><input type="date" value={editForm.joiningDate} onChange={(e) => setEditForm((f) => ({ ...f, joiningDate: e.target.value }))} /></label>
+              </div>
+            </div>
+            <div className="supplier-form-section">
+              <p className="eyebrow">Collection Settings</p>
+              <div className="form-grid">
+                <div className="form-field full-span">
+                  <span>Sessions <em className="required">*</em></span>
+                  <div className="supplier-session-toggles">
+                    {["morning", "evening"].map((s) => (
+                      <label key={s} className="supplier-session-option"><input type="checkbox" checked={editForm.collectionSessions.includes(s)} onChange={() => handleSessionToggle(s)} /><span>{s}</span></label>
+                    ))}
+                  </div>
+                </div>
+                <label className="form-field"><span>Morning Qty (L)</span><input type="number" min="0" step="0.1" value={editForm.defaultMorningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultMorningQty: e.target.value }))} placeholder="0" /></label>
+                <label className="form-field"><span>Evening Qty (L)</span><input type="number" min="0" step="0.1" value={editForm.defaultEveningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultEveningQty: e.target.value }))} placeholder="0" /></label>
+                <label className="form-field"><span>Rate / Liter (₹)</span><input type="number" min="0" step="0.01" value={editForm.defaultRatePerLiter} onChange={(e) => setEditForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))} placeholder="0.00" /></label>
+              </div>
+            </div>
+            <div className="supplier-form-section">
+              <p className="eyebrow">Bank Details</p>
+              <div className="form-grid">
+                <label className="form-field"><span>Account Holder</span><input type="text" value={editForm.bankDetails.holderName} onChange={(e) => handleBankChange("holderName", e.target.value)} /></label>
+                <label className="form-field"><span>Account Number</span><input type="text" value={editForm.bankDetails.accountNo} onChange={(e) => handleBankChange("accountNo", e.target.value)} /></label>
+                <label className="form-field"><span>IFSC Code</span><input type="text" value={editForm.bankDetails.ifscCode} onChange={(e) => handleBankChange("ifscCode", e.target.value.toUpperCase())} /></label>
+                <label className="form-field"><span>Bank Name</span><input type="text" value={editForm.bankDetails.bankName} onChange={(e) => handleBankChange("bankName", e.target.value)} /></label>
+              </div>
+            </div>
+            <div className="supplier-form-section">
+              <label className="form-field"><span>Notes</span><textarea value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} rows={2} /></label>
+            </div>
+          </div>
+        </Modal>
+      ))}
+
+      {/* ── Confirm Dialogs ─────────────────────────── */}
+      {confirmAction?.type === "toggle" && (
+        <ConfirmDialog
+          open
+          onClose={() => setConfirmAction(null)}
+          onConfirm={handleToggleStatus}
+          title={supplier.isActive ? "Deactivate Supplier" : "Activate Supplier"}
+          message={supplier.isActive
+            ? `Deactivate ${supplier.name}? Their entries will no longer be generated in daily collections.`
+            : `Activate ${supplier.name}? They will be included in future daily collection entries.`}
+          confirmText={supplier.isActive ? "Deactivate" : "Activate"}
+          variant={supplier.isActive ? "danger" : "active"}
+        />
+      )}
+      {confirmAction?.type === "delete" && (
+        <ConfirmDialog
+          open
+          onClose={() => setConfirmAction(null)}
+          onConfirm={handleDelete}
+          title="Remove Supplier"
+          message={`Remove ${supplier.name}? Their collection and payment history will be preserved but they will no longer appear in the active supplier list.`}
+          confirmText="Remove"
+          variant="danger"
+        />
+      )}
     </div>
   );
 }

@@ -492,7 +492,7 @@ export default function MilkCollectionsPage() {
 
       {/* ── View tabs ─────────────────────────────────────────────────── */}
       <div className="surface" style={{ padding: 0 }}>
-        <div className="filter-tabs" style={{ borderBottom: "1px solid var(--border-soft)", padding: "0 16px" }}>
+        <div className="mc-tabs">
           <button
             className={`filter-tab ${view === "daily" ? "active" : ""}`}
             onClick={() => setView("daily")}
@@ -509,14 +509,14 @@ export default function MilkCollectionsPage() {
 
         {/* ════════════════════════ DAILY VIEW ════════════════════════ */}
         {view === "daily" && (
-          <div style={{ padding: 16 }}>
+          <div className="mc-content">
 
             {/* ── Toolbar ────────────────────────────────────────────── */}
             <div className="mc-toolbar">
               <div className="mc-toolbar-left">
                 <input
                   type="date"
-                  className="search-input mc-date-input"
+                  className="mc-date-input"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                 />
@@ -576,13 +576,13 @@ export default function MilkCollectionsPage() {
                     <span>Total</span>
                     <strong>{summary.total}</strong>
                   </div>
-                  <div className="supplier-default-chip" style={{ borderColor: "var(--color-warning)", background: "var(--warning-bg)" }}>
-                    <span style={{ color: "var(--warning-text)" }}>Pending</span>
-                    <strong style={{ color: "var(--warning-text)" }}>{summary.pending}</strong>
+                  <div className="supplier-default-chip mc-chip--pending">
+                    <span>Pending</span>
+                    <strong>{summary.pending}</strong>
                   </div>
-                  <div className="supplier-default-chip" style={{ borderColor: "var(--color-primary)", background: "var(--success-bg)" }}>
-                    <span style={{ color: "var(--success-text)" }}>Confirmed</span>
-                    <strong style={{ color: "var(--color-primary-dark)" }}>{summary.confirmed}</strong>
+                  <div className="supplier-default-chip mc-chip--confirmed">
+                    <span>Confirmed</span>
+                    <strong>{summary.confirmed}</strong>
                   </div>
                   <div className="supplier-default-chip">
                     <span>Collected</span>
@@ -909,7 +909,7 @@ export default function MilkCollectionsPage() {
 
         {/* ════════════════════════ HISTORY VIEW ══════════════════════ */}
         {view === "history" && (
-          <div style={{ padding: 16 }}>
+          <div className="mc-content">
 
             {/* ── Filters ─────────────────────────────────────────────── */}
             <div className="mc-history-filters">
@@ -952,23 +952,25 @@ export default function MilkCollectionsPage() {
                   onChange={(e) => setHistoryFilters((f) => ({ ...f, to: e.target.value }))}
                 />
               </label>
-              <button
-                className="mini-button active"
-                onClick={fetchHistory}
-                disabled={historyLoading}
-              >
-                {historyLoading ? "Loading…" : "Apply"}
-              </button>
-              {history.length > 0 && (
+              <div className="mc-history-filter-actions">
                 <button
-                  className="mini-button"
-                  onClick={() => downloadCSV(history)}
-                  title="Export to CSV"
+                  className="mini-button active"
+                  onClick={fetchHistory}
+                  disabled={historyLoading}
                 >
-                  <Download size={14} style={{ marginRight: 4 }} />
-                  Export
+                  {historyLoading ? "Loading…" : "Apply"}
                 </button>
-              )}
+                {history.length > 0 && (
+                  <button
+                    className="mini-button"
+                    onClick={() => downloadCSV(history)}
+                    title="Export to CSV"
+                  >
+                    <Download size={14} style={{ marginRight: 4 }} />
+                    Export
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* ── History summary totals ───────────────────────────────── */}

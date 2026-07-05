@@ -7,11 +7,14 @@ import PageHeader from "../components/ui/PageHeader";
 import PageSkeleton from "../components/ui/PageSkeleton";
 import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
+import BottomSheet from "../components/ui/BottomSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import toast from "react-hot-toast";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 export default function AgentDetailPage() {
   const { id } = useParams();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [agent, setAgent] = useState(null);
   const [performance, setPerformance] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
@@ -164,7 +167,7 @@ export default function AgentDetailPage() {
           </span>
         </div>
 
-        <div style={{ marginTop: "var(--space-6)", paddingTop: "var(--space-6)", borderTop: "1px solid var(--border-soft)", display: "grid", gap: "var(--space-3)", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+        <div style={{ marginTop: "var(--space-6)", paddingTop: "var(--space-6)", borderTop: "1px solid var(--border-soft)", display: "grid", gap: "var(--space-3)", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}>
           <div>
             <p className="eyebrow">Assigned Area</p>
             <strong>{agent.agentInfo?.assignedArea?.name || <span style={{ fontStyle: "italic", color: "var(--text-muted)", fontWeight: "normal" }}>Not assigned</span>}</strong>
@@ -277,52 +280,95 @@ export default function AgentDetailPage() {
         </div>
       </section>
 
-      <Modal
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        title="Edit Agent"
-        footer={
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
-            <button className="mini-button" onClick={() => setEditOpen(false)} disabled={saving}>Cancel</button>
-            <button className="mini-button active" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </div>
-        }
-      >
-        {form && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Name <em style={{ color: "var(--danger)" }}>*</em></span>
-              <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Email <em style={{ color: "var(--danger)" }}>*</em></span>
-              <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Phone <em style={{ color: "var(--danger)" }}>*</em></span>
-              <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} required />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Password (leave blank to keep)</span>
-              <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Joining Date</span>
-              <input type="date" value={form.joiningDate} onChange={(e) => setForm((f) => ({ ...f, joiningDate: e.target.value }))} />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Vehicle Type</span>
-              <input type="text" value={form.vehicleType} onChange={(e) => setForm((f) => ({ ...f, vehicleType: e.target.value }))} placeholder="e.g. Bike, Van" />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Max Capacity</span>
-              <input type="number" value={form.maxCapacity} onChange={(e) => setForm((f) => ({ ...f, maxCapacity: e.target.value }))} placeholder="Max items per trip" />
-            </label>
-          </div>
-        )}
-      </Modal>
+      {isMobile ? (
+        <BottomSheet isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Agent">
+          {form && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Name <em style={{ color: "var(--danger)" }}>*</em></span>
+                <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Email <em style={{ color: "var(--danger)" }}>*</em></span>
+                <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Phone <em style={{ color: "var(--danger)" }}>*</em></span>
+                <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} required />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Password (leave blank to keep)</span>
+                <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Joining Date</span>
+                <input type="date" value={form.joiningDate} onChange={(e) => setForm((f) => ({ ...f, joiningDate: e.target.value }))} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Vehicle Type</span>
+                <input type="text" value={form.vehicleType} onChange={(e) => setForm((f) => ({ ...f, vehicleType: e.target.value }))} placeholder="e.g. Bike, Van" />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Max Capacity</span>
+                <input type="number" value={form.maxCapacity} onChange={(e) => setForm((f) => ({ ...f, maxCapacity: e.target.value }))} placeholder="Max items per trip" />
+              </label>
+              <div className="modal-actions">
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditOpen(false)} disabled={saving}>Cancel</button>
+                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          )}
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          title="Edit Agent"
+          footer={
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
+              <button className="mini-button" onClick={() => setEditOpen(false)} disabled={saving}>Cancel</button>
+              <button className="mini-button active" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          }
+        >
+          {form && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Name <em style={{ color: "var(--danger)" }}>*</em></span>
+                <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Email <em style={{ color: "var(--danger)" }}>*</em></span>
+                <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Phone <em style={{ color: "var(--danger)" }}>*</em></span>
+                <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} required />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Password (leave blank to keep)</span>
+                <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Joining Date</span>
+                <input type="date" value={form.joiningDate} onChange={(e) => setForm((f) => ({ ...f, joiningDate: e.target.value }))} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Vehicle Type</span>
+                <input type="text" value={form.vehicleType} onChange={(e) => setForm((f) => ({ ...f, vehicleType: e.target.value }))} placeholder="e.g. Bike, Van" />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Max Capacity</span>
+                <input type="number" value={form.maxCapacity} onChange={(e) => setForm((f) => ({ ...f, maxCapacity: e.target.value }))} placeholder="Max items per trip" />
+              </label>
+            </div>
+          )}
+        </Modal>
+      )}
 
       {confirmAction && (
         <ConfirmDialog

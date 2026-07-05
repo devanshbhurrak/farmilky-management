@@ -164,10 +164,41 @@
   box-shadow: var(--shadow-lg);
 }
 
+/* Clickable InfoCard (rendered as <a> via Link) */
+.info-card--clickable {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.info-card--clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.info-card--clickable:active {
+  transform: scale(0.97);
+  box-shadow: var(--shadow-soft);
+}
+
 .info-card-inner {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  position: relative;
+}
+
+.info-card-body {
+  flex: 1;
+}
+
+.info-card-chevron {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--text-muted);
+  opacity: 0.5;
 }
 
 .info-card-icon {
@@ -719,12 +750,12 @@
 }
 
 .tab-content {
-  padding: var(--space-5);
+  padding: var(--space-4);
 }
 
 @media (min-width: 768px) {
   .tab-content {
-    padding: var(--space-6);
+    padding: var(--space-4);
   }
 }
 
@@ -1132,6 +1163,17 @@
   /* info-card — smaller on mobile */
   .info-card {
     padding: var(--space-4);
+  }
+
+  /* Disable hover lift on touch screens — use active scale instead */
+  .info-card:hover,
+  .info-card--clickable:hover {
+    transform: none;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .info-card--clickable:active {
+    transform: scale(0.97);
   }
 
   .info-card-value {

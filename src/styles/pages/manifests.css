@@ -52,6 +52,17 @@
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
+@media (max-width: 767px) {
+  .manifest-date-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .manifest-filter-row {
+    justify-content: flex-start;
+  }
+}
+
 /* ─── Header actions row ─────────────────────── */
 .manifest-header-actions {
   display: flex;

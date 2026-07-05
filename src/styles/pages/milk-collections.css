@@ -2,13 +2,25 @@
    MILK COLLECTIONS PAGE
    ═══════════════════════════════════════════════ */
 
+/* ─── Content area (daily / history pane) ────── */
+.mc-content {
+  padding: var(--space-4);
+}
+
+/* ─── View tab strip ────────────────────────── */
+.mc-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-soft);
+  padding: 0 var(--space-4);
+}
+
 /* ─── Toolbar: date picker + action buttons ─── */
 .mc-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .mc-toolbar-left {
@@ -30,6 +42,23 @@
 .mc-date-input {
   width: auto;
   min-width: 160px;
+  height: 38px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-soft);
+  background: var(--surface-muted);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--duration-base);
+}
+
+.mc-date-input:focus {
+  outline: none;
+  background-color: #fff;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
 /* ─── Backdate alert strip ─────────────────── */
@@ -41,7 +70,7 @@
   background: var(--warning-bg);
   border: 1px solid var(--color-warning);
   border-radius: var(--radius-sm);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
   font-size: var(--font-size-xs);
   color: var(--warning-text);
   font-weight: var(--font-weight-medium);
@@ -86,7 +115,7 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .mc-filters .search-box {
@@ -97,14 +126,42 @@
 
 /* ─── Summary / Progress bar ─────────────────── */
 .mc-summary {
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
 }
 
 .mc-summary-chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+/* Summary chip color variants */
+.mc-chip--pending {
+  border-color: var(--color-warning) !important;
+  background: var(--warning-bg) !important;
+}
+
+.mc-chip--pending span,
+.mc-chip--pending strong {
+  color: var(--warning-text) !important;
+}
+
+.mc-chip--confirmed {
+  border-color: var(--color-primary) !important;
+  background: var(--success-bg) !important;
+}
+
+.mc-chip--confirmed span {
+  color: var(--success-text) !important;
+}
+
+.mc-chip--confirmed strong {
+  color: var(--color-primary-dark) !important;
 }
 
 .mc-progress-track {
@@ -124,7 +181,8 @@
 .mc-progress-label {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
-  margin-top: var(--space-1);
+  margin-top: var(--space-2);
+  text-align: right;
 }
 
 /* ─── Desktop Table ─────────────────────────── */
@@ -276,7 +334,8 @@
 .mc-card-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  padding-bottom: 80px; /* clearance for sticky confirm-all bar */
 }
 
 .mc-card {
@@ -284,11 +343,13 @@
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
+  box-shadow: var(--shadow-soft);
 }
 
 .mc-card--confirmed {
-  border-color: var(--color-primary);
+  border-color: var(--border-soft);
   background: var(--surface-muted);
+  opacity: 0.92;
 }
 
 .mc-card-head {
@@ -296,7 +357,7 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--border-soft);
 }
 
@@ -332,7 +393,7 @@
 }
 
 .mc-card-expected {
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-xs);
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-soft);
@@ -347,8 +408,8 @@
 .mc-card-inputs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
   background: var(--surface);
 }
 
@@ -391,6 +452,7 @@
   padding: var(--space-2) var(--space-3);
   border-top: 1px solid var(--border-soft);
   background: var(--surface-muted);
+  font-size: var(--font-size-sm);
 }
 
 .mc-card-amount-label {
@@ -410,7 +472,7 @@
 .mc-card-actions {
   display: flex;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-3);
   border-top: 1px solid var(--border-soft);
   background: var(--surface);
 }
@@ -506,17 +568,17 @@
 .mc-history-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-3);
   align-items: flex-end;
-  padding: var(--space-3);
+  padding: var(--space-4);
   background: var(--surface-muted);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-3);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-4);
 }
 
 .mc-history-filters .form-field {
-  flex: 1 1 120px;
+  flex: 1 1 140px;
   min-width: 0;
 }
 
@@ -530,12 +592,20 @@
   margin-bottom: 4px;
 }
 
+/* Action buttons group aligned to the bottom of the filter bar */
+.mc-history-filter-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
 /* ─── History: summary totals strip ─────────── */
 .mc-history-summary {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 @media (min-width: 640px) {
@@ -588,10 +658,19 @@
    MOBILE OVERRIDES  (≤ 767px)
    ═══════════════════════════════════════════════ */
 @media (max-width: 767px) {
+  .mc-content {
+    padding: var(--space-3);
+  }
+
+  .mc-tabs {
+    padding: 0 var(--space-3);
+  }
+
   .mc-toolbar {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-2);
+    margin-bottom: var(--space-3);
   }
 
   .mc-toolbar-left,
@@ -614,18 +693,31 @@
   .mc-filters {
     flex-direction: column;
     align-items: stretch;
+    margin-bottom: var(--space-3);
   }
 
   .mc-filters .search-box {
     max-width: none;
   }
 
-  .mc-history-filters {
-    gap: var(--space-2);
+  .mc-summary {
+    margin-bottom: var(--space-3);
+    padding: var(--space-3);
   }
 
-  .mc-history-filters .mini-button {
+  .mc-history-filters {
+    gap: var(--space-3);
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .mc-history-filter-actions {
     width: 100%;
+    flex-direction: row;
+  }
+
+  .mc-history-filter-actions .mini-button {
+    flex: 1;
     justify-content: center;
     min-height: 40px;
   }
@@ -633,5 +725,10 @@
   .mc-missing-alert {
     flex-wrap: wrap;
     gap: var(--space-2);
+  }
+
+  .mc-history-summary {
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
   }
 }

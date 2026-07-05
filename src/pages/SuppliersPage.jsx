@@ -1,15 +1,17 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import DataTable from "../components/ui/DataTable";
 import PageHeader from "../components/ui/PageHeader";
 import Modal from "../components/ui/Modal";
+import BottomSheet from "../components/ui/BottomSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import toast from "react-hot-toast";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 const fetchSuppliers = createApiFetch("/api/suppliers");
 
@@ -36,6 +38,7 @@ function formatCurrency(val) {
 export default function SuppliersPage() {
   const navigate = useNavigate();
   const { data, loading, refetch } = useApiData(fetchSuppliers);
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const suppliers = data?.suppliers ?? [];
 
   const [statusFilter, setStatusFilter] = useState("all");
@@ -175,6 +178,125 @@ export default function SuppliersPage() {
     }
   }, [confirmAction, refetch]);
 
+  const supplierFormContent = (
+    <div className="supplier-form">
+      {/* ── Basic Info ── */}
+      <div className="supplier-form-section">
+        <p className="eyebrow">Basic Information</p>
+        <div className="form-grid">
+          <label className="form-field">
+            <span>Name <em className="required">*</em></span>
+            <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
+          </label>
+          <label className="form-field">
+            <span>Phone <em className="required">*</em></span>
+            <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} pattern="[0-9]{10}" required />
+          </label>
+          <label className="form-field">
+            <span>Email</span>
+            <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+          </label>
+          <label className="form-field">
+            <span>Location</span>
+            <input type="text" value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="e.g. Vadgam" />
+          </label>
+          <label className="form-field">
+            <span>Pincode</span>
+            <input type="text" value={form.pincode} onChange={(e) => setForm((f) => ({ ...f, pincode: e.target.value }))} />
+          </label>
+          <label className="form-field">
+            <span>Joining Date</span>
+            <input type="date" value={form.joiningDate} onChange={(e) => setForm((f) => ({ ...f, joiningDate: e.target.value }))} />
+          </label>
+        </div>
+      </div>
+
+      {/* ── Collection Settings ── */}
+      <div className="supplier-form-section">
+        <p className="eyebrow">Collection Settings</p>
+        <div className="form-grid">
+          <div className="form-field full-span">
+            <span>Sessions <em className="required">*</em></span>
+            <div className="supplier-session-toggles">
+              {["morning", "evening"].map((session) => (
+                <label key={session} className="supplier-session-option">
+                  <input type="checkbox" checked={form.collectionSessions.includes(session)} onChange={() => handleSessionToggle(session)} />
+                  <span>{session}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <label className="form-field">
+            <span>Morning Qty (L)</span>
+            <input type="number" min="0" step="0.1" value={form.defaultMorningQty} onChange={(e) => setForm((f) => ({ ...f, defaultMorningQty: e.target.value }))} placeholder="0" />
+          </label>
+          <label className="form-field">
+            <span>Evening Qty (L)</span>
+            <input type="number" min="0" step="0.1" value={form.defaultEveningQty} onChange={(e) => setForm((f) => ({ ...f, defaultEveningQty: e.target.value }))} placeholder="0" />
+          </label>
+          <label className="form-field">
+            <span>Rate / Liter (₹)</span>
+            <input type="number" min="0" step="0.01" value={form.defaultRatePerLiter} onChange={(e) => setForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))} placeholder="0.00" />
+          </label>
+        </div>
+      </div>
+
+      {/* ── Bank Details ── */}
+      <div className="supplier-form-section">
+        <p className="eyebrow">Bank Details</p>
+        <div className="form-grid">
+          <label className="form-field">
+            <span>Account Holder</span>
+            <input type="text" value={form.bankDetails.holderName} onChange={(e) => handleBankChange("holderName", e.target.value)} />
+          </label>
+          <label className="form-field">
+            <span>Account Number</span>
+            <input type="text" value={form.bankDetails.accountNo} onChange={(e) => handleBankChange("accountNo", e.target.value)} />
+          </label>
+          <label className="form-field">
+            <span>IFSC Code</span>
+            <input type="text" value={form.bankDetails.ifscCode} onChange={(e) => handleBankChange("ifscCode", e.target.value.toUpperCase())} placeholder="e.g. SBIN0001234" />
+          </label>
+          <label className="form-field">
+            <span>Bank Name</span>
+            <input type="text" value={form.bankDetails.bankName} onChange={(e) => handleBankChange("bankName", e.target.value)} />
+          </label>
+        </div>
+      </div>
+
+      {/* ── Notes ── */}
+      <div className="supplier-form-section">
+        <label className="form-field">
+          <span>Notes</span>
+          <textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Any additional notes..." />
+        </label>
+      </div>
+
+      {/* ── Save Actions ── */}
+      <div className="supplier-form-actions">
+        <button className="primary-button" onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </button>
+        {modalMode === "edit" && editingSupplier && (
+          <div className="supplier-form-actions-row">
+            <button
+              className={`mini-button ${editingSupplier.isActive ? "warning" : "active"}`}
+              onClick={() => { closeModal(); setConfirmAction({ type: "toggle", supplier: editingSupplier }); }}
+            >
+              {editingSupplier.isActive ? "Deactivate" : "Activate"}
+            </button>
+            <button
+              className="mini-button danger"
+              onClick={() => { closeModal(); setConfirmAction({ type: "delete", supplier: editingSupplier }); }}
+            >
+              Remove
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   const columns = useMemo(() => [
     {
       key: "name",
@@ -224,42 +346,39 @@ export default function SuppliersPage() {
       render: (row) => (
         <div className="table-actions" onClick={(e) => e.stopPropagation()}>
           <button className="mini-button" onClick={() => openEdit(row)}>Edit</button>
-          <button
-            className={`mini-button ${row.isActive ? "warning" : "active"}`}
-            onClick={() => setConfirmAction({ type: "toggle", supplier: row })}
-          >
-            {row.isActive ? "Deactivate" : "Activate"}
-          </button>
-          <button
-            className="mini-button danger"
-            onClick={() => setConfirmAction({ type: "delete", supplier: row })}
-          >
-            Remove
-          </button>
         </div>
       ),
     },
   ], [openEdit]);
 
   const renderCard = useCallback((row) => (
-    <div style={{ padding: "var(--space-4) var(--space-5)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <strong>{row.name}</strong>
-        {row.isActive ? <StatusTag value="active" /> : <StatusTag value="inactive" />}
+    <>
+      <div className="mc-head">
+        <div className="mc-identity">
+          <span className="mc-name">{row.name}</span>
+          <span className="mc-sub">{row.phone}{row.location ? ` · ${row.location}` : ""}</span>
+        </div>
+        <div className="supplier-card-actions">
+          <StatusTag value={row.isActive ? "active" : "inactive"} />
+          <button className="supplier-card-edit-btn" onClick={(e) => { e.stopPropagation(); openEdit(row); }} aria-label="Edit">
+            <Pencil size={14} />
+          </button>
+        </div>
       </div>
-      <div className="text-muted" style={{ fontSize: "0.9em", marginBottom: 4 }}>
-        {row.phone}{row.location ? ` · ${row.location}` : ""}
-      </div>
-      <div style={{ fontSize: "0.85em", display: "flex", gap: 12 }}>
-        <span>Rate: ₹{Number(row.defaultRatePerLiter || 0).toFixed(2)}/L</span>
-        {row.outstandingAmount > 0 && (
-          <span style={{ color: "var(--color-warning, #d97706)", fontWeight: 600 }}>
-            Due: {formatCurrency(row.outstandingAmount)}
+      <div className="mc-stats">
+        <div className="mc-stat">
+          <span className="mc-stat-label">Rate / L</span>
+          <span className="mc-stat-value">₹{Number(row.defaultRatePerLiter || 0).toFixed(2)}</span>
+        </div>
+        <div className="mc-stat">
+          <span className="mc-stat-label">Outstanding</span>
+          <span className={`mc-stat-value ${row.outstandingAmount > 0 ? "danger" : "muted"}`}>
+            {formatCurrency(row.outstandingAmount)}
           </span>
-        )}
+        </div>
       </div>
-    </div>
-  ), []);
+    </>
+  ), [openEdit]);
 
   if (loading && suppliers.length === 0) return <LoadingScreen />;
 
@@ -323,176 +442,48 @@ export default function SuppliersPage() {
         />
       </div>
 
-      <Modal
-        open={modalMode !== null}
-        onClose={closeModal}
-        title={modalMode === "create" ? "Add Farmer / Supplier" : "Edit Supplier"}
-        footer={
-          <div className="modal-actions">
-            <button className="mini-button" onClick={closeModal} disabled={saving}>Cancel</button>
-            <button className="mini-button active" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </div>
-        }
-      >
-        <div className="form-grid">
-          {/* Basic Info */}
-          <label className="form-field">
-            <span>Name <em className="required">*</em></span>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              required
-            />
-          </label>
-          <label className="form-field">
-            <span>Phone <em className="required">*</em></span>
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-              pattern="[0-9]{10}"
-              required
-            />
-          </label>
-          <label className="form-field">
-            <span>Email</span>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            />
-          </label>
-          <label className="form-field">
-            <span>Location (Village / Town)</span>
-            <input
-              type="text"
-              value={form.location}
-              onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-              placeholder="e.g. Vadgam"
-            />
-          </label>
-          <label className="form-field">
-            <span>Pincode</span>
-            <input
-              type="text"
-              value={form.pincode}
-              onChange={(e) => setForm((f) => ({ ...f, pincode: e.target.value }))}
-            />
-          </label>
-          <label className="form-field">
-            <span>Joining Date</span>
-            <input
-              type="date"
-              value={form.joiningDate}
-              onChange={(e) => setForm((f) => ({ ...f, joiningDate: e.target.value }))}
-            />
-          </label>
-
-          {/* Collection Settings */}
-          <div className="form-field" style={{ gridColumn: "1 / -1" }}>
-            <span>Collection Sessions <em className="required">*</em></span>
-            <div style={{ display: "flex", gap: 16, marginTop: 6 }}>
-              {["morning", "evening"].map((session) => (
-                <label key={session} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={form.collectionSessions.includes(session)}
-                    onChange={() => handleSessionToggle(session)}
-                  />
-                  <span style={{ textTransform: "capitalize" }}>{session}</span>
-                </label>
-              ))}
+      {isMobile ? (
+        <BottomSheet
+          isOpen={modalMode !== null}
+          onClose={closeModal}
+          title={modalMode === "create" ? "Add Farmer / Supplier" : "Edit Supplier"}
+        >
+          {supplierFormContent}
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={modalMode !== null}
+          onClose={closeModal}
+          title={modalMode === "create" ? "Add Farmer / Supplier" : "Edit Supplier"}
+          footer={
+            <div className="modal-actions">
+              <button className="mini-button" onClick={closeModal} disabled={saving}>Cancel</button>
+              <button className="primary-button" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save"}
+              </button>
+              {modalMode === "edit" && editingSupplier && (
+                <>
+                  <span className="modal-actions-sep" />
+                  <button
+                    className={`mini-button ${editingSupplier.isActive ? "warning" : "active"}`}
+                    onClick={() => { closeModal(); setConfirmAction({ type: "toggle", supplier: editingSupplier }); }}
+                  >
+                    {editingSupplier.isActive ? "Deactivate" : "Activate"}
+                  </button>
+                  <button
+                    className="mini-button danger"
+                    onClick={() => { closeModal(); setConfirmAction({ type: "delete", supplier: editingSupplier }); }}
+                  >
+                    Remove
+                  </button>
+                </>
+              )}
             </div>
-          </div>
-          <label className="form-field">
-            <span>Default Morning Qty (L)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              value={form.defaultMorningQty}
-              onChange={(e) => setForm((f) => ({ ...f, defaultMorningQty: e.target.value }))}
-              placeholder="0"
-            />
-          </label>
-          <label className="form-field">
-            <span>Default Evening Qty (L)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              value={form.defaultEveningQty}
-              onChange={(e) => setForm((f) => ({ ...f, defaultEveningQty: e.target.value }))}
-              placeholder="0"
-            />
-          </label>
-          <label className="form-field">
-            <span>Default Rate / Liter (₹)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.defaultRatePerLiter}
-              onChange={(e) => setForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))}
-              placeholder="0.00"
-            />
-          </label>
-
-          {/* Bank Details */}
-          <div className="form-field" style={{ gridColumn: "1 / -1" }}>
-            <span style={{ display: "block", marginBottom: 4, fontWeight: 600, fontSize: "0.85em", color: "var(--text-muted, #888)" }}>
-              BANK DETAILS
-            </span>
-          </div>
-          <label className="form-field">
-            <span>Account Holder Name</span>
-            <input
-              type="text"
-              value={form.bankDetails.holderName}
-              onChange={(e) => handleBankChange("holderName", e.target.value)}
-            />
-          </label>
-          <label className="form-field">
-            <span>Account Number</span>
-            <input
-              type="text"
-              value={form.bankDetails.accountNo}
-              onChange={(e) => handleBankChange("accountNo", e.target.value)}
-            />
-          </label>
-          <label className="form-field">
-            <span>IFSC Code</span>
-            <input
-              type="text"
-              value={form.bankDetails.ifscCode}
-              onChange={(e) => handleBankChange("ifscCode", e.target.value.toUpperCase())}
-              placeholder="e.g. SBIN0001234"
-            />
-          </label>
-          <label className="form-field">
-            <span>Bank Name</span>
-            <input
-              type="text"
-              value={form.bankDetails.bankName}
-              onChange={(e) => handleBankChange("bankName", e.target.value)}
-            />
-          </label>
-
-          {/* Notes */}
-          <label className="form-field" style={{ gridColumn: "1 / -1" }}>
-            <span>Notes</span>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              rows={2}
-              placeholder="Any additional notes..."
-            />
-          </label>
-        </div>
-      </Modal>
+          }
+        >
+          {supplierFormContent}
+        </Modal>
+      )}
 
       {confirmAction?.type === "toggle" && (
         <ConfirmDialog

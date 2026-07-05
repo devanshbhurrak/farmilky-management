@@ -7,8 +7,10 @@ import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
+import BottomSheet from "../components/ui/BottomSheet";
 import StatusTag from "../components/ui/StatusTag";
 import toast from "react-hot-toast";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 const fetchAreas = createApiFetch("/api/areas");
 const fetchAgents = createApiFetch("/api/areas/agents");
@@ -20,6 +22,7 @@ export default function AreasPage() {
   const { data: agentData } = useApiData(fetchAgents);
   const areas = areaData?.areas ?? [];
   const agents = agentData?.agents ?? [];
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -183,43 +186,77 @@ export default function AreasPage() {
         )}
       </div>
 
-      <Modal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        title={editing ? "Edit Area" : "Create Area"}
-        footer={
-          <>
-            <button className="btn btn-secondary btn-sm" onClick={() => setShowModal(false)}>Cancel</button>
-            <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save Area"}
-            </button>
-          </>
-        }
-      >
-        <div className="area-form-stack">
-          <div className="form-group">
-            <label>Area Name *</label>
-            <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Koramangala" />
+      {isMobile ? (
+        <BottomSheet isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? "Edit Area" : "Create Area"}>
+          <div className="area-form-stack">
+            <div className="form-group">
+              <label>Area Name *</label>
+              <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Koramangala" />
+            </div>
+            <div className="form-group">
+              <label>Pincodes (comma-separated)</label>
+              <input name="pincodes" value={form.pincodes} onChange={handleChange} placeholder="560034, 560095" />
+            </div>
+            <div className="form-group">
+              <label>Localities (comma-separated)</label>
+              <input name="localities" value={form.localities} onChange={handleChange} placeholder="Block 1, Sector A" />
+            </div>
+            <div className="form-group">
+              <label>Assign Agent</label>
+              <select name="assignedAgent" value={form.assignedAgent} onChange={handleChange}>
+                <option value="">-- No Agent --</option>
+                {agents.map((a) => (
+                  <option key={a._id} value={a._id}>{a.name} ({a.phone || a.email})</option>
+                ))}
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save Area"}
+              </button>
+            </div>
           </div>
-          <div className="form-group">
-            <label>Pincodes (comma-separated)</label>
-            <input name="pincodes" value={form.pincodes} onChange={handleChange} placeholder="560034, 560095" />
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          title={editing ? "Edit Area" : "Create Area"}
+          footer={
+            <>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save Area"}
+              </button>
+            </>
+          }
+        >
+          <div className="area-form-stack">
+            <div className="form-group">
+              <label>Area Name *</label>
+              <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Koramangala" />
+            </div>
+            <div className="form-group">
+              <label>Pincodes (comma-separated)</label>
+              <input name="pincodes" value={form.pincodes} onChange={handleChange} placeholder="560034, 560095" />
+            </div>
+            <div className="form-group">
+              <label>Localities (comma-separated)</label>
+              <input name="localities" value={form.localities} onChange={handleChange} placeholder="Block 1, Sector A" />
+            </div>
+            <div className="form-group">
+              <label>Assign Agent</label>
+              <select name="assignedAgent" value={form.assignedAgent} onChange={handleChange}>
+                <option value="">-- No Agent --</option>
+                {agents.map((a) => (
+                  <option key={a._id} value={a._id}>{a.name} ({a.phone || a.email})</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="form-group">
-            <label>Localities (comma-separated)</label>
-            <input name="localities" value={form.localities} onChange={handleChange} placeholder="Block 1, Sector A" />
-          </div>
-          <div className="form-group">
-            <label>Assign Agent</label>
-            <select name="assignedAgent" value={form.assignedAgent} onChange={handleChange}>
-              <option value="">-- No Agent --</option>
-              {agents.map((a) => (
-                <option key={a._id} value={a._id}>{a.name} ({a.phone || a.email})</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
 
       <ConfirmDialog
         open={!!deleteConfirm}
