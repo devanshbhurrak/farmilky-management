@@ -53,6 +53,7 @@ import "./styles/pages/invoices.css";
 import "./styles/pages/areas.css";
 import "./styles/pages/support.css";
 import "./styles/pages/suppliers.css";
+import "./styles/pages/milk-collections.css";
 
 function App() {
   const isMobile = useMediaQuery("(max-width: 768px)");
