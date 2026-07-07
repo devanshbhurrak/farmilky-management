@@ -9,6 +9,7 @@ export default function CustomerForm({ form, onChange, onSubmit, saving }) {
           value={form.name}
           onChange={(e) => onChange({ name: e.target.value })}
           placeholder="e.g., John Doe"
+          autoComplete="name"
           required
         />
       </div>
@@ -21,6 +22,7 @@ export default function CustomerForm({ form, onChange, onSubmit, saving }) {
             value={form.email}
             onChange={(e) => onChange({ email: e.target.value })}
             placeholder="john@example.com"
+            autoComplete="email"
             required
           />
         </div>
@@ -31,6 +33,7 @@ export default function CustomerForm({ form, onChange, onSubmit, saving }) {
             value={form.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
             placeholder="10-digit number"
+            autoComplete="tel"
             required
             pattern="[0-9]{10}"
           />
@@ -44,6 +47,7 @@ export default function CustomerForm({ form, onChange, onSubmit, saving }) {
           value={form.password}
           onChange={(e) => onChange({ password: e.target.value })}
           placeholder="Min 6 characters"
+          autoComplete="new-password"
           minLength={6}
           required={!form._id}
         />

@@ -46,6 +46,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               placeholder="name@farmilky.com"
+              autoComplete="email"
               required
             />
           </div>
@@ -61,14 +62,15 @@ export default function LoginPage() {
               value={form.password}
               onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
               placeholder="••••••••"
+              autoComplete="current-password"
               required
             />
           </div>
         </div>
 
-        <button className="primary-button" type="submit" disabled={loading} style={{ width: "100%", marginTop: "var(--space-4)", height: "52px", fontSize: "1.1rem" }}>
+        <button className="primary-button login-submit-btn" type="submit" disabled={loading}>
           {loading ? (
-            <Loader2 size={20} className="spin-icon" />
+            <Loader2 size={20} className="spin-icon" aria-hidden />
           ) : (
             "Sign In"
           )}

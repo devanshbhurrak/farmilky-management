@@ -48,10 +48,10 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
 
   return (
-    <div className="bottom-sheet-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div className="bottom-sheet-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby={title ? "sheet-title" : undefined}>
       <div className="bottom-sheet-content" onClick={(e) => e.stopPropagation()} ref={sheetRef}>
         <div className="bottom-sheet-header">
-          <div className="bottom-sheet-drag-handle" />
+          <div className="bottom-sheet-drag-handle" aria-hidden="true" />
           <div className="bottom-sheet-header-main">
             {title && <h3 id="sheet-title">{title}</h3>}
             <button className="bottom-sheet-close" onClick={onClose} aria-label="Close sheet">

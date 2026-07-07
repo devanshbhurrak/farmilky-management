@@ -263,7 +263,7 @@
   white-space: nowrap;
 }
 
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btn:focus-visible, .primary-button:focus-visible, .secondary-button:focus-visible, .mini-button:focus-visible {
   outline: none;
@@ -1193,6 +1193,11 @@
   .empty-state {
     padding: var(--space-8) var(--space-4);
   }
+
+  /* loading-screen — less wasted space on mobile */
+  .loading-screen {
+    min-height: 30vh;
+  }
 }
 
 /* card-grid: 2 columns at 480px for InfoCards */
@@ -1270,8 +1275,8 @@
 
 @media (max-width: 480px) {
   .pagination-pages .mini-button {
-    min-width: 40px;
-    min-height: 40px;
+    min-width: 44px;
+    min-height: 44px;
     font-size: var(--font-size-base);
   }
 }
@@ -1307,7 +1312,7 @@
 .fallback-card-row {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
   padding: var(--space-4) var(--space-5);
 }
 

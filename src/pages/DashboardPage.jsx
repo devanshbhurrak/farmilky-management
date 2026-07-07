@@ -68,7 +68,7 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
 
   return (
     <div className="view-stack">
-      <header className="page-header" style={{ marginBottom: "var(--space-4)" }}>
+      <header className="page-header">
         <div className="page-header-left">
           <h1 className="page-header-title">Dashboard</h1>
         </div>
@@ -104,13 +104,9 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
                     <strong>{item.name}</strong>
                     <span>{item.customerCount} customer stops</span>
                   </div>
-                  <div className="card-figure" style={{ textAlign: "right" }}>
-                    <strong style={{ fontSize: "var(--font-size-lg)" }}>
-                      {item.totalQuantity} {item.unit}
-                    </strong>
-                    <span style={{ color: "var(--color-primary-dark)", fontWeight: "bold" }}>
-                      {formatCurrency(item.totalAmount)}
-                    </span>
+                  <div className="card-figure card-figure-lg card-figure-primary">
+                    <strong>{item.totalQuantity} {item.unit}</strong>
+                    <span>{formatCurrency(item.totalAmount)}</span>
                   </div>
                 </div>
               ))
@@ -126,8 +122,8 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
                 <strong>Paused subscriptions</strong>
                 <span>Customers temporarily off route</span>
               </div>
-              <div className="card-figure">
-                <strong style={{ fontSize: "var(--font-size-xl)" }}>{overview.pausedSubscriptions}</strong>
+              <div className="card-figure card-figure-xl">
+                <strong>{overview.pausedSubscriptions}</strong>
               </div>
             </Link>
             <Link to="/subscriptions" className="list-card nav-link">
@@ -135,8 +131,8 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
                 <strong>Cancelled subscriptions</strong>
                 <span>Churn you may want to review</span>
               </div>
-              <div className="card-figure">
-                <strong style={{ fontSize: "var(--font-size-xl)" }}>{overview.cancelledSubscriptions}</strong>
+              <div className="card-figure card-figure-xl">
+                <strong>{overview.cancelledSubscriptions}</strong>
               </div>
             </Link>
             <Link to="/invoices" className="list-card nav-link">
@@ -144,10 +140,8 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
                 <strong>Pending subscription amount</strong>
                 <span>Open postpaid balance</span>
               </div>
-              <div className="card-figure">
-                <strong style={{ fontSize: "var(--font-size-xl)", color: "var(--danger)" }}>
-                  {formatCurrency(overview.pendingSubscriptionAmount)}
-                </strong>
+              <div className="card-figure card-figure-danger">
+                <strong>{formatCurrency(overview.pendingSubscriptionAmount)}</strong>
               </div>
             </Link>
           </div>
@@ -156,8 +150,8 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
 
       <div className="two-column-grid">
         <section className="panel">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-6)" }}>
-            <p className="eyebrow" style={{ marginBottom: 0 }}>Recent Orders</p>
+          <div className="panel-section-header">
+            <p className="eyebrow">Recent Orders</p>
             <Link to="/orders" className="btn btn-secondary btn-sm">View all</Link>
           </div>
           <div className="stack-list">
@@ -170,7 +164,7 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
                     <strong>{order.userId?.name || "Unknown"}</strong>
                     <span>{formatCurrency(order.totalAmount)} • {formatTime(order.createdAt)}</span>
                   </div>
-                  <div style={{ textAlign: "right" }}>
+                  <div className="card-figure">
                     <StatusTag value={order.orderStatus} />
                   </div>
                 </Link>
@@ -180,8 +174,8 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
         </section>
 
         <section className="panel">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-6)" }}>
-            <p className="eyebrow" style={{ marginBottom: 0 }}>Subscription Changes</p>
+          <div className="panel-section-header">
+            <p className="eyebrow">Subscription Changes</p>
             <Link to="/subscriptions" className="btn btn-secondary btn-sm">View all</Link>
           </div>
           <div className="stack-list">
@@ -194,7 +188,7 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
                     <strong>{sub.userId?.name || "Unknown"}</strong>
                     <span>{sub.productId?.name || "Product"} • {formatDate(sub.updatedAt || sub.createdAt)}</span>
                   </div>
-                  <div style={{ textAlign: "right" }}>
+                  <div className="card-figure">
                     <StatusTag value={sub.status} />
                   </div>
                 </Link>
@@ -247,14 +241,14 @@ export default function DashboardPage({ data, loading, onOrderUpdate, onSubscrip
                 ))}
               </div>
               {(perfData.openComplaints > 0 || perfData.pendingReturns > 0) && (
-                <div className="panel-divider" style={{ display: "flex", gap: "1.5rem" }}>
+                <div className="panel-divider panel-divider--flex">
                   {perfData.openComplaints > 0 && (
-                    <Link to="/complaints" className="rate-mid" style={{ fontSize: "0.875rem", textDecoration: "none" }}>
+                    <Link to="/complaints" className="rate-mid alert-link">
                       {perfData.openComplaints} open complaint{perfData.openComplaints > 1 ? "s" : ""}
                     </Link>
                   )}
                   {perfData.pendingReturns > 0 && (
-                    <Link to="/returns" className="rate-poor" style={{ fontSize: "0.875rem", textDecoration: "none" }}>
+                    <Link to="/returns" className="rate-poor alert-link">
                       {perfData.pendingReturns} pending return{perfData.pendingReturns > 1 ? "s" : ""}
                     </Link>
                   )}

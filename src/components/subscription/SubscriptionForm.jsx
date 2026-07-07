@@ -96,9 +96,7 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
           <label>
             Price per Unit (₹)
             {isCustomPrice && (
-              <span style={{ marginLeft: '6px', fontSize: '10px', fontWeight: 'bold', color: 'var(--color-warning, #b45309)', background: 'var(--warning-bg, #fef3c7)', borderRadius: '4px', padding: '1px 6px' }}>
-                CUSTOM
-              </span>
+              <span className="price-custom-badge">CUSTOM</span>
             )}
           </label>
           <input
@@ -110,7 +108,7 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
             placeholder={selectedProduct ? `Default: ₹${standardPrice}` : 'Select a product first'}
           />
           {selectedProduct && (
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', display: 'block' }}>
+            <span className="form-helper-text">
               {selectedVariant ? `Variant rate: ₹${standardPrice}/${selectedVariant.unit}` : `Standard rate: ₹${standardPrice}/${selectedProduct.unit}`}
               {isCustomPrice && ' — custom rate will override'}
             </span>

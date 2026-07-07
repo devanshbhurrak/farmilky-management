@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Truck, ShoppingCart, MoreHorizontal, ClipboardList } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
-export default function BottomNav({ onMoreClick }) {
+export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
   const { isAdmin } = useAuth();
 
   if (!isAdmin) {
@@ -73,8 +73,8 @@ export default function BottomNav({ onMoreClick }) {
             </>
           )}
         </NavLink>
-        <button type="button" className="nav-item" onClick={onMoreClick} aria-haspopup="dialog">
-          <MoreHorizontal size={24} />
+        <button type="button" className="nav-item" onClick={onMoreClick} aria-haspopup="dialog" aria-expanded={isDrawerOpen}>
+          <MoreHorizontal size={24} aria-hidden />
           <span>More</span>
         </button>
       </div>

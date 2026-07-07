@@ -48,6 +48,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
               className={p === page ? "mini-button active" : "mini-button"}
               onClick={() => onPageChange(p)}
               type="button"
+              aria-current={p === page ? "page" : undefined}
             >
               {p}
             </button>
@@ -88,6 +89,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
               className={p === page ? "mini-button active" : "mini-button"}
               onClick={() => onPageChange(p)}
               type="button"
+              aria-current={p === page ? "page" : undefined}
             >
               {p}
             </button>

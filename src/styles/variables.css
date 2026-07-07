@@ -81,7 +81,7 @@
   /* ─── Borders & Focus ───────────────────────────── */
   --border-soft:   #e2e8f0;
   --border-strong: #cbd5e1;
-  --focus-ring: rgba(16, 185, 129, 0.2);
+  --focus-ring: rgba(16, 185, 129, 0.35);
 
   /* ─── Semantic Colors ───────────────────────────── */
   --danger:      #ef4444;

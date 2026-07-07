@@ -24,6 +24,7 @@ export default function SearchInput({ value, onChange, placeholder = "Search..."
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder}
       />
     </label>
   );

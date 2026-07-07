@@ -55,20 +55,22 @@ export default function MobileDrawer({ isOpen, onClose }) {
             </button>
           </div>
         <div className="mobile-drawer-inner">
-          <div className="drawer-nav">
-            {items.map((item) => (
-              <NavLink
-                key={item.id}
-                to={item.path}
-                end={item.path === "/"}
-                className="drawer-link"
-                onClick={onClose}
-              >
-                <NavIcon name={item.icon} size={20} />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-          </div>
+          <nav aria-label="More navigation">
+            <div className="drawer-nav">
+              {items.map((item) => (
+                <NavLink
+                  key={item.id}
+                  to={item.path}
+                  end={item.path === "/"}
+                  className="drawer-link"
+                  onClick={onClose}
+                >
+                  <NavIcon name={item.icon} size={20} />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </nav>
         </div>
       </div>
     </div>

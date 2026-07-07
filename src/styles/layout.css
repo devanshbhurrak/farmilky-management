@@ -387,7 +387,7 @@
   gap: var(--space-2);
   margin: 0;
   padding: 0;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-extrabold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -611,6 +611,9 @@
   font-size: var(--font-size-sm);
   transition: all var(--duration-base);
   border: 2px solid transparent;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .drawer-link.active {
@@ -632,7 +635,7 @@
 
 .bottom-sheet-content {
   width: 100%;
-  max-height: 85vh;
+  max-height: calc(100dvh - 60px);
   background: var(--surface);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   display: flex;
@@ -657,7 +660,7 @@
 .modal-content {
   width: 100%;
   max-width: 600px;
-  max-height: 90vh;
+  max-height: calc(100dvh - 60px);
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
@@ -850,6 +853,7 @@
 .sidebar-link.active {
   background: var(--sidebar-active-bg);
   color: var(--color-primary-dark);
+  font-weight: var(--font-weight-bold);
   box-shadow: inset 3px 0 0 var(--color-primary);
 }
 

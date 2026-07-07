@@ -202,6 +202,53 @@
   margin-top: 1rem;
 }
 
+.panel-divider--flex {
+  display: flex;
+  gap: var(--space-6);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Section header row: title + "View all" link */
+.panel-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.panel-section-header .eyebrow {
+  margin-bottom: 0 !important;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Card figure text size variants */
+.card-figure-lg strong {
+  font-size: var(--font-size-lg);
+}
+
+.card-figure-xl strong {
+  font-size: var(--font-size-xl);
+}
+
+.card-figure-danger strong {
+  font-size: var(--font-size-xl);
+  color: var(--danger);
+}
+
+.card-figure-primary span {
+  color: var(--color-primary-dark);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Alert links in panel divider */
+.alert-link {
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+}
+
 /* ─── Premium Dashboard UI Enhancements ──────── */
 
 /* 1. Hero Welcome Banner */

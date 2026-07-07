@@ -7,11 +7,12 @@ export default function DeliveryCard({ item, index, onSelect, isSelected, onActi
       <div className="delivery-head">
         <div className="stop-selector">
           {item.canRecordOutcome !== false && (
-            <input 
-              type="checkbox" 
-              checked={isSelected} 
-              onChange={() => onSelect(item.id)} 
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onSelect(item.id)}
               id={`stop-${item.id}`}
+              aria-label={`Select stop ${index + 1} — ${item.customerName || "Unknown Customer"}`}
             />
           )}
           <label htmlFor={`stop-${item.id}`} className="stop-pill">Stop {index + 1}</label>

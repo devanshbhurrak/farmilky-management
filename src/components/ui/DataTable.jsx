@@ -105,6 +105,7 @@ export default function DataTable({
             {columns.map((col) => (
               <th
                 key={col.key}
+                scope="col"
                 onClick={() => col.sortable !== false && handleSort(col.key)}
                 style={col.sortable !== false ? { cursor: "pointer", userSelect: "none" } : undefined}
               >

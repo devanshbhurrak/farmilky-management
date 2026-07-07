@@ -1,6 +1,22 @@
 .table-shell {
   overflow-x: auto;
   background: var(--surface);
+  position: relative;
+}
+
+/* Subtle right-edge fade to hint at horizontal scrollability on smaller viewports */
+@media (max-width: 900px) {
+  .table-shell::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 32px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.9));
+    pointer-events: none;
+    z-index: 2;
+  }
 }
 
 table {
