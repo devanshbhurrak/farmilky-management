@@ -12,7 +12,7 @@ export default function InfoCard({ title, value, icon: Icon, color = "primary", 
     <div className="info-card-inner">
       {Icon && (
         <div className="info-card-icon">
-          <Icon size={20} />
+          <Icon size={24} />
         </div>
       )}
       <div className="info-card-body">

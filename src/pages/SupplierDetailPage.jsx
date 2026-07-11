@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Pencil, ChevronDown } from "lucide-react";
+import { Pencil, ChevronDown, SquarePen, Trash2 } from "lucide-react";
 import { apiRequest } from "../api/client";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
@@ -47,10 +47,29 @@ export default function SupplierDetailPage() {
   const [paymentForm, setPaymentForm] = useState({ ...PAYMENT_EMPTY });
   const [savingPayment, setSavingPayment] = useState(false);
 
+  const [passbookData, setPassbookData] = useState(null);
+  const [passbookLoading, setPassbookLoading] = useState(false);
+  const [adjOpen, setAdjOpen] = useState(false);
+  const [adjForm, setAdjForm] = useState({
+    type: "debit", category: "other", amount: "",
+    date: new Date().toISOString().split("T")[0], description: "", notes: "",
+  });
+  const [savingAdj, setSavingAdj] = useState(false);
+
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+
+  const [colEditTarget, setColEditTarget] = useState(null); // collection being edited
+  const [colEditForm, setColEditForm] = useState({});
+  const [savingCol, setSavingCol] = useState(false);
+
+  const [colConfirmTarget, setColConfirmTarget] = useState(null); // pending collection to confirm
+  const [colConfirmForm, setColConfirmForm] = useState({});
+  const [savingConfirm, setSavingConfirm] = useState(false);
+
+  const [periodTotal, setPeriodTotal] = useState(null); // { collectionTotal, collectionCount }
 
   const fetchSupplier = useCallback(async () => {
     setLoading(true);
@@ -110,14 +129,33 @@ export default function SupplierDetailPage() {
   useEffect(() => { fetchCollectionsRef.current = fetchCollections; }, [fetchCollections]);
   useEffect(() => { fetchPaymentsRef.current = fetchPayments; }, [fetchPayments]);
 
+  const fetchPassbook = useCallback(async () => {
+    setPassbookLoading(true);
+    try {
+      const res = await apiRequest(`/api/suppliers/${id}/passbook`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setPassbookData(data);
+    } catch (err) {
+      toast.error(err.message || "Failed to load passbook.");
+    } finally {
+      setPassbookLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (activeTab === "collections") fetchCollectionsRef.current();
     if (activeTab === "payments") fetchPaymentsRef.current();
-  }, [activeTab]);
+    if (activeTab === "passbook") fetchPassbook();
+  }, [activeTab, fetchPassbook]);
 
   const handleRecordPayment = useCallback(async () => {
-    if (!paymentForm.amount || !paymentForm.fromDate || !paymentForm.toDate) {
-      toast.error("Amount, from date, and to date are required.");
+    if (!paymentForm.fromDate || !paymentForm.toDate) {
+      toast.error("From date and to date are required.");
+      return;
+    }
+    if (!paymentForm.amount || parseFloat(paymentForm.amount) <= 0) {
+      toast.error("Please enter a valid payment amount.");
       return;
     }
     setSavingPayment(true);
@@ -136,9 +174,15 @@ export default function SupplierDetailPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      toast.success(data.message);
+      let msg = data.message;
+      if (data.adjustment) {
+        const adj = data.adjustment;
+        msg += ` ${adj.type === "credit" ? "+" : "−"}${formatCurrency(adj.amount)} auto-adjusted.`;
+      }
+      toast.success(msg);
       setPaymentModal(false);
       setPaymentForm({ ...PAYMENT_EMPTY });
+      setPeriodTotal(null);
       fetchSupplier();
       fetchPayments();
     } catch (err) {
@@ -147,6 +191,150 @@ export default function SupplierDetailPage() {
       setSavingPayment(false);
     }
   }, [id, paymentForm, fetchSupplier, fetchPayments]);
+
+  const fetchPeriodTotal = useCallback(async (fromDate, toDate) => {
+    if (!fromDate || !toDate) { setPeriodTotal(null); return; }
+    try {
+      const params = new URLSearchParams({ supplierId: id, from: fromDate, to: toDate });
+      const res = await apiRequest(`/api/supplier-payments/collection-total?${params}`);
+      const data = await res.json();
+      if (res.ok) {
+        setPeriodTotal(data);
+        if (data.collectionTotal > 0) {
+          setPaymentForm((f) => ({ ...f, amount: data.collectionTotal.toFixed(2) }));
+        }
+      }
+    } catch { setPeriodTotal(null); }
+  }, [id]);
+
+  const openPaymentModal = useCallback(() => {
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const toDate = yest.toISOString().split("T")[0];
+    setPeriodTotal(null);
+    setPaymentForm({ ...PAYMENT_EMPTY, toDate });
+    setPaymentModal(true);
+  }, []);
+
+  const handleCreateAdjustment = useCallback(async () => {
+    if (!adjForm.amount || !adjForm.description || !adjForm.date) {
+      toast.error("Amount, date, and description are required.");
+      return;
+    }
+    setSavingAdj(true);
+    try {
+      const res = await apiRequest(`/api/suppliers/${id}/adjustments`, {
+        method: "POST",
+        body: JSON.stringify(adjForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      toast.success("Adjustment recorded.");
+      setAdjOpen(false);
+      setAdjForm({ type: "debit", category: "other", amount: "", date: new Date().toISOString().split("T")[0], description: "", notes: "" });
+      fetchPassbook();
+      fetchSupplier();
+    } catch (err) {
+      toast.error(err.message || "Failed to record adjustment.");
+    } finally {
+      setSavingAdj(false);
+    }
+  }, [id, adjForm, fetchPassbook, fetchSupplier]);
+
+  const handleDeleteAdjustment = useCallback(async (adjId) => {
+    try {
+      const res = await apiRequest(`/api/suppliers/${id}/adjustments/${adjId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      toast.success("Adjustment deleted.");
+      fetchPassbook();
+      fetchSupplier();
+    } catch (err) {
+      toast.error(err.message || "Failed to delete adjustment.");
+    }
+  }, [id, fetchPassbook, fetchSupplier]);
+
+  const openColConfirm = useCallback((c) => {
+    setColConfirmTarget(c);
+    setColConfirmForm({
+      actualQty: c.expectedQty?.toString() ?? "",
+      ratePerLiter: c.ratePerLiter?.toString() ?? "",
+      fatContent: "",
+      snf: "",
+      notes: "",
+    });
+  }, []);
+
+  const handleColConfirm = useCallback(async () => {
+    if (!colConfirmTarget) return;
+    if (!colConfirmForm.actualQty || !colConfirmForm.ratePerLiter) {
+      toast.error("Actual quantity and rate are required.");
+      return;
+    }
+    setSavingConfirm(true);
+    try {
+      const body = {
+        actualQty: parseFloat(colConfirmForm.actualQty),
+        ratePerLiter: parseFloat(colConfirmForm.ratePerLiter),
+        fatContent: colConfirmForm.fatContent !== "" ? parseFloat(colConfirmForm.fatContent) : null,
+        snf: colConfirmForm.snf !== "" ? parseFloat(colConfirmForm.snf) : null,
+        notes: colConfirmForm.notes,
+      };
+      const res = await apiRequest(`/api/milk-collections/${colConfirmTarget._id}/confirm`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      toast.success("Collection confirmed.");
+      setColConfirmTarget(null);
+      fetchCollections();
+      fetchSupplier();
+    } catch (err) {
+      toast.error(err.message || "Failed to confirm collection.");
+    } finally {
+      setSavingConfirm(false);
+    }
+  }, [colConfirmTarget, colConfirmForm, fetchCollections, fetchSupplier]);
+
+  const openColEdit = useCallback((c) => {
+    setColEditTarget(c);
+    setColEditForm({
+      actualQty: c.actualQty?.toString() ?? "",
+      ratePerLiter: c.ratePerLiter?.toString() ?? "",
+      fatContent: c.fatContent?.toString() ?? "",
+      snf: c.snf?.toString() ?? "",
+      notes: c.notes ?? "",
+    });
+  }, []);
+
+  const handleColSave = useCallback(async () => {
+    if (!colEditTarget) return;
+    setSavingCol(true);
+    try {
+      const body = {
+        actualQty: colEditForm.actualQty !== "" ? parseFloat(colEditForm.actualQty) : undefined,
+        ratePerLiter: colEditForm.ratePerLiter !== "" ? parseFloat(colEditForm.ratePerLiter) : undefined,
+        fatContent: colEditForm.fatContent !== "" ? parseFloat(colEditForm.fatContent) : null,
+        snf: colEditForm.snf !== "" ? parseFloat(colEditForm.snf) : null,
+        notes: colEditForm.notes,
+      };
+      const res = await apiRequest(`/api/milk-collections/${colEditTarget._id}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      toast.success("Collection updated.");
+      setColEditTarget(null);
+      fetchCollections();
+      fetchSupplier();
+    } catch (err) {
+      toast.error(err.message || "Failed to update collection.");
+    } finally {
+      setSavingCol(false);
+    }
+  }, [colEditTarget, colEditForm, fetchCollections, fetchSupplier]);
 
   const openEdit = useCallback(() => {
     if (!supplier) return;
@@ -293,6 +481,9 @@ export default function SupplierDetailPage() {
             >
               {formatCurrency(supplier.outstandingAmount)}
             </span>
+            <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "2px", display: "block" }}>
+              Supply: {formatCurrency(supplier.supplyBalance)} · Passbook: {formatCurrency(supplier.passbookBalance)}
+            </span>
           </div>
         </div>
 
@@ -377,6 +568,12 @@ export default function SupplierDetailPage() {
           >
             Payments
           </button>
+          <button
+            className={`tab-pill ${activeTab === "passbook" ? "active" : ""}`}
+            onClick={() => setActiveTab("passbook")}
+          >
+            Passbook
+          </button>
         </div>
 
         {/* ── Collections Tab ──────────────────────── */}
@@ -443,7 +640,11 @@ export default function SupplierDetailPage() {
                       </div>
                       <div className="sc-card-badges">
                         <StatusTag value={c.status} />
-                        {c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}
+                        {c.status === "confirmed" && (c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />)}
+                        {c.status === "pending"
+                          ? <button className="mini-button active" style={{ fontSize: "11px", padding: "2px 8px" }} onClick={() => openColConfirm(c)}>Confirm</button>
+                          : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={13} /></button>
+                        }
                       </div>
                     </div>
                     {/* Row 1: Actual · Fat · SNF */}
@@ -468,8 +669,14 @@ export default function SupplierDetailPage() {
                         <strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong>
                       </div>
                       <div className="sc-stat sc-stat--amount">
-                        <span>Amount</span>
-                        <strong>{c.totalAmount != null ? formatCurrency(c.totalAmount) : "—"}</strong>
+                        <span>{c.totalAmount != null ? "Amount" : "Est. Amount"}</span>
+                        <strong>
+                          {c.totalAmount != null
+                            ? formatCurrency(c.totalAmount)
+                            : c.expectedQty && c.ratePerLiter
+                              ? formatCurrency(c.expectedQty * c.ratePerLiter)
+                              : "—"}
+                        </strong>
                       </div>
                     </div>
                   </div>
@@ -491,6 +698,7 @@ export default function SupplierDetailPage() {
                       <th>Amount</th>
                       <th>Status</th>
                       <th>Payment</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -504,10 +712,20 @@ export default function SupplierDetailPage() {
                         <td>{c.snf != null ? c.snf : <span className="muted-text">—</span>}</td>
                         <td>₹{Number(c.ratePerLiter || 0).toFixed(2)}</td>
                         <td style={{ fontWeight: 600 }}>
-                          {c.totalAmount != null ? formatCurrency(c.totalAmount) : <span className="muted-text">—</span>}
+                          {c.totalAmount != null
+                            ? formatCurrency(c.totalAmount)
+                            : c.expectedQty && c.ratePerLiter
+                              ? <span className="muted-text">{formatCurrency(c.expectedQty * c.ratePerLiter)}*</span>
+                              : <span className="muted-text">—</span>}
                         </td>
                         <td><StatusTag value={c.status} /></td>
-                        <td>{c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}</td>
+                        <td>{c.status === "confirmed" ? (c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />) : null}</td>
+                        <td>
+                          {c.status === "pending"
+                            ? <button className="mini-button active" style={{ fontSize: "11px", padding: "2px 10px" }} onClick={() => openColConfirm(c)}>Confirm</button>
+                            : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={13} /></button>
+                          }
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -523,7 +741,7 @@ export default function SupplierDetailPage() {
             <div className="tab-action-row">
               <button
                 className="primary-button"
-                onClick={() => { setPaymentForm({ ...PAYMENT_EMPTY }); setPaymentModal(true); }}
+                onClick={openPaymentModal}
               >
                 Record Payment
               </button>
@@ -595,6 +813,59 @@ export default function SupplierDetailPage() {
             )}
           </div>
         )}
+
+        {activeTab === "passbook" && (
+          <div className="tab-content">
+            <div className="tab-action-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                Passbook Balance: <strong className={passbookData?.supplier?.passbookBalance > 0 ? "danger-text" : passbookData?.supplier?.passbookBalance < 0 ? "success-text" : ""}>{formatCurrency(passbookData?.supplier?.passbookBalance || 0)}</strong>
+              </span>
+              <button className="primary-button" onClick={() => setAdjOpen(true)}>
+                Add Adjustment
+              </button>
+            </div>
+            {passbookLoading ? (
+              <div className="tab-loading">Loading passbook…</div>
+            ) : !passbookData || passbookData.entries.length === 0 ? (
+              <EmptyState text="No passbook entries yet." />
+            ) : (
+              <div className="stack-list">
+                {passbookData.entries.map((entry) => (
+                  <div key={entry._id} className="list-card">
+                    <div>
+                      <strong>{entry.description}</strong>
+                      <span>
+                        {formatDate(entry.date)}
+                        {entry.notes ? ` · ${entry.notes}` : ""}
+                        {entry.recordedBy ? ` · by ${entry.recordedBy}` : ""}
+                        {entry.isAuto ? " · auto" : ""}
+                      </span>
+                    </div>
+                    <div className="card-figure" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+                      <div style={{ textAlign: "right" }}>
+                        <strong style={{ color: entry.type === "credit" ? "var(--color-primary-dark)" : "var(--danger-text)", display: "block" }}>
+                          {entry.type === "credit" ? "+" : "−"}{formatCurrency(entry.amount)}
+                        </strong>
+                        <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "capitalize" }}>
+                          {entry.category?.replace("_", " ")}
+                        </span>
+                      </div>
+                      {!entry.isAuto && (
+                        <button
+                          className="supplier-card-edit-btn"
+                          onClick={() => handleDeleteAdjustment(entry._id)}
+                          title="Delete"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* ── Record Payment Modal ─────────────────────── */}
@@ -615,6 +886,32 @@ export default function SupplierDetailPage() {
       >
         <div className="form-grid">
           <label className="form-field">
+            <span>From Date <em>*</em></span>
+            <input
+              type="date"
+              value={paymentForm.fromDate}
+              onChange={(e) => {
+                const fromDate = e.target.value;
+                setPaymentForm((f) => ({ ...f, fromDate }));
+                fetchPeriodTotal(fromDate, paymentForm.toDate);
+              }}
+              required
+            />
+          </label>
+          <label className="form-field">
+            <span>To Date <em>*</em></span>
+            <input
+              type="date"
+              value={paymentForm.toDate}
+              onChange={(e) => {
+                const toDate = e.target.value;
+                setPaymentForm((f) => ({ ...f, toDate }));
+                fetchPeriodTotal(paymentForm.fromDate, toDate);
+              }}
+              required
+            />
+          </label>
+          <label className="form-field" style={{ gridColumn: "1 / -1" }}>
             <span>Amount (₹) <em>*</em></span>
             <input
               type="number"
@@ -623,8 +920,18 @@ export default function SupplierDetailPage() {
               value={paymentForm.amount}
               onChange={(e) => setPaymentForm((f) => ({ ...f, amount: e.target.value }))}
               placeholder="0.00"
-              required
             />
+            {periodTotal && (
+              <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
+                Collections in period: {formatCurrency(periodTotal.collectionTotal)} ({periodTotal.collectionCount} entries)
+                {paymentForm.amount && Math.abs(parseFloat(paymentForm.amount || 0) - periodTotal.collectionTotal) > 0.01
+                  ? (() => {
+                      const diff = parseFloat(paymentForm.amount || 0) - periodTotal.collectionTotal;
+                      return ` · Diff: ${diff > 0 ? "−" : "+"}${formatCurrency(Math.abs(diff))} (auto-adjusted)`;
+                    })()
+                  : ""}
+              </span>
+            )}
           </label>
           <label className="form-field">
             <span>Payment Method</span>
@@ -636,24 +943,6 @@ export default function SupplierDetailPage() {
               <option value="bank_transfer">Bank Transfer</option>
               <option value="upi">UPI</option>
             </select>
-          </label>
-          <label className="form-field">
-            <span>From Date <em>*</em></span>
-            <input
-              type="date"
-              value={paymentForm.fromDate}
-              onChange={(e) => setPaymentForm((f) => ({ ...f, fromDate: e.target.value }))}
-              required
-            />
-          </label>
-          <label className="form-field">
-            <span>To Date <em>*</em></span>
-            <input
-              type="date"
-              value={paymentForm.toDate}
-              onChange={(e) => setPaymentForm((f) => ({ ...f, toDate: e.target.value }))}
-              required
-            />
           </label>
           <label className="form-field">
             <span>Transaction Reference</span>
@@ -784,6 +1073,169 @@ export default function SupplierDetailPage() {
           </div>
         </Modal>
       ))}
+
+      {/* ── Confirm Collection Modal ────────────────── */}
+      <Modal
+        open={!!colConfirmTarget}
+        onClose={() => setColConfirmTarget(null)}
+        title={colConfirmTarget ? `Confirm — ${formatDate(colConfirmTarget.date)} ${colConfirmTarget.session}` : "Confirm Collection"}
+        footer={
+          <div className="modal-actions">
+            <button className="mini-button" onClick={() => setColConfirmTarget(null)} disabled={savingConfirm}>Cancel</button>
+            <button className="mini-button active" onClick={handleColConfirm} disabled={savingConfirm}>
+              {savingConfirm ? "Confirming…" : "Confirm"}
+            </button>
+          </div>
+        }
+      >
+        <div className="form-grid">
+          <label className="form-field">
+            <span>Actual Qty (L) <em>*</em></span>
+            <input type="number" min="0" step="0.1"
+              value={colConfirmForm.actualQty}
+              onChange={(e) => setColConfirmForm((f) => ({ ...f, actualQty: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>Rate / Liter (₹) <em>*</em></span>
+            <input type="number" min="0" step="0.01"
+              value={colConfirmForm.ratePerLiter}
+              onChange={(e) => setColConfirmForm((f) => ({ ...f, ratePerLiter: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>Fat %</span>
+            <input type="number" min="0" step="0.01"
+              value={colConfirmForm.fatContent}
+              onChange={(e) => setColConfirmForm((f) => ({ ...f, fatContent: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>SNF %</span>
+            <input type="number" min="0" step="0.01"
+              value={colConfirmForm.snf}
+              onChange={(e) => setColConfirmForm((f) => ({ ...f, snf: e.target.value }))}
+            />
+          </label>
+          <label className="form-field" style={{ gridColumn: "1 / -1" }}>
+            <span>Notes</span>
+            <textarea rows={2}
+              value={colConfirmForm.notes}
+              onChange={(e) => setColConfirmForm((f) => ({ ...f, notes: e.target.value }))}
+            />
+          </label>
+        </div>
+      </Modal>
+
+      {/* ── Add Adjustment Modal ─────────────────────────── */}
+      <Modal
+        open={adjOpen}
+        onClose={() => setAdjOpen(false)}
+        title="Add Adjustment"
+        footer={
+          <div className="modal-actions">
+            <button className="mini-button" onClick={() => setAdjOpen(false)} disabled={savingAdj}>Cancel</button>
+            <button className="mini-button active" onClick={handleCreateAdjustment} disabled={savingAdj}>
+              {savingAdj ? "Saving…" : "Save"}
+            </button>
+          </div>
+        }
+      >
+        <div className="form-grid">
+          <label className="form-field">
+            <span>Type <em>*</em></span>
+            <select value={adjForm.type} onChange={(e) => setAdjForm((f) => ({ ...f, type: e.target.value }))}>
+              <option value="debit">Debit (reduce balance)</option>
+              <option value="credit">Credit (increase balance)</option>
+            </select>
+          </label>
+          <label className="form-field">
+            <span>Category <em>*</em></span>
+            <select value={adjForm.category} onChange={(e) => setAdjForm((f) => ({ ...f, category: e.target.value }))}>
+              <option value="advance">Advance</option>
+              <option value="transport">Transport</option>
+              <option value="quality_bonus">Quality Bonus</option>
+              <option value="quality_penalty">Quality Penalty</option>
+              <option value="rounding">Rounding</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label className="form-field">
+            <span>Amount (₹) <em>*</em></span>
+            <input type="number" min="0" step="0.01" value={adjForm.amount}
+              onChange={(e) => setAdjForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
+          </label>
+          <label className="form-field">
+            <span>Date <em>*</em></span>
+            <input type="date" value={adjForm.date}
+              onChange={(e) => setAdjForm((f) => ({ ...f, date: e.target.value }))} />
+          </label>
+          <label className="form-field" style={{ gridColumn: "1 / -1" }}>
+            <span>Description <em>*</em></span>
+            <input type="text" value={adjForm.description}
+              onChange={(e) => setAdjForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="e.g. Transport deduction for Jan week 2" />
+          </label>
+          <label className="form-field" style={{ gridColumn: "1 / -1" }}>
+            <span>Notes</span>
+            <textarea rows={2} value={adjForm.notes}
+              onChange={(e) => setAdjForm((f) => ({ ...f, notes: e.target.value }))} />
+          </label>
+        </div>
+      </Modal>
+
+      {/* ── Edit Collection Modal ───────────────────── */}
+      <Modal
+        open={!!colEditTarget}
+        onClose={() => setColEditTarget(null)}
+        title={colEditTarget ? `Edit — ${formatDate(colEditTarget.date)} ${colEditTarget.session}` : "Edit Collection"}
+        footer={
+          <div className="modal-actions">
+            <button className="mini-button" onClick={() => setColEditTarget(null)} disabled={savingCol}>Cancel</button>
+            <button className="mini-button active" onClick={handleColSave} disabled={savingCol}>
+              {savingCol ? "Saving…" : "Save"}
+            </button>
+          </div>
+        }
+      >
+        <div className="form-grid">
+          <label className="form-field">
+            <span>Actual Qty (L)</span>
+            <input type="number" min="0" step="0.1"
+              value={colEditForm.actualQty}
+              onChange={(e) => setColEditForm((f) => ({ ...f, actualQty: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>Rate / Liter (₹)</span>
+            <input type="number" min="0" step="0.01"
+              value={colEditForm.ratePerLiter}
+              onChange={(e) => setColEditForm((f) => ({ ...f, ratePerLiter: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>Fat %</span>
+            <input type="number" min="0" step="0.01"
+              value={colEditForm.fatContent}
+              onChange={(e) => setColEditForm((f) => ({ ...f, fatContent: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>SNF %</span>
+            <input type="number" min="0" step="0.01"
+              value={colEditForm.snf}
+              onChange={(e) => setColEditForm((f) => ({ ...f, snf: e.target.value }))}
+            />
+          </label>
+          <label className="form-field" style={{ gridColumn: "1 / -1" }}>
+            <span>Notes</span>
+            <textarea rows={2}
+              value={colEditForm.notes}
+              onChange={(e) => setColEditForm((f) => ({ ...f, notes: e.target.value }))}
+            />
+          </label>
+        </div>
+      </Modal>
 
       {/* ── Confirm Dialogs ─────────────────────────── */}
       {confirmAction?.type === "toggle" && (

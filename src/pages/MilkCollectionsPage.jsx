@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { RefreshCw, CheckCheck, AlertTriangle, Download } from "lucide-react";
+import { RefreshCw, CheckCheck, AlertTriangle, Download, ChevronDown, SquarePen } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -134,6 +134,25 @@ export default function MilkCollectionsPage() {
   // Input refs for keyboard navigation (actualQty inputs keyed by collection id)
   const inputRefs = useRef({});
 
+  // Collapsible cards — pending cards start open, confirmed start closed
+  const [openCards, setOpenCards] = useState(() => new Set());
+
+  useEffect(() => {
+    setOpenCards(prev => {
+      const next = new Set(prev);
+      collections.filter(c => c.status === "pending").forEach(c => next.add(c._id));
+      return next;
+    });
+  }, [collections]);
+
+  const toggleCard = useCallback((id) => {
+    setOpenCards(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
   // Missing entries
   const [missing, setMissing] = useState([]);
   const [showMissingModal, setShowMissingModal] = useState(false);
@@ -148,6 +167,11 @@ export default function MilkCollectionsPage() {
   const [history, setHistory] = useState([]);
   const [historySummary, setHistorySummary] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+
+  // Collection edit
+  const [colEditTarget, setColEditTarget] = useState(null);
+  const [colEditForm, setColEditForm] = useState({});
+  const [savingCol, setSavingCol] = useState(false);
 
   // ─── Derived data ──────────────────────────────────────────────────────────
 
@@ -431,6 +455,44 @@ export default function MilkCollectionsPage() {
     }
   }, [historyFilters]);
 
+  const openColEdit = useCallback((c) => {
+    setColEditTarget(c);
+    setColEditForm({
+      actualQty: c.actualQty?.toString() ?? "",
+      ratePerLiter: c.ratePerLiter?.toString() ?? "",
+      fatContent: c.fatContent?.toString() ?? "",
+      snf: c.snf?.toString() ?? "",
+      notes: c.notes ?? "",
+    });
+  }, []);
+
+  const handleColSave = useCallback(async () => {
+    if (!colEditTarget) return;
+    setSavingCol(true);
+    try {
+      const body = {
+        actualQty: colEditForm.actualQty !== "" ? parseFloat(colEditForm.actualQty) : undefined,
+        ratePerLiter: colEditForm.ratePerLiter !== "" ? parseFloat(colEditForm.ratePerLiter) : undefined,
+        fatContent: colEditForm.fatContent !== "" ? parseFloat(colEditForm.fatContent) : null,
+        snf: colEditForm.snf !== "" ? parseFloat(colEditForm.snf) : null,
+        notes: colEditForm.notes,
+      };
+      const res = await apiRequest(`/api/milk-collections/${colEditTarget._id}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      toast.success("Collection updated.");
+      setColEditTarget(null);
+      fetchHistory();
+    } catch (err) {
+      toast.error(err.message || "Failed to update collection.");
+    } finally {
+      setSavingCol(false);
+    }
+  }, [colEditTarget, colEditForm, fetchHistory]);
+
   const fetchHistoryRef = useRef(fetchHistory);
   useEffect(() => { fetchHistoryRef.current = fetchHistory; }, [fetchHistory]);
 
@@ -713,7 +775,6 @@ export default function MilkCollectionsPage() {
                           <td className="mc-amount">₹{previewAmt}</td>
                           <td>
                             <StatusTag value={c.status} />
-                            {wasEdited(c) && <span className="mc-edited-badge">edited</span>}
                           </td>
                           <td>
                             {isPending ? (
@@ -749,141 +810,150 @@ export default function MilkCollectionsPage() {
             {/* ── Mobile cards ─────────────────────────────────────────── */}
             {filtered.length > 0 && isMobile && (
               <div className="mc-card-list">
-                {filtered.map((c) => {
+                {[...filtered].sort((a, b) => {
+                  if (a.status === b.status) return 0;
+                  return a.status === "pending" ? -1 : 1;
+                }).map((c) => {
                   const isPending = c.status === "pending";
                   const edit = edits[c._id] || {};
                   const previewAmt = isPending
                     ? (parseFloat(edit.actualQty || 0) * parseFloat(edit.ratePerLiter || 0)).toFixed(2)
                     : (c.totalAmount || 0).toFixed(2);
+                  const isOpen = openCards.has(c._id);
 
                   return (
                     <div
                       key={c._id}
                       className={`mc-card ${isPending ? "mc-card--pending" : "mc-card--confirmed"}`}
                     >
-                      {/* Header */}
-                      <div className="mc-card-head">
+                      {/* ── Collapsible header (always visible) ── */}
+                      <div
+                        className="mc-card-head"
+                        onClick={() => toggleCard(c._id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && toggleCard(c._id)}
+                        aria-expanded={isOpen}
+                      >
                         <div className="mc-card-identity">
                           <span className="mc-card-name">{c.supplierId?.name || "—"}</span>
-                          {isPending && c.supplierId?.phone && <span className="mc-card-phone">{c.supplierId.phone}</span>}
+                          {c.supplierId?.phone && (
+                            <span className="mc-card-phone">{c.supplierId.phone}</span>
+                          )}
                         </div>
-                        <div className="mc-card-badges">
+                        <div className="mc-card-head-right">
+                          {isPending
+                            ? <span className="mc-card-head-meta">Exp: {c.expectedQty ?? "—"} L</span>
+                            : <span className="mc-card-head-amount">{formatCurrency(c.totalAmount)}</span>
+                          }
                           <span className={`mc-session-pill ${c.session}`}>{c.session}</span>
-                          <StatusTag value={c.status} />
-                          {wasEdited(c) && <span className="mc-edited-badge">edited</span>}
+                          {isPending && <StatusTag value={c.status} />}
+                          <ChevronDown size={15} className={`mc-card-chevron${isOpen ? " open" : ""}`} />
                         </div>
                       </div>
 
-                      {isPending ? (
-                        <>
-                          {/* Expected qty */}
-                          <div className="mc-card-expected">
-                            Expected: <strong>{c.expectedQty ?? "—"} L</strong>
-                          </div>
+                      {/* ── Collapsible body ── */}
+                      {isOpen && (
+                        <div className="mc-card-body">
+                          {isPending ? (
+                            <>
+                              {/* Input grid: 2×2 */}
+                              <div className="mc-card-inputs">
+                                <div className="mc-card-field">
+                                  <span className="mc-card-field-label">Actual Qty (L)</span>
+                                  <input
+                                    ref={(el) => { inputRefs.current[c._id] = el; }}
+                                    type="number" min="0" step="0.1"
+                                    value={edit.actualQty ?? ""}
+                                    onChange={(e) => setEdit(c._id, "actualQty", e.target.value)}
+                                    onKeyDown={(e) => handleInputKeyDown(e, c)}
+                                    inputMode="decimal"
+                                  />
+                                </div>
+                                <div className="mc-card-field">
+                                  <span className="mc-card-field-label">Rate / L (₹)</span>
+                                  <input
+                                    type="number" min="0" step="0.01"
+                                    value={edit.ratePerLiter ?? ""}
+                                    onChange={(e) => setEdit(c._id, "ratePerLiter", e.target.value)}
+                                    inputMode="decimal"
+                                  />
+                                </div>
+                                <div className="mc-card-field">
+                                  <span className="mc-card-field-label">Fat %</span>
+                                  <input
+                                    type="number" min="0" step="0.1"
+                                    value={edit.fatContent ?? ""}
+                                    onChange={(e) => setEdit(c._id, "fatContent", e.target.value)}
+                                    placeholder="opt."
+                                    inputMode="decimal"
+                                  />
+                                </div>
+                                <div className="mc-card-field">
+                                  <span className="mc-card-field-label">SNF %</span>
+                                  <input
+                                    type="number" min="0" step="0.1"
+                                    value={edit.snf ?? ""}
+                                    onChange={(e) => setEdit(c._id, "snf", e.target.value)}
+                                    placeholder="opt."
+                                    inputMode="decimal"
+                                  />
+                                </div>
+                              </div>
 
-                          {/* Input grid */}
-                          <div className="mc-card-inputs">
-                            <div className="mc-card-field">
-                              <span className="mc-card-field-label">Actual Qty (L)</span>
-                              <input
-                                ref={(el) => { inputRefs.current[c._id] = el; }}
-                                type="number"
-                                min="0"
-                                step="0.1"
-                                value={edit.actualQty ?? ""}
-                                onChange={(e) => setEdit(c._id, "actualQty", e.target.value)}
-                                onKeyDown={(e) => handleInputKeyDown(e, c)}
-                                inputMode="decimal"
-                              />
-                            </div>
-                            <div className="mc-card-field">
-                              <span className="mc-card-field-label">Rate / L (₹)</span>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={edit.ratePerLiter ?? ""}
-                                onChange={(e) => setEdit(c._id, "ratePerLiter", e.target.value)}
-                                inputMode="decimal"
-                              />
-                            </div>
-                            <div className="mc-card-field">
-                              <span className="mc-card-field-label">Fat %</span>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.1"
-                                value={edit.fatContent ?? ""}
-                                onChange={(e) => setEdit(c._id, "fatContent", e.target.value)}
-                                placeholder="opt."
-                                inputMode="decimal"
-                              />
-                            </div>
-                            <div className="mc-card-field">
-                              <span className="mc-card-field-label">SNF %</span>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.1"
-                                value={edit.snf ?? ""}
-                                onChange={(e) => setEdit(c._id, "snf", e.target.value)}
-                                placeholder="opt."
-                                inputMode="decimal"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Amount preview */}
-                          <div className="mc-card-amount-row">
-                            <span className="mc-card-amount-label">Amount</span>
-                            <span className="mc-card-amount-value">₹{previewAmt}</span>
-                          </div>
-
-                          {/* Action buttons */}
-                          <div className="mc-card-actions">
-                            <button
-                              className="mini-button"
-                              onClick={() => handleNoSupply(c)}
-                              disabled={confirmingId === c._id}
-                            >
-                              No Supply
-                            </button>
-                            <button
-                              className="mini-button active"
-                              onClick={() => handleConfirmOne(c)}
-                              disabled={confirmingId === c._id}
-                            >
-                              {confirmingId === c._id ? "Confirming…" : "Confirm ✓"}
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        /* Confirmed: compact read-only body */
-                        <div className="mc-card-confirmed-body">
-                          <div className="mc-card-confirmed-stat">
-                            <span>Actual</span>
-                            <strong>{c.actualQty != null ? `${c.actualQty} L` : "—"}</strong>
-                          </div>
-                          {c.fatContent != null && (
-                            <div className="mc-card-confirmed-stat">
-                              <span>Fat %</span>
-                              <strong>{c.fatContent}</strong>
+                              {/* Footer: amount preview + action buttons */}
+                              <div className="mc-card-footer">
+                                <div className="mc-card-amount-row">
+                                  <span className="mc-card-amount-label">Amount</span>
+                                  <span className="mc-card-amount-value">₹{previewAmt}</span>
+                                </div>
+                                <div className="mc-card-actions">
+                                  <button
+                                    className="mini-button"
+                                    onClick={() => handleNoSupply(c)}
+                                    disabled={confirmingId === c._id}
+                                  >
+                                    No Supply
+                                  </button>
+                                  <button
+                                    className="mini-button active"
+                                    onClick={() => handleConfirmOne(c)}
+                                    disabled={confirmingId === c._id}
+                                  >
+                                    {confirmingId === c._id ? "Confirming…" : "Confirm ✓"}
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            /* Confirmed: compact read-only stats */
+                            <div className="mc-card-confirmed-body">
+                              <div className="mc-card-confirmed-stat">
+                                <span>Actual</span>
+                                <strong>{c.actualQty != null ? `${c.actualQty} L` : "—"}</strong>
+                              </div>
+                              {c.fatContent != null && (
+                                <div className="mc-card-confirmed-stat">
+                                  <span>Fat %</span>
+                                  <strong>{c.fatContent}</strong>
+                                </div>
+                              )}
+                              {c.snf != null && (
+                                <div className="mc-card-confirmed-stat">
+                                  <span>SNF %</span>
+                                  <strong>{c.snf}</strong>
+                                </div>
+                              )}
+                              <div className="mc-card-confirmed-stat">
+                                <span>Rate</span>
+                                <strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong>
+                              </div>
+                              <div className="mc-card-confirmed-stat amount">
+                                <span>Amount</span>
+                                <strong>{formatCurrency(c.totalAmount)}</strong>
+                              </div>
                             </div>
                           )}
-                          {c.snf != null && (
-                            <div className="mc-card-confirmed-stat">
-                              <span>SNF %</span>
-                              <strong>{c.snf}</strong>
-                            </div>
-                          )}
-                          <div className="mc-card-confirmed-stat">
-                            <span>Rate</span>
-                            <strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong>
-                          </div>
-                          <div className="mc-card-confirmed-stat amount">
-                            <span>Amount</span>
-                            <strong>{formatCurrency(c.totalAmount)}</strong>
-                          </div>
                         </div>
                       )}
                     </div>
@@ -1020,7 +1090,9 @@ export default function MilkCollectionsPage() {
                       <div className="sc-card-badges">
                         <StatusTag value={c.status} />
                         {c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}
-                        {wasEdited(c) && <span className="mc-edited-badge">edited</span>}
+                        <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit">
+                          <SquarePen size={13} />
+                        </button>
                       </div>
                     </div>
                     <div className="sc-card-head" style={{ background: "var(--surface)", borderTop: 0, paddingTop: 4, paddingBottom: 4 }}>
@@ -1053,6 +1125,7 @@ export default function MilkCollectionsPage() {
                       <th>Rate / L</th>
                       <th>Amount</th>
                       <th>Payment</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1072,7 +1145,11 @@ export default function MilkCollectionsPage() {
                         <td className="mc-amount">{c.totalAmount != null ? formatCurrency(c.totalAmount) : "—"}</td>
                         <td>
                           {c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}
-                          {wasEdited(c) && <span className="mc-edited-badge">edited</span>}
+                        </td>
+                        <td>
+                          <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit">
+                            <SquarePen size={13} />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1083,6 +1160,59 @@ export default function MilkCollectionsPage() {
           </div>
         )}
       </div>
+
+      {/* ── Edit Collection Modal ────────────────────────────────────── */}
+      <Modal
+        open={!!colEditTarget}
+        onClose={() => setColEditTarget(null)}
+        title={colEditTarget ? `Edit — ${formatDate(colEditTarget.date)} ${colEditTarget.session} · ${colEditTarget.supplierId?.name || ""}` : "Edit Collection"}
+        footer={
+          <div className="modal-actions">
+            <button className="mini-button" onClick={() => setColEditTarget(null)} disabled={savingCol}>Cancel</button>
+            <button className="mini-button active" onClick={handleColSave} disabled={savingCol}>
+              {savingCol ? "Saving…" : "Save"}
+            </button>
+          </div>
+        }
+      >
+        <div className="form-grid">
+          <label className="form-field">
+            <span>Actual Qty (L)</span>
+            <input type="number" min="0" step="0.1"
+              value={colEditForm.actualQty}
+              onChange={(e) => setColEditForm((f) => ({ ...f, actualQty: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>Rate / Liter (₹)</span>
+            <input type="number" min="0" step="0.01"
+              value={colEditForm.ratePerLiter}
+              onChange={(e) => setColEditForm((f) => ({ ...f, ratePerLiter: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>Fat %</span>
+            <input type="number" min="0" step="0.01"
+              value={colEditForm.fatContent}
+              onChange={(e) => setColEditForm((f) => ({ ...f, fatContent: e.target.value }))}
+            />
+          </label>
+          <label className="form-field">
+            <span>SNF %</span>
+            <input type="number" min="0" step="0.01"
+              value={colEditForm.snf}
+              onChange={(e) => setColEditForm((f) => ({ ...f, snf: e.target.value }))}
+            />
+          </label>
+          <label className="form-field" style={{ gridColumn: "1 / -1" }}>
+            <span>Notes</span>
+            <textarea rows={2}
+              value={colEditForm.notes}
+              onChange={(e) => setColEditForm((f) => ({ ...f, notes: e.target.value }))}
+            />
+          </label>
+        </div>
+      </Modal>
 
       {/* ── Bulk confirm dialog ──────────────────────────────────────── */}
       <ConfirmDialog
