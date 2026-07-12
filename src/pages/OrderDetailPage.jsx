@@ -237,7 +237,7 @@ export default function OrderDetailPage() {
           {!isMobile && order.orderStatus !== "delivered" && order.orderStatus !== "cancelled" && (
             <section className="panel">
               <p className="eyebrow">Actions</p>
-              <div className="action-row" style={{ marginTop: "1rem" }}>
+              <div className="action-row">
                 {actionButtons}
               </div>
             </section>
@@ -278,7 +278,7 @@ export default function OrderDetailPage() {
               saving={saving}
             />
           )}
-          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+          <div className="product-sheet-actions">
             <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? "Saving..." : "Save Changes"}
             </button>

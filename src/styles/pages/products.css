@@ -138,18 +138,18 @@
   font-weight: var(--font-weight-bold);
 }
 
-/* ─── Product form ───────────────────────────── */
-.product-form-stack {
+/* ─── Form stack (shared modal/sheet form layout) ── */
+.form-stack {
   display: flex;
   flex-direction: column;
 }
 
 /* Tighter form group spacing inside modals/sheets */
-.product-form-stack .form-group {
+.form-stack .form-group {
   margin-bottom: var(--space-4);
 }
 
-.product-form-stack .form-group:last-child {
+.form-stack .form-group:last-child {
   margin-bottom: 0;
 }
 

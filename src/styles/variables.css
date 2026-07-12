@@ -118,12 +118,14 @@
   --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
 
   /* ─── Z-Index Hierarchy ─────────────────────────── */
-  --z-base:    0;
-  --z-raised:  10;
-  --z-sticky:  40;
-  --z-sidebar: 50;
-  --z-overlay: 100;
-  --z-toast:   200;
+  --z-base:     0;
+  --z-raised:   10;
+  --z-sticky:   40;
+  --z-sidebar:  50;
+  --z-dropdown: 60;
+  --z-overlay:  100;
+  --z-modal:    110;
+  --z-toast:    200;
 
   /* ─── Animation Tokens ──────────────────────────── */
   --duration-fast:  0.1s;

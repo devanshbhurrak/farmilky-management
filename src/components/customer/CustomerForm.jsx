@@ -1,8 +1,8 @@
 import React from 'react';
 
-export default function CustomerForm({ form, onChange, onSubmit, saving }) {
+export default function CustomerForm({ form, onChange, onSubmit }) {
   return (
-    <form id="customer-form" onSubmit={onSubmit} className="product-form-stack">
+    <form id="customer-form" onSubmit={onSubmit} className="form-stack">
       <div className="form-group">
         <label>Full Name</label>
         <input

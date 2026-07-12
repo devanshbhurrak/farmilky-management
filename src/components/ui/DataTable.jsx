@@ -38,9 +38,8 @@ export default function DataTable({
     );
   }, [data, searchQuery, searchKeys]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filtered, sortKey, sortDir]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setPage(1); }, [filtered, sortKey, sortDir]);
 
   const sorted = useMemo(() => {
     if (!filtered) return [];

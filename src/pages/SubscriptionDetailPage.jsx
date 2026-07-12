@@ -1,6 +1,6 @@
 import { ChevronRight, Play, Pause, XCircle, Edit2 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
@@ -16,7 +16,6 @@ import toast from "react-hot-toast";
 
 export default function SubscriptionDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [sub, setSub] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -160,29 +159,27 @@ export default function SubscriptionDetailPage() {
         }
       />
 
-      <div className="card-grid" style={{ gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)" }}>
-        <div className="card-inset" style={{ textAlign: "center" }}>
-          <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>DAILY VALUE</span>
-          <strong style={{ fontSize: "var(--font-size-xl)" }}>{formatCurrency(sub.totalPricePerDay)}</strong>
+      <div className="metrics-grid">
+        <div className="card-inset card-metric">
+          <span className="card-metric-label">DAILY VALUE</span>
+          <strong className="card-metric-value">{formatCurrency(sub.totalPricePerDay)}</strong>
         </div>
-        <div className="card-inset" style={{ textAlign: "center" }}>
-          <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>
+        <div className="card-inset card-metric">
+          <span className="card-metric-label">
             RATE / {(sub.variantUnit || sub.productId?.unit)?.toUpperCase() || "UNIT"}
-            {isCustomPrice && (
-              <span style={{ marginLeft: "5px", fontSize: "9px", color: "#b45309", background: "#fef3c7", borderRadius: "3px", padding: "1px 4px" }}>CUSTOM</span>
-            )}
+            {isCustomPrice && <span className="price-badge" style={{ marginLeft: "5px" }}>CUSTOM</span>}
           </span>
-          <strong style={{ fontSize: "var(--font-size-xl)", color: isCustomPrice ? "var(--color-warning, #b45309)" : "inherit" }}>
+          <strong className="card-metric-value" style={{ color: isCustomPrice ? "var(--color-warning)" : undefined }}>
             {formatCurrency(effectivePricePerUnit)}
           </strong>
         </div>
-        <div className="card-inset" style={{ textAlign: "center" }}>
-          <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>DELIVERIES</span>
-          <strong style={{ fontSize: "var(--font-size-xl)", color: "var(--color-primary)" }}>{totalDelivered}</strong>
+        <div className="card-inset card-metric">
+          <span className="card-metric-label">DELIVERIES</span>
+          <strong className="card-metric-value" style={{ color: "var(--color-primary)" }}>{totalDelivered}</strong>
         </div>
-        <div className="card-inset" style={{ textAlign: "center" }}>
-          <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "4px" }}>PENDING</span>
-          <strong style={{ fontSize: "var(--font-size-xl)", color: sub.pendingAmount > 0 ? "var(--danger)" : "inherit" }}>{formatCurrency(sub.pendingAmount)}</strong>
+        <div className="card-inset card-metric">
+          <span className="card-metric-label">PENDING</span>
+          <strong className="card-metric-value" style={{ color: sub.pendingAmount > 0 ? "var(--danger)" : undefined }}>{formatCurrency(sub.pendingAmount)}</strong>
         </div>
       </div>
 
@@ -320,7 +317,7 @@ export default function SubscriptionDetailPage() {
               saving={saving}
             />
           )}
-          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+          <div className="product-sheet-actions">
             <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? "Saving..." : "Save Changes"}
             </button>

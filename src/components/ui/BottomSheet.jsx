@@ -11,9 +11,12 @@ import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
  */
 export default function BottomSheet({ isOpen, onClose, title, children }) {
   const sheetRef = useRef(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  const onCloseRef = useRef(null);
   useBodyScrollLock(isOpen);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!isOpen) return;

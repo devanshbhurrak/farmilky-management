@@ -2,7 +2,7 @@ import { categoryOptions, unitOptions } from "../../utils/constants";
 
 export default function ProductForm({ form, onChange, onSubmit }) {
   return (
-    <form id="product-form" onSubmit={onSubmit} className="product-form-stack">
+    <form id="product-form" onSubmit={onSubmit} className="form-stack">
       <div className="form-group">
         <label>Product Name</label>
         <input

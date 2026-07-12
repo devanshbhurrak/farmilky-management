@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Filter, IndianRupee } from "lucide-react";
-import { formatCurrency, formatDate } from "../utils/format";
+import { formatCurrency } from "../utils/format";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
 import PageSkeleton from "../components/ui/PageSkeleton";
@@ -28,7 +28,7 @@ export default function BalancesPage() {
   const [payModal, setPayModal] = useState(null);
   const [payForm, setPayForm] = useState({ amount: "", transactionId: "", notes: "", date: new Date().toISOString().split("T")[0] });
   const [paying, setPaying] = useState(false);
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
 
   const filteredUsers = useMemo(() => {
     if (!data) return [];
@@ -174,7 +174,7 @@ export default function BalancesPage() {
               <textarea value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })} placeholder="e.g. Cash collected" />
             </div>
           </div>
-          <button className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} onClick={handleRecordPayment} disabled={paying}>
+          <button className="btn btn-primary btn-full-width" style={{ marginTop: 'var(--space-4)' }} onClick={handleRecordPayment} disabled={paying}>
             {paying ? "Recording..." : "Record Payment"}
           </button>
         </BottomSheet>

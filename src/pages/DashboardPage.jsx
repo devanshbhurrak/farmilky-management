@@ -10,7 +10,6 @@ import StatusTag from "../components/ui/StatusTag";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import MetricChip from "../components/ui/MetricChip";
-import { useMediaQuery } from "../hooks/useMediaQuery";
 
 function buildOverview(data) {
   const deliveryBoard = data?.deliveryBoard || {};
@@ -40,8 +39,7 @@ function buildOverview(data) {
   };
 }
 
-export default function DashboardPage({ data, loading, onOrderUpdate, onSubscriptionUpdate }) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+export default function DashboardPage({ data, loading }) {
   const overview = useMemo(() => buildOverview(data), [data]);
   const { data: perfData } = useApiData(fetchPerformance);
 

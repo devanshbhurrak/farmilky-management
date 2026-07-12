@@ -51,7 +51,10 @@
     left: 0;
     bottom: 0;
     z-index: var(--z-sidebar);
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-soft) transparent;
     box-shadow: 1px 0 0 rgba(0, 0, 0, 0.06);
     transition: width var(--duration-slow) var(--ease-in-out);
   }
@@ -432,8 +435,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--touch-min);
+  height: var(--touch-min);
   border-radius: 50%;
   border: none;
   background: var(--surface-muted);
@@ -1003,8 +1006,8 @@
 }
 
 .user-menu-trigger {
-  width: 36px;
-  height: 36px;
+  width: var(--touch-min);
+  height: var(--touch-min);
   border-radius: 50%;
   border: none;
   background: var(--color-primary);

@@ -19,7 +19,7 @@ import toast from "react-hot-toast";
 
 const fetchCustomers = createApiFetch("/api/user/admin/all");
 
-export default function CustomersPage({ onRefresh }) {
+export default function CustomersPage() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { data, loading, error, refetch } = useApiData(fetchCustomers);
@@ -249,7 +249,7 @@ export default function CustomersPage({ onRefresh }) {
           title="Add Customer"
         >
           {formContent}
-          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+          <div className="product-sheet-actions">
             <button
               className="btn btn-primary"
               onClick={handleSave}

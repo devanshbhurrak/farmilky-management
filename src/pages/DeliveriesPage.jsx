@@ -198,18 +198,18 @@ export default function DeliveriesPage() {
               <MetricChip label="Alerts" value={summary.exceptions || 0} />
             </div>
           ) : (
-            <div className="card-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-              <div className="card-inset" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                 <span style={{ fontSize: "var(--font-size-xs)", fontWeight: "var(--font-weight-bold)", color: "var(--text-muted)" }}>PENDING STOPS</span>
-                 <strong style={{ fontSize: "var(--font-size-xl)" }}>{summary.remainingDeliveries || 0}</strong>
+            <div className="metrics-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+              <div className="card-inset delivery-stat-card">
+                 <span className="card-metric-label">PENDING STOPS</span>
+                 <strong className="card-metric-value">{summary.remainingDeliveries || 0}</strong>
               </div>
-              <div className="card-inset" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                 <span style={{ fontSize: "var(--font-size-xs)", fontWeight: "var(--font-weight-bold)", color: "var(--text-muted)" }}>COMPLETED</span>
-                 <strong style={{ fontSize: "var(--font-size-xl)", color: "var(--color-primary)" }}>{summary.completedDeliveries || 0}</strong>
+              <div className="card-inset delivery-stat-card">
+                 <span className="card-metric-label">COMPLETED</span>
+                 <strong className="card-metric-value" style={{ color: "var(--color-primary)" }}>{summary.completedDeliveries || 0}</strong>
               </div>
-              <div className="card-inset" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                 <span style={{ fontSize: "var(--font-size-xs)", fontWeight: "var(--font-weight-bold)", color: "var(--text-muted)" }}>EXCEPTIONS</span>
-                 <strong style={{ fontSize: "var(--font-size-xl)", color: "var(--danger)" }}>{summary.exceptions || 0}</strong>
+              <div className="card-inset delivery-stat-card">
+                 <span className="card-metric-label">EXCEPTIONS</span>
+                 <strong className="card-metric-value" style={{ color: "var(--danger)" }}>{summary.exceptions || 0}</strong>
               </div>
             </div>
           )}

@@ -11,13 +11,12 @@ import PageHeader from "../components/ui/PageHeader";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import SubscriptionForm from "../components/subscription/SubscriptionForm";
-import { subscriptionStatusOptions } from "../utils/constants";
 import { useDebounce } from "../hooks/useDebounce";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
 
-export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }) {
+export default function SubscriptionsPage({ subscriptions, onRefresh }) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -42,7 +41,7 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
       ]).then(([pData, cData]) => {
         setProducts(pData.products || pData || []);
         setCustomers(cData.users || cData || []);
-      }).catch(err => {
+      }).catch(() => {
         toast.error("Failed to load dependency data");
       });
     }
@@ -153,7 +152,7 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <strong>{formatCurrency(r.totalPricePerDay)}</strong>
             {isCustom && (
-              <span style={{ fontSize: "10px", fontWeight: "bold", color: "var(--color-warning, #b45309)", background: "var(--warning-bg, #fef3c7)", borderRadius: "4px", padding: "1px 5px", width: "fit-content" }}>
+              <span className="price-badge">
                 CUSTOM ₹{r.pricePerUnit}/{r.productId?.unit}
               </span>
             )}
@@ -389,7 +388,7 @@ export default function SubscriptionsPage({ subscriptions, onUpdate, onRefresh }
           title="Add Subscription"
         >
           {formContent}
-          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+          <div className="product-sheet-actions">
             <button
               className="btn btn-primary"
               onClick={handleSave}

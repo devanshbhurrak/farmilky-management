@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
-export default function OrderForm({ form, onChange, products, customers, onSubmit, saving }) {
+export default function OrderForm({ form, onChange, products, customers, onSubmit }) {
   const handleUserChange = (e) => {
     const userId = e.target.value;
     const user = (customers || []).find(c => c._id === userId);

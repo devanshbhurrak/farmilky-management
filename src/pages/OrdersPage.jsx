@@ -10,13 +10,12 @@ import PageHeader from "../components/ui/PageHeader";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import OrderForm from "../components/order/OrderForm";
-import { orderStatusOptions } from "../utils/constants";
 import { useDebounce } from "../hooks/useDebounce";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
 
-export default function OrdersPage({ orders, onUpdate, onRefresh }) {
+export default function OrdersPage({ orders, onRefresh }) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -38,7 +37,7 @@ export default function OrdersPage({ orders, onUpdate, onRefresh }) {
       ]).then(([pData, cData]) => {
         setProducts(pData.products || pData || []);
         setCustomers(cData.users || cData || []);
-      }).catch(err => {
+      }).catch(() => {
         toast.error("Failed to load dependency data");
       });
     }
@@ -273,7 +272,7 @@ export default function OrdersPage({ orders, onUpdate, onRefresh }) {
           title="Add Order"
         >
           {formContent}
-          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+          <div className="product-sheet-actions">
             <button
               className="btn btn-primary"
               onClick={handleSave}

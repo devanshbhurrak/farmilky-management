@@ -5,7 +5,7 @@ import { navItems, deliveryNavItems } from "../../utils/constants";
 import NavIcon from "../icons/NavIcon";
 
 export default function Sidebar({ collapsed, onToggle }) {
-  const { isAdmin, isDeliveryPartner } = useAuth();
+  const { isAdmin } = useAuth();
   const items = isAdmin ? navItems : deliveryNavItems;
 
   return (

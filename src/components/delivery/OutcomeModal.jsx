@@ -7,14 +7,8 @@ import toast from "react-hot-toast";
 export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfirm, onFormChange }) {
   const [localMode, setLocalMode] = useState(null);
 
-  // Sync localMode when the modal opens
-  useEffect(() => {
-    if (outcomeModal) {
-      setLocalMode(outcomeModal.mode);
-    } else {
-      setLocalMode(null);
-    }
-  }, [outcomeModal]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setLocalMode(outcomeModal ? outcomeModal.mode : null); }, [outcomeModal]);
 
   if (!outcomeModal || !localMode) return null;
 

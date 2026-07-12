@@ -4,16 +4,15 @@ import { useState, useEffect } from "react";
 export default function SearchInput({ value, onChange, placeholder = "Search..." }) {
   const [local, setLocal] = useState(value || "");
 
-  useEffect(() => {
-    setLocal(value || "");
-  }, [value]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setLocal(value || ""); }, [value]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (local !== value) onChange(local);
     }, 300);
     return () => clearTimeout(timer);
-  }, [local]);
+  }, [local, value, onChange]);
 
   return (
     <label className="search-box">

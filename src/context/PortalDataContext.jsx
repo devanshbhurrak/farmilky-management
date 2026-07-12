@@ -86,6 +86,7 @@ export function PortalDataProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePortalData() {
   const ctx = useContext(PortalDataContext);
   if (!ctx) throw new Error("usePortalData must be used within PortalDataProvider");

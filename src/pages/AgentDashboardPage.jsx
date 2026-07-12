@@ -35,36 +35,36 @@ export default function AgentDashboardPage() {
         />
       ) : (
         <div className="view-stack">
-          <div className="card-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
-            <div className="card-inset" style={{ textAlign: "center" }}>
-               <Clock size={20} style={{ color: "var(--color-primary)", marginBottom: "var(--space-1)" }} />
-               <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }}>PENDING</span>
-               <strong style={{ fontSize: "var(--font-size-xl)" }}>{manifest.summary?.pending ?? 0}</strong>
+          <div className="metrics-grid">
+            <div className="card-inset card-metric">
+               <Clock size={20} className="agent-stat-icon agent-stat-icon--primary" />
+               <span className="card-metric-label">PENDING</span>
+               <strong className="card-metric-value">{manifest.summary?.pending ?? 0}</strong>
             </div>
-            <div className="card-inset" style={{ textAlign: "center" }}>
-               <CheckCircle size={20} style={{ color: "var(--success-text)", marginBottom: "var(--space-1)" }} />
-               <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }}>DELIVERED</span>
-               <strong style={{ fontSize: "var(--font-size-xl)", color: "var(--color-primary)" }}>{manifest.summary?.delivered ?? 0}</strong>
+            <div className="card-inset card-metric">
+               <CheckCircle size={20} className="agent-stat-icon agent-stat-icon--success" />
+               <span className="card-metric-label">DELIVERED</span>
+               <strong className="card-metric-value" style={{ color: "var(--color-primary)" }}>{manifest.summary?.delivered ?? 0}</strong>
             </div>
-            <div className="card-inset" style={{ textAlign: "center" }}>
-               <XCircle size={20} style={{ color: "var(--danger)", marginBottom: "var(--space-1)" }} />
-               <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }}>FAILED</span>
-               <strong style={{ fontSize: "var(--font-size-xl)", color: "var(--danger)" }}>{manifest.summary?.failed ?? 0}</strong>
+            <div className="card-inset card-metric">
+               <XCircle size={20} className="agent-stat-icon agent-stat-icon--danger" />
+               <span className="card-metric-label">FAILED</span>
+               <strong className="card-metric-value" style={{ color: "var(--danger)" }}>{manifest.summary?.failed ?? 0}</strong>
             </div>
-            <div className="card-inset" style={{ textAlign: "center" }}>
-               <Truck size={20} style={{ color: "var(--text-muted)", marginBottom: "var(--space-1)" }} />
-               <span style={{ display: "block", fontSize: "10px", fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }}>TOTAL</span>
-               <strong style={{ fontSize: "var(--font-size-xl)" }}>{manifest.summary?.total ?? 0}</strong>
+            <div className="card-inset card-metric">
+               <Truck size={20} className="agent-stat-icon" />
+               <span className="card-metric-label">TOTAL</span>
+               <strong className="card-metric-value">{manifest.summary?.total ?? 0}</strong>
             </div>
           </div>
 
-          <section className="panel" style={{ marginTop: "var(--space-4)" }}>
-            <p className="eyebrow" style={{ marginBottom: "var(--space-4)" }}>Route Progress: {manifest.areaId?.name || "Unassigned Area"}</p>
-            
-            <div style={{ height: "12px", borderRadius: "var(--radius-pill)", background: "var(--surface-muted)", overflow: "hidden", marginBottom: "var(--space-2)" }}>
-              <div style={{ height: "100%", width: `${pct}%`, background: "var(--color-primary)", transition: "width 0.8s ease" }} />
+          <section className="panel agent-progress-panel">
+            <p className="eyebrow">Route Progress: {manifest.areaId?.name || "Unassigned Area"}</p>
+
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${pct}%` }} />
             </div>
-            <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-muted)", textAlign: "right", fontWeight: "bold" }}>{pct}% COMPLETE</p>
+            <p className="progress-label">{pct}% COMPLETE</p>
           </section>
 
           <button

@@ -2,41 +2,7 @@
    AREAS + AGENTS — Page Styles
    ═══════════════════════════════════════════════ */
 
-/* ─── Icon button (edit / delete row actions) ── */
-.icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  min-width: var(--touch-min);
-  min-height: var(--touch-min);
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all var(--duration-base);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.icon-button:hover {
-  background: var(--surface-muted);
-  border-color: var(--border-soft);
-  color: var(--text-primary);
-}
-
-.icon-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px var(--focus-ring);
-  border-color: var(--color-primary);
-}
-
-.icon-button.danger:hover {
-  background: var(--danger-bg);
-  border-color: var(--danger);
-  color: var(--danger-text);
-}
+/* Icon button styles moved to components.css */
 
 /* ═══════════════════════════════════════════════
    AREAS PAGE

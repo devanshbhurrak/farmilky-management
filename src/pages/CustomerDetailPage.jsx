@@ -1,5 +1,5 @@
 import { ChevronRight, Plus, ShoppingBag, Calendar, Edit2 } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
@@ -104,18 +104,6 @@ export default function CustomerDetailPage() {
     setModalType("subscription");
   }
 
-  function openAddOrder() {
-    setForm({ 
-      userId: id, 
-      items: [{ productId: "", quantity: 1 }], 
-      address: user?.addresses?.[0] || { street: "", city: "", state: "", pincode: "" }, 
-      paymentMethod: "COD", 
-      paymentStatus: "pending", 
-      orderStatus: "confirmed" 
-    });
-    setModalType("order");
-  }
-
   function openAddPayment() {
     setForm({
       userId: id,
@@ -204,71 +192,6 @@ export default function CustomerDetailPage() {
       <div className="st-card-body">
         <span>{sub.quantityPerDay} per day</span>
         <strong>{formatCurrency(sub.totalPricePerDay)}</strong>
-      </div>
-    </div>
-  );
-
-  const invoiceColumns = [
-    { key: "_id", label: "Invoice", render: (r) => <code>#{r._id?.slice(-8)}</code> },
-    { key: "month", label: "Month" },
-    { key: "totalAmount", label: "Amount", render: (r) => formatCurrency(r.totalAmount) },
-    { 
-      key: "remainingAmount", 
-      label: "Remaining", 
-      render: (r) => {
-        const remaining = Math.max(0, r.totalAmount - (r.amountPaid || 0));
-        return <span className={remaining > 0 ? "danger-text" : ""}>{formatCurrency(remaining)}</span>;
-      }
-    },
-    { key: "status", label: "Status", render: (r) => <StatusTag value={r.status} /> },
-    {
-      key: "_actions",
-      label: "History",
-      render: (r) => (r.amountPaid > 0 || r.payments?.length > 0) ? (
-        <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setHistoryModal(r); }}>
-          View
-        </button>
-      ) : "—"
-    }
-  ];
-
-  const renderInvoiceCard = (inv) => (
-    <div className="sub-table-card">
-      <div className="st-card-header">
-        <strong>{inv.month}</strong>
-        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-          {(inv.amountPaid > 0 || inv.payments?.length > 0) && (
-            <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setHistoryModal(inv); }}>
-              History
-            </button>
-          )}
-          <StatusTag value={inv.status} />
-        </div>
-      </div>
-      <div className="st-card-body">
-        <span>Remaining: <strong className={(inv.totalAmount - (inv.amountPaid || 0)) > 0 ? "danger-text" : ""}>{formatCurrency(Math.max(0, inv.totalAmount - (inv.amountPaid || 0)))}</strong></span>
-        <strong>Total: {formatCurrency(inv.totalAmount)}</strong>
-      </div>
-    </div>
-  );
-
-  const paymentColumns = [
-    { key: "date", label: "Date", render: (r) => formatDate(r.date) },
-    { key: "amount", label: "Amount", render: (r) => <strong>{formatCurrency(r.amount)}</strong> },
-    { key: "invoiceMonth", label: "Invoice", render: (r) => r.invoiceMonth },
-    { key: "transactionId", label: "Ref", render: (r) => r.transactionId || (r.isLegacy ? "Legacy" : "—") },
-    { key: "recordedBy.name", label: "Recorded By", render: (r) => r.recordedBy?.name || "—" },
-  ];
-
-  const renderPaymentCard = (p) => (
-    <div className="sub-table-card">
-      <div className="st-card-header">
-        <strong>{formatCurrency(p.amount)}</strong>
-        <span className="text-muted">{formatDate(p.date)}</span>
-      </div>
-      <div className="st-card-body">
-        <span>Invoice: {p.invoiceMonth}</span>
-        <span>{p.transactionId ? `Ref: ${p.transactionId}` : p.isLegacy ? "Legacy Payment" : ""}</span>
       </div>
     </div>
   );
@@ -472,7 +395,7 @@ export default function CustomerDetailPage() {
               </div>
             </div>
           ) : null}
-          <div className="product-sheet-actions" style={{ marginTop: '1rem' }}>
+          <div className="product-sheet-actions">
             <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? "Saving..." : modalType === 'payment' ? "Record Payment" : `Save ${modalType}`}
             </button>

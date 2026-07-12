@@ -362,7 +362,7 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
   background: rgba(16, 185, 129, 0.08) !important;
   color: var(--color-primary) !important;
-  transition: transform 0.3s var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-out);
 }
 
 .info-card--warning .info-card-icon {
@@ -371,7 +371,7 @@
 }
 
 .info-card--danger .info-card-icon {
-  background: #fef2f2 !important;
+  background: var(--danger-bg) !important;
   color: var(--danger) !important;
 }
 

@@ -3,11 +3,18 @@ import { useEffect, useRef } from "react";
 
 export default function Modal({ open, onClose, title, children, footer }) {
   const modalRef = useRef(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  const onCloseRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
+
+    // Store the element that triggered the modal
+    triggerRef.current = document.activeElement;
 
     const modal = modalRef.current;
     const focusable = modal?.querySelectorAll(
@@ -40,14 +47,18 @@ export default function Modal({ open, onClose, title, children, footer }) {
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      // Restore focus to trigger element
+      triggerRef.current?.focus?.();
+    };
   }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} ref={modalRef}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div className="modal-header">
           <h3 id="modal-title">{title || "Modal"}</h3>
           <button className="modal-close icon-button" onClick={onClose} type="button" aria-label="Close modal">

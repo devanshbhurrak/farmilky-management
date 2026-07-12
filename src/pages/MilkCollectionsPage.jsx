@@ -37,11 +37,6 @@ function formatDate(val) {
   });
 }
 
-// Was this confirmed entry later edited? (updatedAt more than 60s after confirmedAt)
-function wasEdited(c) {
-  if (c.status !== "confirmed" || !c.confirmedAt || !c.updatedAt) return false;
-  return new Date(c.updatedAt).getTime() - new Date(c.confirmedAt).getTime() > 60_000;
-}
 
 // Derive summary stats from collections array
 function buildSummary(collections) {
@@ -59,20 +54,20 @@ function buildSummary(collections) {
 function saveDraft(date, edits) {
   try {
     sessionStorage.setItem(`mc-drafts-${date}`, JSON.stringify(edits));
-  } catch (_) {}
+  } catch { /* ignored */ }
 }
 
 function loadDraft(date) {
   try {
     const raw = sessionStorage.getItem(`mc-drafts-${date}`);
     return raw ? JSON.parse(raw) : null;
-  } catch (_) {
+  } catch {
     return null;
   }
 }
 
 function clearDraft(date) {
-  try { sessionStorage.removeItem(`mc-drafts-${date}`); } catch (_) {}
+  try { sessionStorage.removeItem(`mc-drafts-${date}`); } catch { /* ignored */ }
 }
 
 // Build CSV from history array

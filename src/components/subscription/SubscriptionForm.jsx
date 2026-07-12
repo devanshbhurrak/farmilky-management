@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function SubscriptionForm({ form, onChange, products, customers, onSubmit, saving }) {
+export default function SubscriptionForm({ form, onChange, products, customers, onSubmit }) {
   const selectedProduct = (products || []).find(p => p._id === form.productId);
 
   const selectedProductVariants = selectedProduct?.variants || [];
@@ -39,7 +39,7 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
     Number(form.pricePerUnit) !== standardPrice;
 
   return (
-    <form id="subscription-form" onSubmit={onSubmit} className="product-form-stack">
+    <form id="subscription-form" onSubmit={onSubmit} className="form-stack">
       <div className="form-group">
         <label>Customer</label>
         <select

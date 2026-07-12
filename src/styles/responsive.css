@@ -1,4 +1,7 @@
-/* Responsive utilities */
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE UTILITIES
+   Canonical breakpoints: 768px (tablet+), 1024px (desktop+)
+   ═══════════════════════════════════════════════════ */
 
 /* Visibility toggles */
 .hide-mobile {
@@ -9,7 +12,7 @@
   .hide-mobile {
     display: initial !important;
   }
-  
+
   .hide-desktop {
     display: none !important;
   }
@@ -25,4 +28,34 @@
   .stack-mobile {
     flex-direction: row;
   }
+}
+
+/* Extra-small screen padding reduction */
+@media (max-width: 320px) {
+  .page-content {
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
+  }
+}
+
+/* Scroll hint — fade gradient on scrollable containers */
+.scroll-hint {
+  position: relative;
+}
+
+.scroll-hint::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(to right, transparent, var(--color-background));
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity var(--duration-base);
+}
+
+.scroll-hint.scrolled-end::after {
+  opacity: 0;
 }

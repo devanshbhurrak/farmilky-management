@@ -541,12 +541,18 @@
   }
 }
 
-/* Prevent iOS Safari zoom on input focus — all inputs must be ≥16px on mobile */
+/* Prevent iOS Safari zoom on input focus — form inputs must be ≥16px on mobile */
 @media (max-width: 767px) {
-  input,
-  select,
-  textarea {
-    font-size: 16px !important;
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .modal-body input,
+  .modal-body select,
+  .modal-body textarea,
+  .bottom-sheet-body input,
+  .bottom-sheet-body select,
+  .bottom-sheet-body textarea {
+    font-size: 16px;
   }
 
   .form-group textarea {

@@ -1,4 +1,43 @@
 /* ═══════════════════════════════════════════════════
+   ICON BUTTON (global — edit/delete/close actions)
+   ═══════════════════════════════════════════════════ */
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-base);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-button:hover {
+  background: var(--surface-muted);
+  border-color: var(--border-soft);
+  color: var(--text-primary);
+}
+
+.icon-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  border-color: var(--color-primary);
+}
+
+.icon-button.danger:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+/* ═══════════════════════════════════════════════════
    SURFACE / PANEL / CARD SYSTEM
    ═══════════════════════════════════════════════════ */
 
@@ -223,7 +262,7 @@
 
 .info-card-value {
   display: block;
-  font-size: var(--font-size-3xl);
+  font-size: clamp(var(--font-size-xl), 3vw + 0.5rem, var(--font-size-3xl));
   font-weight: var(--font-weight-extrabold);
   letter-spacing: -0.04em;
   color: var(--text-primary);
@@ -1170,9 +1209,7 @@
     transform: scale(0.97);
   }
 
-  .info-card-value {
-    font-size: var(--font-size-xl);  /* 1.25rem not 2rem */
-  }
+  /* info-card-value uses clamp() for fluid sizing */
 
   .info-card-icon {
     width: 40px;
@@ -1319,4 +1356,132 @@
 .fallback-card-row span {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════
+   BOTTOM SHEET ACTIONS (reusable footer for BottomSheet)
+   ═══════════════════════════════════════════════════ */
+
+/* ─── Action Row (button group) ──────────────── */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.bottom-sheet-actions {
+  margin-top: var(--space-4);
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+
+.btn-full-width {
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════
+   METRICS GRID (responsive stat card grid)
+   ═══════════════════════════════════════════════════ */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   PRICE BADGE (small inline price/status badge)
+   ═══════════════════════════════════════════════════ */
+
+.price-badge {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border-radius: 4px;
+  padding: 1px 5px;
+  width: fit-content;
+}
+
+/* ═══════════════════════════════════════════════════
+   CARD METRIC (centered stat inside card-inset)
+   ═══════════════════════════════════════════════════ */
+
+.card-metric {
+  text-align: center;
+  margin-bottom: var(--space-1);
+}
+
+.card-metric-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+}
+
+.card-metric-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ═══════════════════════════════════════════════════
+   AGENT STAT ICONS
+   ═══════════════════════════════════════════════════ */
+
+.agent-stat-icon {
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.agent-stat-icon--primary { color: var(--color-primary); }
+.agent-stat-icon--success { color: var(--success-text); }
+.agent-stat-icon--danger  { color: var(--danger); }
+
+/* ═══════════════════════════════════════════════════
+   PROGRESS BAR
+   ═══════════════════════════════════════════════════ */
+
+.progress-bar {
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.8s ease;
+}
+
+.progress-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  text-align: right;
+  font-weight: var(--font-weight-bold);
+}
+
+.agent-progress-panel .eyebrow {
+  margin-bottom: var(--space-4);
 }
