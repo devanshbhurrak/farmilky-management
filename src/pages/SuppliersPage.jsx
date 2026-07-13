@@ -5,7 +5,7 @@ import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import DataTable from "../components/ui/DataTable";
 import PageHeader from "../components/ui/PageHeader";
-import Modal from "../components/ui/Modal";
+import RightDrawer from "../components/ui/RightDrawer";
 import BottomSheet from "../components/ui/BottomSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusTag from "../components/ui/StatusTag";
@@ -451,19 +451,14 @@ export default function SuppliersPage() {
           {supplierFormContent}
         </BottomSheet>
       ) : (
-        <Modal
+        <RightDrawer
           open={modalMode !== null}
           onClose={closeModal}
           title={modalMode === "create" ? "Add Farmer / Supplier" : "Edit Supplier"}
           footer={
             <div className="modal-actions">
-              <button className="mini-button" onClick={closeModal} disabled={saving}>Cancel</button>
-              <button className="primary-button" onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
-              </button>
               {modalMode === "edit" && editingSupplier && (
                 <>
-                  <span className="modal-actions-sep" />
                   <button
                     className={`mini-button ${editingSupplier.isActive ? "warning" : "active"}`}
                     onClick={() => { closeModal(); setConfirmAction({ type: "toggle", supplier: editingSupplier }); }}
@@ -476,13 +471,18 @@ export default function SuppliersPage() {
                   >
                     Remove
                   </button>
+                  <span className="modal-actions-sep" />
                 </>
               )}
+              <button className="mini-button" onClick={closeModal} disabled={saving}>Cancel</button>
+              <button className="primary-button" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save"}
+              </button>
             </div>
           }
         >
           {supplierFormContent}
-        </Modal>
+        </RightDrawer>
       )}
 
       {confirmAction?.type === "toggle" && (

@@ -96,7 +96,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Toaster
-        position={isMobile ? "top-center" : "top-right"}
+        position="bottom-right"
         toastOptions={{
           duration: 3000,
           style: {

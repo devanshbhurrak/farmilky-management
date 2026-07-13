@@ -218,7 +218,7 @@
 }
 
 .panel-section-header .eyebrow {
-  margin-bottom: 0 !important;
+  margin-bottom: 0;
   border-bottom: none;
   padding-bottom: 0;
 }
@@ -283,10 +283,10 @@
   margin-bottom: var(--space-3);
 }
 
-.hero-banner-title {
+.dashboard-hero-banner .hero-banner-title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-extrabold);
-  color: #ffffff !important;
+  color: #ffffff;
   margin-bottom: var(--space-2);
   line-height: var(--line-height-tight);
 }
@@ -323,16 +323,16 @@
 }
 
 /* 2. Modernized Info Cards */
-.info-card {
+.page-content .info-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border-soft) !important;
-  background: var(--surface) !important;
-  box-shadow: var(--shadow-soft) !important;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s, border-color 0.3s !important;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s, border-color 0.3s;
 }
 
-.info-card::before {
+.page-content .info-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -343,79 +343,79 @@
   opacity: 0.8;
 }
 
-.info-card--warning::before { background: var(--color-secondary); }
-.info-card--danger::before  { background: var(--danger); }
-.info-card--info::before    { background: var(--color-accent); }
+.page-content .info-card--warning::before { background: var(--color-secondary); }
+.page-content .info-card--danger::before  { background: var(--danger); }
+.page-content .info-card--info::before    { background: var(--color-accent); }
 
-.info-card:hover {
-  transform: translateY(-4px) scale(1.01) !important;
-  box-shadow: 0 12px 24px -10px rgba(15, 23, 42, 0.1) !important;
-  border-color: rgba(16, 185, 129, 0.3) !important;
+.page-content .info-card:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 12px 24px -10px rgba(15, 23, 42, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
-.info-card--warning:hover { border-color: rgba(245, 158, 11, 0.3) !important; }
-.info-card--danger:hover  { border-color: rgba(239, 68, 68, 0.3) !important; }
-.info-card--info:hover    { border-color: rgba(139, 92, 246, 0.3) !important; }
+.page-content .info-card--warning:hover { border-color: rgba(245, 158, 11, 0.3); }
+.page-content .info-card--danger:hover  { border-color: rgba(239, 68, 68, 0.3); }
+.page-content .info-card--info:hover    { border-color: rgba(139, 92, 246, 0.3); }
 
-.info-card-icon {
-  border-radius: 50% !important;
+.page-content .info-card-icon {
+  border-radius: 50%;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-  background: rgba(16, 185, 129, 0.08) !important;
-  color: var(--color-primary) !important;
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--color-primary);
   transition: transform var(--duration-slow) var(--ease-out);
 }
 
-.info-card--warning .info-card-icon {
-  background: rgba(245, 158, 11, 0.08) !important;
-  color: var(--color-secondary) !important;
+.page-content .info-card--warning .info-card-icon {
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--color-secondary);
 }
 
-.info-card--danger .info-card-icon {
-  background: var(--danger-bg) !important;
-  color: var(--danger) !important;
+.page-content .info-card--danger .info-card-icon {
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
-.info-card--info .info-card-icon {
-  background: rgba(139, 92, 246, 0.08) !important;
-  color: var(--color-accent) !important;
+.page-content .info-card--info .info-card-icon {
+  background: rgba(139, 92, 246, 0.08);
+  color: var(--color-accent);
 }
 
-.info-card:hover .info-card-icon {
+.page-content .info-card:hover .info-card-icon {
   transform: scale(1.1);
 }
 
-.info-card-chevron {
-  transition: transform 0.2s, color 0.2s, opacity 0.2s !important;
+.page-content .info-card-chevron {
+  transition: transform 0.2s, color 0.2s, opacity 0.2s;
 }
 
-.info-card:hover .info-card-chevron {
+.page-content .info-card:hover .info-card-chevron {
   transform: translateX(4px);
-  color: var(--color-primary) !important;
-  opacity: 1 !important;
+  color: var(--color-primary);
+  opacity: 1;
 }
 
 /* 3. Panel/Eyebrow Adjustments */
-.panel {
-  border: 1px solid var(--border-soft) !important;
-  box-shadow: var(--shadow-soft) !important;
-  background: var(--surface) !important;
+.page-content .panel {
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  background: var(--surface);
 }
 
-.panel .eyebrow {
+.page-content .panel .eyebrow {
   position: relative;
   padding-bottom: var(--space-3);
-  margin-bottom: var(--space-4) !important;
+  margin-bottom: var(--space-4);
   border-bottom: 1px solid var(--border-soft);
-  color: var(--text-primary) !important;
-  font-weight: var(--font-weight-bold) !important;
-  font-size: var(--font-size-sm) !important;
-  letter-spacing: 0.05em !important;
-  display: flex !important;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.05em;
+  display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-.panel .eyebrow::before {
+.page-content .panel .eyebrow::before {
   content: '';
   display: inline-block;
   width: 6px;
@@ -426,16 +426,16 @@
 }
 
 /* 4. List Cards hover animations */
-.list-card {
-  border: 1px solid var(--border-soft) !important;
-  background: var(--surface) !important;
-  transition: border-color 0.2s, background-color 0.2s, transform 0.2s, box-shadow 0.2s !important;
+.page-content .list-card {
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  transition: border-color 0.2s, background-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
-.list-card.nav-link:hover {
-  background: var(--surface-inset) !important;
-  border-color: var(--color-primary-muted) !important;
-  transform: translateX(4px);
+.page-content .list-card.nav-link:hover {
+  background: var(--surface-inset);
+  border-color: var(--color-primary-muted);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
 

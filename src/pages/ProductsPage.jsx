@@ -138,7 +138,7 @@ export default function ProductsPage() {
       <div className="pm-card-body">
         <div className="pm-stat">
           <span>Price</span>
-          <strong>{p.variants?.length > 0 ? `from ${formatCurrency(Math.min(...p.variants.map(v => v.discountedPrice ?? v.price)))}` : `${formatCurrency(p.price)} / ${p.unit}`}</strong>
+          <strong>{p.variants?.length > 0 ? (() => { const def = p.variants.find(v => v.isDefault) ?? p.variants[0]; return formatCurrency(def.discountedPrice ?? def.price); })() : `${formatCurrency(p.price)} / ${p.unit}`}</strong>
         </div>
         <div className="pm-stat">
           <span>Stock</span>
@@ -238,7 +238,7 @@ export default function ProductsPage() {
                     </td>
                     <td><strong>{p.name}</strong></td>
                     <td>{p.category}</td>
-                    <td><strong>{p.variants?.length > 0 ? `from ${formatCurrency(Math.min(...p.variants.map(v => v.discountedPrice ?? v.price)))}` : formatCurrency(p.price)}</strong></td>
+                    <td><strong>{p.variants?.length > 0 ? (() => { const def = p.variants.find(v => v.isDefault) ?? p.variants[0]; return formatCurrency(def.discountedPrice ?? def.price); })() : formatCurrency(p.price)}</strong></td>
                     <td>{p.variants?.length > 0 ? `${p.variants.length} variant${p.variants.length > 1 ? 's' : ''}` : p.unit}</td>
                     <td>{p.variants?.length > 0 ? p.variants.map(v => `${v.label}: ${v.stock}`).join(', ') : (p.stock ?? "—")}</td>
                     <td>

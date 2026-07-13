@@ -34,9 +34,9 @@ th, td {
 th {
   color: var(--text-muted);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-extrabold);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   background: var(--surface-muted);
   border-bottom: 1px solid var(--border-soft);
   position: sticky;

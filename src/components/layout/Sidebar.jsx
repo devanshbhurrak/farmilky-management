@@ -34,7 +34,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             <span className="sidebar-icon">
               <NavIcon name={item.icon} />
             </span>
-            {!collapsed && <span>{item.label}</span>}
+            <span className="sidebar-label">{item.label}</span>
           </NavLink>
         ))}
       </nav>

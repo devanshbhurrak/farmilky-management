@@ -129,16 +129,8 @@ export default function MilkCollectionsPage() {
   // Input refs for keyboard navigation (actualQty inputs keyed by collection id)
   const inputRefs = useRef({});
 
-  // Collapsible cards — pending cards start open, confirmed start closed
+  // Collapsible cards — all cards start closed
   const [openCards, setOpenCards] = useState(() => new Set());
-
-  useEffect(() => {
-    setOpenCards(prev => {
-      const next = new Set(prev);
-      collections.filter(c => c.status === "pending").forEach(c => next.add(c._id));
-      return next;
-    });
-  }, [collections]);
 
   const toggleCard = useCallback((id) => {
     setOpenCards(prev => {
