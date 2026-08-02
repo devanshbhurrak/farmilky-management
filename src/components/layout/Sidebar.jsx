@@ -29,7 +29,6 @@ export default function Sidebar({ collapsed, onToggle }) {
             end={item.path === "/"}
             className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
             title={collapsed ? item.label : undefined}
-            aria-current={({ isActive }) => isActive ? "page" : undefined}
           >
             <span className="sidebar-icon">
               <NavIcon name={item.icon} />

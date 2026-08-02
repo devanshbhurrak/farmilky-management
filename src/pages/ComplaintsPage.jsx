@@ -1,13 +1,16 @@
 import { useState, useMemo } from "react";
 import { Filter } from "lucide-react";
+import { formatDate } from "../utils/format";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import StatusTag from "../components/ui/StatusTag";
+import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
 import FilterSheet from "../components/ui/FilterSheet";
+import SearchInput from "../components/ui/SearchInput";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
@@ -19,7 +22,7 @@ const RELATED_OPTIONS = ["order", "subscription", "delivery", "product", "other"
 export default function ComplaintsPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { data, loading, error, refetch } = useApiData(fetchComplaints);
-  const complaints = data?.complaints ?? [];
+  const complaints = useMemo(() => data?.complaints ?? [], [data?.complaints]);
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [relatedFilter, setRelatedFilter] = useState("all");
@@ -101,19 +104,19 @@ export default function ComplaintsPage() {
       </div>
       <div className="mc-stats">
         <div className="mc-stat">
-          <span className="mc-stat-label">Related To</span>
-          <StatusTag value={c.relatedTo} />
+          <span className="mc-stat-label">Category</span>
+          <span className="mc-chip">{c.relatedTo}</span>
         </div>
         <div className="mc-stat">
           <span className="mc-stat-label">Date</span>
-          <span className="mc-stat-value muted">{new Date(c.createdAt).toLocaleDateString()}</span>
+          <span className="mc-stat-value muted">{formatDate(c.createdAt)}</span>
         </div>
       </div>
     </>
   );
 
   if (loading) return <LoadingScreen />;
-  if (error) return <div className="page-error">{error}</div>;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack complaints-page">
@@ -124,18 +127,7 @@ export default function ComplaintsPage() {
 
       <div className="surface">
         <div className="surface-filters">
-          <div className="search-input-wrap">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search subject or customer..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
-            )}
-          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search subject or customer..." />
           {!isMobile && (
             <div className="desktop-filters">
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>

@@ -1,6 +1,5 @@
 import { Inbox } from "lucide-react";
 
-// eslint-disable-next-line no-unused-vars
 export default function EmptyState({ text, action, icon: Icon = Inbox }) {
   return (
     <div className="empty-state">
@@ -9,7 +8,7 @@ export default function EmptyState({ text, action, icon: Icon = Inbox }) {
       {action && (
         <button
           type="button"
-          className={action.className || "mini-button active"}
+          className={action.className || "btn btn-sm btn-primary"}
           onClick={action.onClick}
         >
           {action.label}

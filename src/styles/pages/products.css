@@ -13,6 +13,31 @@
   }
 }
 
+/* ─── List page header — title left, action right ── */
+.products-page .page-header {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.products-page .page-header-left {
+  width: auto;
+  gap: 0;
+  margin-bottom: 0;
+}
+
+.products-page .page-header-subtitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.products-page .page-header-right {
+  width: auto;
+  flex-shrink: 0;
+}
+
 /* ─── Product table thumbnail ────────────────── */
 .product-thumb {
   width: 44px;
@@ -23,16 +48,13 @@
   display: block;
 }
 
-/* ─── Mobile "Add Product" bar ───────────────── */
-.product-add-bar {
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.product-add-bar .btn {
-  width: 100%;
-  height: 44px;
-  justify-content: center;
+.product-thumb--empty {
+  display: grid;
+  place-items: center;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  border-style: dashed;
 }
 
 /* ─── Mobile card list container ─────────────── */
@@ -53,7 +75,7 @@
   background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
-  padding: var(--space-4);
+  padding: 12px var(--space-4);
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
@@ -153,33 +175,10 @@
   margin-bottom: 0;
 }
 
-/* ─── Bottom sheet actions ───────────────────── */
-.product-sheet-actions {
-  margin-top: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.product-sheet-actions .btn {
-  width: 100%;
-  height: 48px;
-  justify-content: center;
-}
-
-.product-sheet-actions .btn-delete {
-  color: var(--danger-text);
-}
+/* ─── Bottom sheet actions ─────────────────────
+   Base .sheet-actions styles live in components.css */
 
 /* ─── Desktop modal footer ───────────────────── */
-.product-modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: var(--space-3);
-}
-
 .product-modal-footer-right {
   display: flex;
   gap: var(--space-2);

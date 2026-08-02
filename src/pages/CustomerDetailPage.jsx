@@ -1,10 +1,9 @@
-import { ChevronRight, Plus, ShoppingBag, Calendar, Edit2 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2 } from "lucide-react";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
-import PageHeader from "../components/ui/PageHeader";
 import PageSkeleton from "../components/ui/PageSkeleton";
 import EmptyState from "../components/ui/EmptyState";
 import DataTable from "../components/ui/DataTable";
@@ -16,6 +15,12 @@ import CustomerForm from "../components/customer/CustomerForm";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
+function getInitials(name = "") {
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (name.slice(0, 2) || "?").toUpperCase();
+}
+
 export default function CustomerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -24,11 +29,10 @@ export default function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("ledger");
-  const [historyModal, setHistoryModal] = useState(null); // Used for viewing payment details if needed
   const [passbook, setPassbook] = useState({ user: {}, entries: [] });
   const [passbookLoading, setPassbookLoading] = useState(false);
 
-  const [modalType, setModalType] = useState(null); // 'subscription' | 'order' | 'customer' | 'payment'
+  const [modalType, setModalType] = useState(null);
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(null);
@@ -39,9 +43,11 @@ export default function CustomerDetailPage() {
     try {
       const res = await apiRequest(`/api/user/admin/${id}`);
       if (res.status === 401) return;
-      if (!res.ok) { const p = await safeParseJson(res); throw new Error(p?.message || "Failed to load customer"); }
-      const data = await res.json();
-      setCustomer(data);
+      if (!res.ok) {
+        const p = await safeParseJson(res);
+        throw new Error(p?.message || "Failed to load customer");
+      }
+      setCustomer(await res.json());
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,8 +60,7 @@ export default function CustomerDetailPage() {
     try {
       const res = await apiRequest(`/api/payments/${id}`);
       if (!res.ok) throw new Error("Failed to fetch passbook");
-      const data = await res.json();
-      setPassbook(data);
+      setPassbook(await res.json());
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -67,10 +72,10 @@ export default function CustomerDetailPage() {
   useEffect(() => { if (tab === "ledger") fetchPassbook(); }, [tab, fetchPassbook]);
 
   useEffect(() => {
-    if (modalType === 'subscription' || modalType === 'order') {
+    if (modalType === "subscription" || modalType === "order") {
       apiRequest("/api/products")
-        .then(r => r.json())
-        .then(data => setProducts(data.products || data || []))
+        .then((r) => r.json())
+        .then((data) => setProducts(data.products || data || []))
         .catch(() => toast.error("Failed to load products"));
     }
   }, [modalType]);
@@ -84,33 +89,26 @@ export default function CustomerDetailPage() {
   const subscriptions = customer.subscriptions || [];
 
   function openEditCustomer() {
-    setForm({ 
-      ...user, 
+    setForm({
+      ...user,
       address: user.addresses?.[0] || { street: "", city: "", state: "", pincode: "" },
-      password: "" 
+      password: "",
     });
     setModalType("customer");
   }
 
   function openAddSubscription() {
-    setForm({ 
-      userId: id, 
-      productId: "", 
-      quantityPerDay: 1, 
-      deliverySchedule: "daily", 
-      customDays: [], 
-      startDate: new Date().toISOString().split("T")[0] 
+    setForm({
+      userId: id, productId: "", quantityPerDay: 1, deliverySchedule: "daily",
+      customDays: [], startDate: new Date().toISOString().split("T")[0],
     });
     setModalType("subscription");
   }
 
   function openAddPayment() {
     setForm({
-      userId: id,
-      amount: "",
-      transactionId: "",
-      notes: "",
-      date: new Date().toISOString().split("T")[0]
+      userId: id, amount: "", transactionId: "", notes: "",
+      date: new Date().toISOString().split("T")[0],
     });
     setModalType("payment");
   }
@@ -120,31 +118,20 @@ export default function CustomerDetailPage() {
     setSaving(true);
     try {
       let endpoint, method;
-      if (modalType === "subscription") {
-        endpoint = "/api/subscriptions/admin/create";
-        method = "POST";
-      } else if (modalType === "order") {
-        endpoint = "/api/order/admin/create";
-        method = "POST";
-      } else if (modalType === "customer") {
-        endpoint = `/api/user/admin/${id}`;
-        method = "PUT";
-      } else if (modalType === "payment") {
-        endpoint = "/api/payments/admin/record";
-        method = "POST";
-      }
-      
-      const body = modalType === "customer" 
-        ? { ...form, addresses: form.address.street ? [form.address] : [] }
-        : form;
+      if (modalType === "subscription") { endpoint = "/api/subscriptions/admin/create"; method = "POST"; }
+      else if (modalType === "order")   { endpoint = "/api/order/admin/create";           method = "POST"; }
+      else if (modalType === "customer"){ endpoint = `/api/user/admin/${id}`;             method = "PUT"; }
+      else if (modalType === "payment") { endpoint = "/api/payments/admin/record";        method = "POST"; }
 
-      const res = await apiRequest(endpoint, {
-        method,
-        body: JSON.stringify(body),
-      });
+      const body =
+        modalType === "customer"
+          ? { ...form, addresses: form.address.street ? [form.address] : [] }
+          : form;
+
+      const res = await apiRequest(endpoint, { method, body: JSON.stringify(body) });
       const payload = await safeParseJson(res);
       if (!res.ok) throw new Error(payload?.message || `Failed to save ${modalType}`);
-      
+
       toast.success(`${modalType.charAt(0).toUpperCase() + modalType.slice(1)} saved!`);
       setModalType(null);
       fetchCustomer();
@@ -156,22 +143,143 @@ export default function CustomerDetailPage() {
     }
   }
 
+  /* ─── Modal content ─────────────────────────── */
+  const modalTitle =
+    modalType === "customer" ? "Edit Customer" :
+    modalType === "subscription" ? "Add Subscription" :
+    modalType === "order" ? "Add Order" : "Collect Payment";
+
+  const modalContent = (() => {
+    if (modalType === "customer")
+      return (
+        <CustomerForm
+          form={form}
+          onChange={(updates) => setForm((f) => ({ ...f, ...updates }))}
+          onSubmit={handleSave}
+          saving={saving}
+        />
+      );
+    if (modalType === "subscription")
+      return (
+        <SubscriptionForm
+          form={form}
+          onChange={(updates) => setForm((f) => ({ ...f, ...updates }))}
+          products={products}
+          customers={[user]}
+          onSubmit={handleSave}
+          saving={saving}
+        />
+      );
+    if (modalType === "order")
+      return (
+        <OrderForm
+          form={form}
+          onChange={(updates) => setForm((f) => ({ ...f, ...updates }))}
+          products={products}
+          customers={[user]}
+          onSubmit={handleSave}
+          saving={saving}
+        />
+      );
+    if (modalType === "payment")
+      return (
+        <div className="payment-form">
+          {user.accountBalance > 0 && (
+            <div className="payment-balance-banner">
+              <div>
+                <span className="payment-balance-label">Outstanding balance</span>
+                <span className="payment-balance-amount">{formatCurrency(user.accountBalance)}</span>
+              </div>
+              <button
+                type="button"
+                className="payment-fill-btn"
+                onClick={() => setForm({ ...form, amount: user.accountBalance })}
+              >
+                Fill
+              </button>
+            </div>
+          )}
+          <div className="payment-amount-wrap">
+            <span className="payment-currency">₹</span>
+            <input
+              type="number"
+              className="payment-amount-input"
+              value={form?.amount || ""}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              placeholder="0"
+              min="0"
+              step="0.01"
+              autoFocus
+            />
+          </div>
+          {form?.amount > 0 && (
+            <div className="payment-amount-preview">
+              <span className="payment-amount-preview-label">Collecting</span>
+              <span className="payment-amount-preview-value">{formatCurrency(form.amount)}</span>
+            </div>
+          )}
+          <div className="form-row">
+            <div className="form-group">
+              <label>Date</label>
+              <input
+                type="date"
+                value={form?.date || ""}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Reference</label>
+              <input
+                type="text"
+                value={form?.transactionId || ""}
+                onChange={(e) => setForm({ ...form, transactionId: e.target.value })}
+                placeholder="UPI ref, cheque no."
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Notes (optional)</label>
+            <textarea
+              value={form?.notes || ""}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="Any notes about this payment"
+              rows={2}
+            />
+          </div>
+        </div>
+      );
+    return null;
+  })();
+
+  const saveLabel =
+    saving ? "Saving…" :
+    modalType === "payment" ? "Record Payment" :
+    `Save ${modalType || ""}`;
+
+  /* ─── Tab data ──────────────────────────────── */
+  const tabs = [
+    { key: "ledger",        label: "Ledger",        icon: BookOpen,   count: passbook.entries?.length },
+    { key: "orders",        label: "Orders",        icon: ShoppingBag, count: orders.length },
+    { key: "subscriptions", label: "Subscriptions", icon: Repeat2,    count: subscriptions.length },
+  ];
+
+  /* ─── Order columns ─────────────────────────── */
   const orderColumns = [
-    { key: "_id", label: "Order ID", render: (r) => <code>#{r._id?.slice(-8)}</code> },
-    { key: "totalAmount", label: "Amount", render: (r) => formatCurrency(r.totalAmount) },
-    { key: "orderStatus", label: "Status", render: (r) => <StatusTag value={r.orderStatus} /> },
-    { key: "createdAt", label: "Date", render: (r) => formatDate(r.createdAt) },
+    { key: "_id",         label: "Order ID",  render: (r) => <code>#{r._id?.slice(-8)}</code> },
+    { key: "totalAmount", label: "Amount",    render: (r) => formatCurrency(r.totalAmount) },
+    { key: "orderStatus", label: "Status",    render: (r) => <StatusTag value={r.orderStatus} /> },
+    { key: "createdAt",   label: "Date",      render: (r) => formatDate(r.createdAt) },
   ];
 
   const renderOrderCard = (order) => (
-    <div className="sub-table-card">
-      <div className="st-card-header">
-        <code>#{order._id?.slice(-8)}</code>
-        <StatusTag value={order.orderStatus} />
+    <div className="customer-sub-card">
+      <div className="customer-sub-card-main">
+        <div className="customer-sub-card-name">Order <code>#{order._id?.slice(-6).toUpperCase()}</code></div>
+        <div className="customer-sub-card-meta">{formatDate(order.createdAt)}</div>
       </div>
-      <div className="st-card-body">
-        <strong>{formatCurrency(order.totalAmount)}</strong>
-        <span>{formatDate(order.createdAt)}</span>
+      <div className="customer-sub-card-right">
+        <StatusTag value={order.orderStatus} />
+        <div className="customer-sub-card-value">{formatCurrency(order.totalAmount)}</div>
       </div>
     </div>
   );
@@ -184,220 +292,206 @@ export default function CustomerDetailPage() {
   ];
 
   const renderSubCard = (sub) => (
-    <div className="sub-table-card">
-      <div className="st-card-header">
-        <strong>{sub.productId?.name || "Product"}</strong>
-        <StatusTag value={sub.status} />
+    <div className="customer-sub-card">
+      <div className="customer-sub-card-main">
+        <div className="customer-sub-card-name">{sub.productId?.name || "Product"}</div>
+        <div className="customer-sub-card-meta">
+          {sub.quantityPerDay} {sub.productId?.unit || "unit"}/day · {sub.deliverySchedule}
+        </div>
       </div>
-      <div className="st-card-body">
-        <span>{sub.quantityPerDay} per day</span>
-        <strong>{formatCurrency(sub.totalPricePerDay)}</strong>
+      <div className="customer-sub-card-right">
+        <StatusTag value={sub.status} />
+        <div className="customer-sub-card-value">{formatCurrency(sub.totalPricePerDay)}/day</div>
       </div>
     </div>
   );
 
+  const totalDeliveries = subscriptions.reduce((s, sub) => s + (sub.deliveryHistory?.length || 0), 0);
+
   return (
-    <div className="view-stack">
-      <PageHeader
-        title={
-          <span className="customer-title-row">
-            {user.name}
-            <StatusTag value={user.role} />
-          </span>
-        }
-        subtitle={`${user.email} · ${user.phone || "No phone"}`}
-        breadcrumb={[
-          { label: "Customers", path: "/customers" },
-          { label: user.name }
-        ]}
-        className="customer-page-header"
-        actions={
-          <div className="detail-actions">
-            <div className="detail-actions-buttons">
-              <button className="btn btn-secondary btn-sm" onClick={openEditCustomer}>
-                <Edit2 size={14} /> Edit Profile
-              </button>
-              <button className="btn btn-secondary btn-sm" onClick={openAddSubscription}>
-                <Calendar size={14} /> Add Sub
-              </button>
-              <button className="btn btn-primary btn-sm" onClick={openAddPayment}>
-                Rs Collect Payment
-              </button>
+    <div className="customer-detail-page view-stack">
+      {/* Breadcrumb */}
+      <nav className="customer-page-breadcrumb" aria-label="Breadcrumb">
+        <Link to="/customers">Customers</Link>
+        <ChevronRight size={14} />
+        <span className="text-primary">{user.name}</span>
+      </nav>
+
+      {/* Hero profile panel */}
+      <div className="customer-hero">
+        {/* Identity row — always side-by-side */}
+        <div className="customer-hero-top">
+          <div className={`customer-hero-avatar role-${user.role}`} aria-hidden="true">
+            {getInitials(user.name)}
+          </div>
+          <div className="customer-hero-identity">
+            <div className="customer-hero-name-row">
+              <span className="customer-hero-name">{user.name}</span>
+              {!user.isActive && <StatusTag value="inactive" />}
+            </div>
+            <div className="customer-hero-contact">
+              {user.phone && (
+                <span className="customer-hero-contact-item">
+                  <Phone size={12} />{user.phone}
+                </span>
+              )}
+              {user.email && (
+                <span className="customer-hero-contact-item">
+                  <Mail size={12} />{user.email}
+                </span>
+              )}
             </div>
           </div>
-        }
-      />
-
-      <div className="panel customer-detail-panel">
-        <div className="customer-detail-meta">
-          <div className="customer-detail-meta-left">
-            <p className="eyebrow">Customer Since</p>
-            <strong>{formatDate(user.createdAt)}</strong>
-          </div>
-          <span className="customer-id-chip">ID #{user._id?.slice(-6).toUpperCase()}</span>
+          {user.accountBalance > 0 && (
+            <span className="customer-hero-due-badge">{formatCurrency(user.accountBalance)} due</span>
+          )}
         </div>
 
+        {/* Meta: ID + since */}
+        <div className="customer-hero-meta">
+          <span className="customer-id-pill">#{user._id?.slice(-6).toUpperCase()}</span>
+          <span className="customer-since">
+            <Calendar size={11} />
+            Since {formatDate(user.createdAt)}
+          </span>
+        </div>
+
+        {/* Addresses */}
         {user.addresses?.length > 0 && (
-          <div className="customer-addresses-section">
-            <p className="eyebrow">Saved Addresses</p>
-            <div className="customer-addresses-list">
+          <div className="customer-hero-address">
+            <div className="customer-hero-address-list">
               {user.addresses.map((addr, i) => (
-                <div key={i} className="customer-address-card">
-                  <div className="customer-address-main">
-                    <strong>{addr.type || `Address ${i + 1}`}</strong>
-                    <span>{addr.street}, {addr.city}</span>
-                  </div>
-                  <div className="customer-address-sub">
-                    {addr.state} — {addr.pincode}
-                  </div>
-                </div>
+                <span key={i} className="customer-hero-addr-chip">
+                  <MapPin size={10} />
+                  {addr.street}, {addr.city} — {addr.pincode}
+                </span>
               ))}
             </div>
           </div>
         )}
-      </div>
 
-      <div className={isMobile ? "mobile-metric-strip" : "card-grid"}>
-        <div className="panel info-card">
-          <p className="eyebrow">Current Balance</p>
-          <strong className={user.accountBalance > 0 ? "danger-text" : "success-text"}>
-            {formatCurrency(user.accountBalance)}
-          </strong>
-        </div>
-        <div className="panel info-card">
-          <p className="eyebrow">Deliveries</p>
-          <strong>{subscriptions.reduce((s, sub) => s + (sub.deliveryHistory?.length || 0), 0)}</strong>
-        </div>
-        <div className="panel info-card">
-          <p className="eyebrow">Total Orders</p>
-          <strong>{orders.length}</strong>
+        {/* Actions */}
+        <div className="customer-hero-actions">
+          <button className="btn btn-secondary btn-sm" onClick={openEditCustomer}>
+            <Edit2 size={14} /> Edit
+          </button>
+          <button className="btn btn-secondary btn-sm" onClick={openAddSubscription}>
+            <Repeat2 size={14} /> Subscribe
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={openAddPayment}>
+            <IndianRupee size={12} /> Collect
+          </button>
         </div>
       </div>
 
-      <section className="panel detail-tabs-panel">
-        <div className="scrollable-tab-bar">
-          {["ledger", "orders", "subscriptions"].map((t) => (
+      {/* Metric strip */}
+      <div className="customer-metrics">
+        <div className={`customer-metric-card ${user.accountBalance > 0 ? "metric-danger" : "metric-success"}`}>
+          <div className="customer-metric-header">
+            <span className="customer-metric-icon" aria-hidden="true"><IndianRupee size={11} /></span>
+            <span className="customer-metric-label">Balance Due</span>
+          </div>
+          <span className="customer-metric-value">{formatCurrency(user.accountBalance)}</span>
+        </div>
+        <div className="customer-metric-card metric-info">
+          <div className="customer-metric-header">
+            <span className="customer-metric-icon" aria-hidden="true"><Repeat2 size={11} /></span>
+            <span className="customer-metric-label">Deliveries</span>
+          </div>
+          <span className="customer-metric-value">{totalDeliveries}</span>
+        </div>
+        <div className="customer-metric-card metric-neutral">
+          <div className="customer-metric-header">
+            <span className="customer-metric-icon" aria-hidden="true"><ShoppingBag size={11} /></span>
+            <span className="customer-metric-label">Orders</span>
+          </div>
+          <span className="customer-metric-value">{orders.length}</span>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="customer-tabs-panel">
+        <div className="customer-tabs-header" role="tablist">
+          {tabs.map(({ key, label, icon: Icon, count }) => (
             <button
-              key={t}
-              className={tab === t ? "tab-pill active" : "tab-pill"}
-              onClick={() => setTab(t)}
+              key={key}
+              role="tab"
+              aria-selected={tab === key}
+              className={`customer-tab-btn ${tab === key ? "active" : ""}`}
+              onClick={() => setTab(key)}
             >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+              <Icon size={15} />
+              {label}
+              {count > 0 && <span className="customer-tab-count">{count}</span>}
             </button>
           ))}
         </div>
 
-        <div className="tab-content">
+        <div className="customer-tab-body" role="tabpanel">
           {tab === "ledger" && (
-            <DataTable 
+            <DataTable
               columns={[
-                { key: "date", label: "Date", render: (r) => formatDate(r.date) },
+                { key: "date",        label: "Date",        render: (r) => formatDate(r.date) },
                 { key: "description", label: "Description", render: (r) => (
                   <div>
-                    <div style={{ fontWeight: 600 }}>{r.description}</div>
-                    <div className="text-muted" style={{ fontSize: '11px' }}>{r.notes}</div>
+                    <div className="cell-title">{r.description}</div>
+                    {r.notes && <div className="cell-sub">{r.notes}</div>}
                   </div>
                 )},
-                { key: "debit", label: "Debit", render: (r) => r.type === "debit" ? <span className="danger-text">-{formatCurrency(r.amount)}</span> : "—" },
+                { key: "debit",  label: "Debit",  render: (r) => r.type === "debit"  ? <span className="danger-text">-{formatCurrency(r.amount)}</span> : "—" },
                 { key: "credit", label: "Credit", render: (r) => r.type === "credit" ? <span className="success-text">+{formatCurrency(r.amount)}</span> : "—" },
-              ]} 
-              data={passbook.entries} 
+              ]}
+              data={passbook.entries}
               renderCard={(r) => (
-                <div className="sub-table-card">
-                  <div className="st-card-header">
-                    <strong>{r.description}</strong>
-                    <span className={r.type === "debit" ? "danger-text" : "success-text"}>
-                      {r.type === "debit" ? "-" : "+"}{formatCurrency(r.amount)}
-                    </span>
+                <div className="ledger-entry-card">
+                  <div className={`ledger-type-dot ${r.type}`} aria-hidden="true" />
+                  <div className="ledger-entry-body">
+                    <div className="ledger-entry-desc">{r.description}</div>
+                    <div className="ledger-entry-note">
+                      {r.notes && <span>{r.notes} · </span>}
+                      {formatDate(r.date)}
+                    </div>
                   </div>
-                  <div className="st-card-body">
-                    <span>{formatDate(r.date)}</span>
-                    <span className="text-muted">{r.notes}</span>
-                  </div>
+                  <span className={`ledger-entry-amount ${r.type}`}>
+                    {r.type === "debit" ? "−" : "+"}{formatCurrency(r.amount)}
+                  </span>
                 </div>
-              )} 
-              emptyText="No transactions found."
+              )}
+              emptyText="No transactions yet."
               pageSize={20}
               loading={passbookLoading}
             />
           )}
           {tab === "orders" && (
-            <DataTable 
-              columns={orderColumns} 
-              data={orders} 
-              renderCard={renderOrderCard} 
-              emptyText="No orders yet." 
-              pageSize={10} 
+            <DataTable
+              columns={orderColumns}
+              data={orders}
+              renderCard={renderOrderCard}
+              emptyText="No orders yet."
+              pageSize={10}
               onRowClick={(row) => navigate(`/orders/${row._id}`)}
             />
           )}
           {tab === "subscriptions" && (
-            <DataTable 
-              columns={subColumns} 
-              data={subscriptions} 
+            <DataTable
+              columns={subColumns}
+              data={subscriptions}
               renderCard={renderSubCard}
-              emptyText="No subscriptions yet." 
-              pageSize={10} 
+              emptyText="No subscriptions yet."
+              pageSize={10}
               onRowClick={(row) => navigate(`/subscriptions/${row._id}`)}
             />
           )}
         </div>
-      </section>
+      </div>
 
+      {/* Modal / BottomSheet */}
       {isMobile ? (
-        <BottomSheet
-          isOpen={!!modalType}
-          onClose={() => setModalType(null)}
-          title={modalType === 'customer' ? "Edit Customer" : modalType === 'subscription' ? "Add Subscription" : modalType === 'order' ? "Add Order" : "Collect Payment"}
-        >
-          {modalType === 'customer' ? (
-            <CustomerForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          ) : modalType === 'subscription' ? (
-            <SubscriptionForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              products={products}
-              customers={[user]}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          ) : modalType === 'order' ? (
-            <OrderForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              products={products}
-              customers={[user]}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          ) : modalType === 'payment' ? (
-            <div className="form-stack">
-              <div className="form-group">
-                <label>Amount Collected (Rs)</label>
-                <input type="number" value={form?.amount || ""} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
-              </div>
-              <div className="form-group">
-                <label>Date</label>
-                <input type="date" value={form?.date || ""} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label>Transaction ID / Reference</label>
-                <input type="text" value={form?.transactionId || ""} onChange={(e) => setForm({ ...form, transactionId: e.target.value })} placeholder="Optional UPI/Ref ID" />
-              </div>
-              <div className="form-group">
-                <label>Notes</label>
-                <textarea value={form?.notes || ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes about this payment" />
-              </div>
-            </div>
-          ) : null}
+        <BottomSheet isOpen={!!modalType} onClose={() => setModalType(null)} title={modalTitle}>
+          {modalContent}
           <div className="product-sheet-actions">
             <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : modalType === 'payment' ? "Record Payment" : `Save ${modalType}`}
+              {saveLabel}
             </button>
           </div>
         </BottomSheet>
@@ -405,129 +499,24 @@ export default function CustomerDetailPage() {
         <Modal
           open={!!modalType}
           onClose={() => setModalType(null)}
-          title={modalType === 'customer' ? "Edit Customer" : modalType === 'subscription' ? "Add Subscription" : modalType === 'order' ? "Add Order" : "Collect Payment"}
+          title={modalTitle}
           footer={
             <div className="product-modal-footer">
               <div />
               <div className="product-modal-footer-right">
-                <button className="btn btn-secondary btn-sm" onClick={() => setModalType(null)}>Cancel</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setModalType(null)}>
+                  Cancel
+                </button>
                 <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                  {saving ? "Saving..." : modalType === 'payment' ? "Record Payment" : `Save ${modalType}`}
+                  {saveLabel}
                 </button>
               </div>
             </div>
           }
         >
-          {modalType === 'customer' ? (
-            <CustomerForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          ) : modalType === 'subscription' ? (
-            <SubscriptionForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              products={products}
-              customers={[user]}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          ) : modalType === 'order' ? (
-            <OrderForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              products={products}
-              customers={[user]}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          ) : modalType === 'payment' ? (
-            <div className="form-stack">
-              <div className="form-group">
-                <label>Amount Collected (Rs)</label>
-                <input type="number" value={form?.amount || ""} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
-              </div>
-              <div className="form-group">
-                <label>Date</label>
-                <input type="date" value={form?.date || ""} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label>Transaction ID / Reference</label>
-                <input type="text" value={form?.transactionId || ""} onChange={(e) => setForm({ ...form, transactionId: e.target.value })} placeholder="Optional UPI/Ref ID" />
-              </div>
-              <div className="form-group">
-                <label>Notes</label>
-                <textarea value={form?.notes || ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes about this payment" />
-              </div>
-            </div>
-          ) : null}
+          {modalContent}
         </Modal>
       )}
-
-      <Modal
-        open={!!historyModal}
-        onClose={() => setHistoryModal(null)}
-        title="Payment History"
-        footer={
-          <button className="btn btn-secondary btn-sm" onClick={() => setHistoryModal(null)}>
-            Close
-          </button>
-        }
-      >
-        <div className="history-ledger">
-          {!historyModal?.payments?.length && !historyModal?.amountPaid ? (
-            <p className="text-muted" style={{ textAlign: 'center', padding: 'var(--space-4)' }}>No payments recorded yet.</p>
-          ) : (
-            <div className="ledger-table-wrapper">
-              <table className="ledger-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Ref / Recorded By</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historyModal?.payments?.map((p, idx) => (
-                    <tr key={idx}>
-                      <td>{formatDate(p.date)}</td>
-                      <td><strong>{formatCurrency(p.amount)}</strong></td>
-                      <td>
-                        <span className="ledger-ref">{p.transactionId || "No Ref"}</span>
-                        <span className="ledger-by">by {p.recordedBy?.name || "Admin"}</span>
-                      </td>
-                    </tr>
-                  ))}
-                  {historyModal?.amountPaid > 0 && (!historyModal?.payments || historyModal.payments.length === 0) && (
-                    <tr>
-                      <td>Legacy</td>
-                      <td><strong>{formatCurrency(historyModal.amountPaid)}</strong></td>
-                      <td>
-                        <span className="ledger-ref">Direct Status Update</span>
-                        <span className="ledger-by">Migrated Data</span>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div className="history-summary" style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '2px solid var(--border-soft)' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Total Paid</span>
-                <strong>{formatCurrency(historyModal?.amountPaid || 0)}</strong>
-             </div>
-             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-1)' }}>
-                <span>Remaining</span>
-                <strong className={(historyModal?.totalAmount - (historyModal?.amountPaid || 0)) > 0 ? "danger-text" : ""}>
-                  {formatCurrency(Math.max(0, historyModal?.totalAmount - (historyModal?.amountPaid || 0)))}
-                </strong>
-             </div>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

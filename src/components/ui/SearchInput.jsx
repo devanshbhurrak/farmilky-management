@@ -1,22 +1,29 @@
-import { Search } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
 
-export default function SearchInput({ value, onChange, placeholder = "Search..." }) {
+export default function SearchInput({
+  value,
+  onChange,
+  placeholder = "Search...",
+  maxWidth,
+}) {
   const [local, setLocal] = useState(value || "");
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setLocal(value || ""); }, [value]);
+  const debounced = useDebounce(local, 300);
+  const firstRender = useRef(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (local !== value) onChange(local);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [local, value, onChange]);
+    if (!firstRender.current) setLocal(value || "");
+    firstRender.current = false;
+  }, [value]);
+
+  useEffect(() => {
+    if (debounced !== value) onChange(debounced);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debounced]);
 
   return (
-    <label className="search-box">
-      <span className="sr-only">{placeholder}</span>
+    <label className="search-box" style={maxWidth ? { maxWidth } : undefined}>
       <Search size={18} className="search-box-icon" aria-hidden />
       <input
         type="text"
@@ -25,6 +32,19 @@ export default function SearchInput({ value, onChange, placeholder = "Search..."
         placeholder={placeholder}
         aria-label={placeholder}
       />
+      {local && (
+        <button
+          type="button"
+          className="search-clear-btn"
+          onClick={() => {
+            setLocal("");
+            onChange("");
+          }}
+          aria-label={`Clear ${placeholder}`}
+        >
+          <X size={14} aria-hidden />
+        </button>
+      )}
     </label>
   );
 }

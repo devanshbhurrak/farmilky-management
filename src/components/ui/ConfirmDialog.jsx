@@ -18,11 +18,16 @@ export default function ConfirmDialog({
       title={title}
       footer={
         <div className="confirm-actions">
-          <button className="mini-button" onClick={onClose} disabled={loading} type="button">
+          <button
+            className="btn btn-sm btn-secondary"
+            onClick={onClose}
+            disabled={loading}
+            type="button"
+          >
             {cancelText}
           </button>
           <button
-            className={`mini-button ${variant === "danger" ? "danger" : "active"}`}
+            className={`btn btn-sm ${variant === "danger" ? "btn-danger" : "btn-primary"}`}
             onClick={onConfirm}
             disabled={loading}
             type="button"
@@ -32,7 +37,7 @@ export default function ConfirmDialog({
         </div>
       }
     >
-      <p>{message}</p>
+      <p className="confirm-message">{message}</p>
     </Modal>
   );
 }

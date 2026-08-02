@@ -1,17 +1,19 @@
 import { useState, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { Filter, Plus } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
-import EmptyState from "../components/ui/EmptyState";
 import LoadingScreen from "../components/ui/LoadingScreen";
+import PageError from "../components/ui/PageError";
+import DataTable from "../components/ui/DataTable";
+import FilterSheet from "../components/ui/FilterSheet";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageHeader from "../components/ui/PageHeader";
+import SearchInput from "../components/ui/SearchInput";
 import ProductForm from "../components/product/ProductForm";
 import toast from "react-hot-toast";
 import { createApiFetch, useApiData } from "../hooks/useApiData";
-import { useDebounce } from "../hooks/useDebounce";
 import { categoryOptions } from "../utils/constants";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -20,10 +22,11 @@ const fetchProducts = createApiFetch("/api/products");
 
 export default function ProductsPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { data, loading, refetch } = useApiData(fetchProducts);
+  const { data, loading, error, refetch } = useApiData(fetchProducts);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [availFilter, setAvailFilter] = useState("all");
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -40,19 +43,17 @@ export default function ProductsPage() {
     return [];
   }, [data]);
 
-  const debouncedSearch = useDebounce(search, 300);
-
   const filtered = useMemo(() => {
     let items = products;
     if (categoryFilter !== "all") items = items.filter((p) => p.category === categoryFilter);
     if (availFilter === "available") items = items.filter((p) => p.isAvailable);
     else if (availFilter === "unavailable") items = items.filter((p) => !p.isAvailable);
-    if (debouncedSearch.trim()) {
-      const q = debouncedSearch.toLowerCase();
+    if (search.trim()) {
+      const q = search.toLowerCase();
       items = items.filter((p) => p.name.toLowerCase().includes(q));
     }
     return items;
-  }, [products, categoryFilter, availFilter, debouncedSearch]);
+  }, [products, categoryFilter, availFilter, search]);
 
   function openCreate() {
     setEditingProduct(null);
@@ -125,8 +126,67 @@ export default function ProductsPage() {
     }
   }
 
+  const getProductPrice = (p) => {
+    if (p.variants?.length > 0) {
+      const def = p.variants.find((v) => v.isDefault) ?? p.variants[0];
+      return formatCurrency(def.discountedPrice ?? def.price);
+    }
+    return `${formatCurrency(p.price)} / ${p.unit}`;
+  };
+
+  const columns = [
+    {
+      key: "name",
+      label: "Product",
+      sortable: false,
+      render: (r) => (
+        <div className="avatar-cell">
+          {r.image ? (
+            <img src={r.image} alt={r.name} className="product-thumb" />
+          ) : (
+            <div className="product-thumb product-thumb--empty" aria-hidden>
+              —
+            </div>
+          )}
+          <strong className="cell-title">{r.name}</strong>
+        </div>
+      ),
+    },
+    { key: "category", label: "Category", render: (r) => <span className="text-muted">{r.category}</span> },
+    {
+      key: "price",
+      label: "Price",
+      sortable: false,
+      render: (r) => <strong>{getProductPrice(r)}</strong>,
+    },
+    {
+      key: "unit",
+      label: "Unit / Variants",
+      sortable: false,
+      render: (r) =>
+        r.variants?.length > 0
+          ? `${r.variants.length} variant${r.variants.length > 1 ? "s" : ""}`
+          : r.unit || "—",
+    },
+    {
+      key: "stock",
+      label: "Stock",
+      sortable: false,
+      render: (r) =>
+        r.variants?.length > 0
+          ? r.variants.map((v) => `${v.label}: ${v.stock}`).join(", ")
+          : (r.stock ?? "—"),
+    },
+    {
+      key: "isAvailable",
+      label: "Status",
+      sortable: false,
+      render: (r) => <StatusTag value={r.isAvailable ? "active" : "cancelled"} />,
+    },
+  ];
+
   const renderProductCard = (p) => (
-    <div className="product-mobile-card" onClick={() => openEdit(p)}>
+    <div className="product-mobile-card">
       <div className="pm-card-header">
         {p.image && <img src={p.image} alt={p.name} className="pm-thumb" />}
         <div className="pm-title">
@@ -138,15 +198,46 @@ export default function ProductsPage() {
       <div className="pm-card-body">
         <div className="pm-stat">
           <span>Price</span>
-          <strong>{p.variants?.length > 0 ? (() => { const def = p.variants.find(v => v.isDefault) ?? p.variants[0]; return formatCurrency(def.discountedPrice ?? def.price); })() : `${formatCurrency(p.price)} / ${p.unit}`}</strong>
+          <strong>{getProductPrice(p)}</strong>
         </div>
         <div className="pm-stat">
           <span>Stock</span>
-          <strong>{p.variants?.length > 0 ? `${p.variants.length} variant${p.variants.length > 1 ? 's' : ''}` : (p.stock ?? "-")}</strong>
+          <strong>
+            {p.variants?.length > 0
+              ? `${p.variants.length} variant${p.variants.length > 1 ? "s" : ""}`
+              : (p.stock ?? "-")}
+          </strong>
         </div>
       </div>
     </div>
   );
+
+  const filters = (
+    <>
+      <div className="form-group">
+        <label>Category</label>
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+          <option value="all">All Categories</option>
+          {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+      <div className="form-group">
+        <label>Availability</label>
+        <select value={availFilter} onChange={(e) => setAvailFilter(e.target.value)}>
+          <option value="all">All Availability</option>
+          <option value="available">Available</option>
+          <option value="unavailable">Unavailable</option>
+        </select>
+      </div>
+    </>
+  );
+
+  const hasFilters = categoryFilter !== "all" || availFilter !== "all" || !!search.trim();
+  const clearFilters = () => {
+    setCategoryFilter("all");
+    setAvailFilter("all");
+    setSearch("");
+  };
 
   const formContent = (
     <ProductForm
@@ -158,6 +249,7 @@ export default function ProductsPage() {
   );
 
   if (loading && products.length === 0) return <LoadingScreen text="Loading products..." />;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack products-page">
@@ -173,18 +265,12 @@ export default function ProductsPage() {
 
       <div className="surface">
         <div className="surface-filters">
-          <div className="search-input-wrap">
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="search-input"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
-            )}
-          </div>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search products..."
+            aria-label="Search products"
+          />
           {!isMobile && (
             <div className="desktop-filters">
               <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
@@ -198,59 +284,35 @@ export default function ProductsPage() {
               </select>
             </div>
           )}
+          {isMobile && (
+            <button
+              className={`filter-toggle-btn${hasFilters ? " filter-toggle-btn--active" : ""}`}
+              onClick={() => setIsFilterSheetOpen(true)}
+            >
+              <Filter size={16} />
+              <span>Filters{hasFilters ? " •" : ""}</span>
+            </button>
+          )}
         </div>
 
-        {isMobile && (
-          <div className="product-add-bar">
-            <button className="btn btn-primary btn-sm" onClick={openCreate}>
-              <Plus size={16} /> Add New Product
-            </button>
-          </div>
-        )}
-
-        {filtered.length === 0 ? (
-          <div className="product-empty-wrap">
-            <EmptyState text="No products found." />
-          </div>
-        ) : isMobile ? (
-          <div className="product-card-list">
-            {filtered.map(renderProductCard)}
-          </div>
-        ) : (
-          <div className="table-shell">
-            <table>
-              <thead>
-                <tr>
-                  <th>Image</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Unit / Variants</th>
-                  <th>Stock</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => (
-                  <tr key={p._id} onClick={() => openEdit(p)} style={{ cursor: "pointer" }}>
-                    <td>
-                      {p.image ? <img src={p.image} alt={p.name} className="product-thumb" /> : "—"}
-                    </td>
-                    <td><strong>{p.name}</strong></td>
-                    <td>{p.category}</td>
-                    <td><strong>{p.variants?.length > 0 ? (() => { const def = p.variants.find(v => v.isDefault) ?? p.variants[0]; return formatCurrency(def.discountedPrice ?? def.price); })() : formatCurrency(p.price)}</strong></td>
-                    <td>{p.variants?.length > 0 ? `${p.variants.length} variant${p.variants.length > 1 ? 's' : ''}` : p.unit}</td>
-                    <td>{p.variants?.length > 0 ? p.variants.map(v => `${v.label}: ${v.stock}`).join(', ') : (p.stock ?? "—")}</td>
-                    <td>
-                      <StatusTag value={p.isAvailable ? "active" : "cancelled"} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          columns={columns}
+          data={filtered}
+          renderCard={renderProductCard}
+          onRowClick={openEdit}
+          loading={loading}
+          sortable={false}
+          emptyText="No products found."
+          noMatchAction={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
+        />
       </div>
+
+      <FilterSheet
+        isOpen={isFilterSheetOpen}
+        onClose={() => setIsFilterSheetOpen(false)}
+      >
+        {filters}
+      </FilterSheet>
 
       {isMobile ? (
         <BottomSheet

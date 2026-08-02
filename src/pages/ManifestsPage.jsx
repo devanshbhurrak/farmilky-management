@@ -5,6 +5,7 @@ import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import { formatDate } from "../utils/format";
 import LoadingScreen from "../components/ui/LoadingScreen";
+import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
 import StatusTag from "../components/ui/StatusTag";
@@ -45,7 +46,7 @@ export default function ManifestsPage() {
   };
 
   if (loading && manifests.length === 0) return <LoadingScreen />;
-  if (error) return <div className="page-error">{error}</div>;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack manifests-page">
@@ -95,6 +96,14 @@ export default function ManifestsPage() {
                   key={m._id}
                   className="manifest-card"
                   onClick={() => navigate(`/manifests/${m._id}`)}
+                  role="link"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(`/manifests/${m._id}`);
+                    }
+                  }}
                 >
                   <div className="manifest-card-head">
                     <div className="manifest-card-identity">

@@ -1,5 +1,6 @@
 import { Search, Filter, CheckSquare } from "lucide-react";
 import PageHeader from "../components/ui/PageHeader";
+import SearchInput from "../components/ui/SearchInput";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { formatDate } from "../utils/format";
 import EmptyState from "../components/ui/EmptyState";
@@ -11,7 +12,6 @@ import OutcomeModal from "../components/delivery/OutcomeModal";
 import BulkActionsBar from "../components/delivery/BulkActionsBar";
 import DeliveryFilters from "../components/delivery/DeliveryFilters";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
-import { useDebounce } from "../hooks/useDebounce";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
@@ -44,11 +44,10 @@ export default function DeliveriesPage() {
   const deliveryBoard = useMemo(() => data || {}, [data]);
   const summary = useMemo(() => deliveryBoard.summary || {}, [deliveryBoard]);
   const deliveries = useMemo(() => deliveryBoard.deliveries || [], [deliveryBoard]);
-  const debouncedSearch = useDebounce(searchValue, 300);
 
   const filteredDeliveries = useMemo(() => {
     let items = deliveries;
-    const query = debouncedSearch.trim().toLowerCase();
+    const query = searchValue.trim().toLowerCase();
     if (query) {
       items = items.filter((item) =>
         [item.customerName, item.phone, item.email, item.productLabel, item.schedule, item.address, item.type]
@@ -59,7 +58,7 @@ export default function DeliveriesPage() {
       );
     }
     return items;
-  }, [deliveries, debouncedSearch]);
+  }, [deliveries, searchValue]);
 
   const totalPages = Math.ceil(filteredDeliveries.length / PAGE_SIZE);
   const pagedDeliveries = useMemo(
@@ -71,14 +70,14 @@ export default function DeliveriesPage() {
     setOutcomeModal({ item, mode, form: {} });
   }
 
-  async function handleOutcomeConfirm({ status, actualQuantity, reason, notes }) {
+  async function handleOutcomeConfirm({ status, actualQuantity, reason, notes, paymentMode, subscriptionId }) {
     const { item } = outcomeModal;
     try {
       const endpoint = item.type === "order"
         ? `/api/order/admin/${item.id}/delivery-outcome`
         : `/api/subscriptions/admin/${item.id}/delivery-outcome`;
       const body = item.type === "order"
-        ? { status, reason, notes }
+        ? { status, reason, notes, paymentMode: paymentMode || "pay_at_delivery", ...(subscriptionId ? { subscriptionId } : {}) }
         : { status, actualQuantity: Number(actualQuantity), reason, notes };
       const res = await apiRequest(endpoint, { method: "POST", body: JSON.stringify(body) });
       if (!res.ok) { const p = await safeParseJson(res); throw new Error(p?.message || "Failed to record outcome."); }
@@ -141,7 +140,7 @@ export default function DeliveriesPage() {
     setPage(1);
   };
 
-  useEffect(() => { setPage(1); }, [debouncedSearch, typeTab, statusFilter, date]);
+  useEffect(() => { setPage(1); }, [searchValue, typeTab, statusFilter, date]);
 
   if (loading && (!data || deliveries.length === 0)) return <LoadingScreen text="Loading route..." />;
 
@@ -175,18 +174,7 @@ export default function DeliveriesPage() {
               onTypeChange={setTypeTab}
             />
           ) : (
-            <div className="search-input-wrap">
-              <input
-                type="text"
-                className="search-input"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Search customer, phone, or product..."
-              />
-              {searchValue && (
-                <button className="search-clear-btn" onClick={() => setSearchValue("")} aria-label="Clear search">&times;</button>
-              )}
-            </div>
+            <SearchInput value={searchValue} onChange={setSearchValue} placeholder="Search customer, phone, or product..." />
           )}
         </div>
 

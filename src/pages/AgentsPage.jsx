@@ -1,9 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import DataTable from "../components/ui/DataTable";
 import PageHeader from "../components/ui/PageHeader";
+import SearchInput from "../components/ui/SearchInput";
 import Modal from "../components/ui/Modal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusTag from "../components/ui/StatusTag";
@@ -27,9 +29,10 @@ const STATUS_FILTERS = [
 ];
 
 export default function AgentsPage() {
+  const navigate = useNavigate();
   const { data, loading, refetch } = useApiData(fetchAgents);
   const { data: areaData } = useApiData(fetchAreas);
-  const agents = data?.users ?? [];
+  const agents = useMemo(() => data?.users ?? [], [data?.users]);
   const areas = areaData?.areas ?? [];
 
   const [statusFilter, setStatusFilter] = useState("all");
@@ -233,19 +236,43 @@ export default function AgentsPage() {
   ], [openEdit]);
 
   const renderCard = useCallback((row) => (
-    <div className="agent-card-content">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <strong>{row.name}</strong>
+    <div>
+      <div className="mc-head">
+        <div className="mc-identity">
+          <span className="mc-name">{row.name}</span>
+          <span className="mc-sub">{row.phone} · {row.email}</span>
+        </div>
         {row.isActive ? <StatusTag value="active" /> : <StatusTag value="inactive" />}
       </div>
-      <div className="text-muted" style={{ fontSize: "0.9em", marginBottom: 4 }}>
-        {row.email} &middot; {row.phone}
+      <div className="mc-stats">
+        <div className="mc-stat">
+          <span className="mc-stat-label">Area</span>
+          <span className="mc-stat-value">
+            {row.agentInfo?.assignedArea?.name || <em style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Unassigned</em>}
+          </span>
+        </div>
+        <div className="mc-stat">
+          <span className="mc-stat-label">Vehicle</span>
+          <span className="mc-stat-value">{row.agentInfo?.vehicleType || "—"}</span>
+        </div>
       </div>
-      <div style={{ fontSize: "0.85em" }}>
-        Area: {row.agentInfo?.assignedArea?.name || <em style={{ color: "var(--text-muted)" }}>Unassigned</em>}
+      <div className="mc-action-bar" onClick={(e) => e.stopPropagation()}>
+        <button className="mini-button" onClick={() => openEdit(row)}>Edit</button>
+        <button
+          className={`mini-button ${row.isActive ? "warning" : "active"}`}
+          onClick={() => setConfirmAction({ type: "toggle", agent: row })}
+        >
+          {row.isActive ? "Deactivate" : "Activate"}
+        </button>
+        <button
+          className="mini-button danger"
+          onClick={() => setConfirmAction({ type: "delete", agent: row })}
+        >
+          Delete
+        </button>
       </div>
     </div>
-  ), []);
+  ), [openEdit, setConfirmAction]);
 
   if (loading && agents.length === 0) return <LoadingScreen />;
 
@@ -274,18 +301,7 @@ export default function AgentsPage() {
               </button>
             ))}
           </div>
-          <div className="search-input-wrap">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search name, email or phone..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button className="search-clear-btn" onClick={() => setSearchQuery("")} aria-label="Clear search">&times;</button>
-            )}
-          </div>
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, email or phone..." />
         </div>
 
         <DataTable
@@ -299,6 +315,7 @@ export default function AgentsPage() {
           searchQuery={searchQuery}
           searchKeys={["name", "email", "phone"]}
           renderCard={renderCard}
+          onRowClick={(row) => navigate(`/agents/${row._id}`)}
           emptyText="No delivery agents found."
           emptyAction={
             <button className="primary-button" onClick={openCreate}>

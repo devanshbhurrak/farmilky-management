@@ -9,6 +9,7 @@ import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import FilterSheet from "../components/ui/FilterSheet";
+import SearchInput from "../components/ui/SearchInput";
 import { useApiData } from "../hooks/useApiData";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -114,15 +115,7 @@ export default function BalancesPage() {
 
       <div className="surface">
         <div className="surface-filters">
-           <div className="search-input-wrap">
-            <input
-              type="text"
-              placeholder="Search customers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input"
-            />
-          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search customers..." />
         </div>
 
         <DataTable

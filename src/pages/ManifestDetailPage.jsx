@@ -7,6 +7,7 @@ import { formatDate } from "../utils/format";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import EmptyState from "../components/ui/EmptyState";
 import StatusTag from "../components/ui/StatusTag";
+import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
@@ -78,7 +79,7 @@ export default function ManifestDetailPage() {
       <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}>
         <ArrowLeft size={16} /> Back
       </button>
-      <div className="page-error">{error || "Manifest not found."}</div>
+      <PageError message={error || "Manifest not found."} onRetry={refetch} />
     </div>
   );
 

@@ -2,16 +2,8 @@
    MANIFESTS — Page Styles
    ═══════════════════════════════════════════════ */
 
-/* ─── Shared error state ─────────────────────── */
-.page-error {
-  margin-top: var(--space-3);
-  color: var(--danger-text);
-  background: var(--danger-bg);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: var(--radius-sm);
-  padding: var(--space-3) var(--space-4);
-  font-size: var(--font-size-sm);
-}
+/* ─── Shared error state ───────────────────────
+   .page-error base styles live in components.css */
 
 /* ─── Page-level gap overrides ───────────────── */
 /* Global view-stack gap is 2rem — manifests pages don't need that much */

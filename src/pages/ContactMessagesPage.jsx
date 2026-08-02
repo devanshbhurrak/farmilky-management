@@ -1,13 +1,16 @@
 import { useState, useMemo } from "react";
 import { Filter } from "lucide-react";
+import { formatDate } from "../utils/format";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import StatusTag from "../components/ui/StatusTag";
+import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
 import FilterSheet from "../components/ui/FilterSheet";
+import SearchInput from "../components/ui/SearchInput";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
@@ -18,7 +21,7 @@ const STATUS_OPTIONS = ["unread", "read", "replied"];
 export default function ContactMessagesPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { data, loading, error, refetch } = useApiData(fetchMessages);
-  const messages = data?.messages ?? [];
+  const messages = useMemo(() => data?.messages ?? [], [data?.messages]);
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -97,27 +100,16 @@ export default function ContactMessagesPage() {
       <div className="mc-head">
         <div className="mc-identity">
           <span className="mc-name">{m.name}</span>
-          <span className="mc-sub">{m.email}</span>
+          <span className="mc-sub">{m.email}&nbsp;&middot;&nbsp;{formatDate(m.createdAt)}</span>
         </div>
         <StatusTag value={m.status} />
       </div>
-      <div className="mc-stats">
-        <div className="mc-stat">
-          <span className="mc-stat-label">Preview</span>
-          <span className="mc-stat-value muted">
-            {m.message.length > 50 ? m.message.slice(0, 50) + "…" : m.message}
-          </span>
-        </div>
-        <div className="mc-stat">
-          <span className="mc-stat-label">Date</span>
-          <span className="mc-stat-value muted">{new Date(m.createdAt).toLocaleDateString()}</span>
-        </div>
-      </div>
+      <div className="mc-preview">{m.message}</div>
     </>
   );
 
   if (loading) return <LoadingScreen />;
-  if (error) return <div className="page-error">{error}</div>;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack">
@@ -128,20 +120,7 @@ export default function ContactMessagesPage() {
 
       <div className="surface">
         <div className="surface-filters">
-          <div className="search-input-wrap">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search name, email, or message..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">
-                &times;
-              </button>
-            )}
-          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search name, email, or message..." />
           {!isMobile && (
             <div className="desktop-filters">
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>

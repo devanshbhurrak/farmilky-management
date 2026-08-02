@@ -25,8 +25,18 @@ export default function UserMenu() {
         setOpen(false);
       }
     }
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        ref.current?.querySelector(".user-menu-trigger")?.focus();
+      }
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [open]);
 
   return (
@@ -35,23 +45,30 @@ export default function UserMenu() {
         className="user-menu-trigger"
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-haspopup="true"
+        aria-haspopup="menu"
         aria-expanded={open}
-        title={user?.name || "User"}
+        aria-label={`Account menu for ${user?.name || "user"}`}
       >
         {initials}
       </button>
       {open && (
-        <div className="user-menu-dropdown">
+        <div className="user-menu-dropdown" role="menu">
           <div className="user-menu-header">
-            <span className="user-menu-header-avatar">{initials}</span>
+            <span className="user-menu-header-avatar" aria-hidden>
+              {initials}
+            </span>
             <div>
               <div className="user-menu-name">{user?.name}</div>
               <div className="user-menu-role">{user?.role}</div>
             </div>
           </div>
-          <button className="user-menu-logout" type="button" onClick={logout}>
-            <LogOut size={15} />
+          <button
+            className="user-menu-logout"
+            type="button"
+            role="menuitem"
+            onClick={logout}
+          >
+            <LogOut size={15} aria-hidden />
             Logout
           </button>
         </div>

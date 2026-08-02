@@ -164,6 +164,7 @@
   font-family: inherit;
   cursor: pointer;
   transition: all var(--duration-base);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .filter-tab:hover {
@@ -175,6 +176,25 @@
   background: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
+}
+
+/* Mobile: horizontally scrollable tab strip with 44px touch targets */
+@media (max-width: 767px) {
+  .filter-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px; /* prevent clipping of borders */
+  }
+  .filter-tabs::-webkit-scrollbar { display: none; }
+  .filter-tab {
+    flex-shrink: 0;
+    min-height: var(--touch-min);
+    display: inline-flex;
+    align-items: center;
+    border-width: 1.5px;
+  }
 }
 
 /* ─── Action buttons row inside DataTable cells ───── */

@@ -7,6 +7,7 @@
   --color-primary-muted: #6ee7b7;
 
   --color-secondary: #f59e0b;
+  --color-secondary-dark: #d97706;
   --color-secondary-bright: #fbbf24;
   --color-secondary-soft: #fffbeb;
 
@@ -75,8 +76,9 @@
 
   /* ─── Touch & Mobile Chrome ─────────────────────── */
   --touch-min: 44px;
+  --avatar-size: 40px;
   --bottom-nav-height: 64px;
-  --mobile-header-height: 56px;
+  --mobile-header-height: 72px;
 
   /* ─── Borders & Focus ───────────────────────────── */
   --border-soft:   #e2e8f0;
@@ -103,13 +105,16 @@
   /* ─── Layout Dimensions ─────────────────────────── */
   --sidebar-width:           260px;
   --sidebar-collapsed-width: 80px;
-  --topbar-height:           72px;
+  --topbar-height:           88px;
 
   /* ─── Shape & Depth ─────────────────────────────── */
+  --radius-xs:   0.25rem;       /* 4px */
   --radius:      1rem;          /* 16px */
   --radius-sm:   0.75rem;       /* 12px */
   --radius-lg:   1.5rem;        /* 24px */
   --radius-pill: 9999px;
+
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow:     0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);

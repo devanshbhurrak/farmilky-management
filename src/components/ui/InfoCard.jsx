@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, TrendingUp } from "lucide-react";
 
-export default function InfoCard({ title, value, icon: Icon, color = "primary", to }) {
+export default function InfoCard({ title, value, icon: Icon, color = "primary", to, trend }) {
   const classes = [
     "panel info-card",
     color !== "primary" ? `info-card--${color}` : "",
@@ -10,16 +10,22 @@ export default function InfoCard({ title, value, icon: Icon, color = "primary", 
 
   const inner = (
     <div className="info-card-inner">
-      {Icon && (
-        <div className="info-card-icon">
-          <Icon size={24} />
-        </div>
-      )}
       <div className="info-card-body">
         <p className="info-card-label">{title}</p>
         <strong className="info-card-value">{value}</strong>
+        {trend != null && (
+          <span className="info-card-trend">
+            <TrendingUp size={12} strokeWidth={2.5} />
+            {trend}%
+          </span>
+        )}
       </div>
-      {to && <ChevronRight size={16} className="info-card-chevron" />}
+      {Icon && (
+        <div className="info-card-icon">
+          <Icon size={22} aria-hidden />
+        </div>
+      )}
+      {to && <ChevronRight size={14} className="info-card-chevron" aria-hidden />}
     </div>
   );
 

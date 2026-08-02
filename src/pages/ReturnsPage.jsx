@@ -5,6 +5,7 @@ import { apiRequest } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import StatusTag from "../components/ui/StatusTag";
+import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
@@ -18,7 +19,7 @@ const STATUS_OPTIONS = ["requested", "approved", "rejected", "completed"];
 export default function ReturnsPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { data, loading, error, refetch } = useApiData(fetchReturns);
-  const returns = data?.returns ?? [];
+  const returns = useMemo(() => data?.returns ?? [], [data?.returns]);
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -107,14 +108,15 @@ export default function ReturnsPage() {
           <span className="mc-stat-value">{r.refundAmount != null ? formatCurrency(r.refundAmount) : "\u2014"}</span>
         </div>
       </div>
-      <div className="returns-card-reason">
-        <strong>Reason:</strong> {r.reason}
+      <div className="mc-footer">
+        <span className="mc-footer-label">Reason</span>
+        {r.reason}
       </div>
     </>
   );
 
   if (loading) return <LoadingScreen />;
-  if (error) return <div className="page-error">{error}</div>;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack returns-page">

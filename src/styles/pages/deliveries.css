@@ -5,49 +5,64 @@
 /* ─── Page-level gap override ───────────────── */
 /* Reduce the global 2rem view-stack gap on all screen sizes */
 .delivery-board.view-stack {
-  gap: var(--space-5); /* 1.25rem on mobile */
+  gap: var(--space-3); /* 0.75rem on mobile */
 }
 
 /* ─── Mobile Metric Strip ────────────────────── */
 .mobile-metric-strip {
   display: flex;
-  gap: var(--space-2);
-  overflow-x: auto;
-  padding: var(--space-2) 0;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.mobile-metric-strip::-webkit-scrollbar { display: none; }
-
-/* Override hero metric-chip for the light-bg delivery context */
-.mobile-metric-strip .metric-chip {
-  flex-shrink: 0;
-  background: var(--surface-muted);
+  background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
-  padding: var(--space-3) var(--space-4);
-  backdrop-filter: none;
-  min-width: 80px;
-  text-align: center;
+  overflow: hidden;
 }
 
-.mobile-metric-strip .metric-chip span {
-  display: block;
-  color: var(--text-muted);
-  font-size: 0.68rem;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.mobile-metric-strip .metric-chip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: var(--space-2) var(--space-1);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  position: relative;
+}
+
+/* Dividers between chips */
+.mobile-metric-strip .metric-chip + .metric-chip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: var(--border-soft);
 }
 
 .mobile-metric-strip .metric-chip strong {
-  display: block;
   color: var(--text-primary);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-extrabold);
-  margin-top: 2px;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
+
+.mobile-metric-strip .metric-chip span {
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Color accents per position */
+.mobile-metric-strip .metric-chip:nth-child(1) strong { color: var(--color-primary); }
+.mobile-metric-strip .metric-chip:nth-child(2) strong { color: #16a34a; }
+.mobile-metric-strip .metric-chip:nth-child(3) strong { color: var(--danger-text); }
 
 /* ─── Desktop stat card (inline label + value) ── */
 .delivery-stat-card {
@@ -84,55 +99,36 @@
   gap: var(--space-4);
 }
 
-/* ─── Delivery Card (mobile-first) ──────────── */
-.delivery-card {
+/* ─── Delivery Card ──────────────────────────── */
+.delivery-card.dc {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  padding: var(--space-4);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) - 2px);
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  transition: border-color var(--duration-base), box-shadow var(--duration-base);
+  gap: var(--space-2);
+  transition: box-shadow var(--duration-base), border-color var(--duration-base);
 }
 
-.delivery-card.selected {
+.delivery-card.dc.selected {
+  background: #fffbeb;
   border-color: var(--color-secondary);
-  background: var(--color-secondary-soft);
+  border-left-color: var(--color-secondary);
 }
 
-/* Tablet & desktop: side-by-side content + actions */
+/* left accent by status */
+.dc-accent--pending   { border-left-color: var(--border-strong); }
+.dc-accent--delivered { border-left-color: var(--success); }
+.dc-accent--failed    { border-left-color: var(--danger); }
+.dc-accent--skipped   { border-left-color: var(--warning); }
+
+/* Tablet & desktop: slightly more padding */
 @media (min-width: 769px) {
-  .delivery-card {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto 1fr;
-    align-items: start;
-    column-gap: var(--space-4);
-    row-gap: var(--space-2);
-    padding: var(--space-4) var(--space-5);
-  }
-
-  .delivery-head    { grid-column: 1 / -1; }
-  .delivery-content { grid-column: 1; }
-
-  .delivery-actions-mobile {
-    grid-column: 2;
-    min-width: 148px;
-    margin-top: 0;
-    align-self: start;
-  }
-
-  .delivery-card .delivery-actions-mobile .action-btn-primary {
-    font-size: var(--font-size-sm);
-    padding: 0.55rem var(--space-3);
-  }
-
-  .delivery-card .delivery-actions-mobile .action-btn-secondary,
-  .delivery-card .delivery-actions-mobile .action-btn-danger {
-    font-size: var(--font-size-xs);
-    padding: 0.4rem var(--space-2);
+  .delivery-card.dc {
+    padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-4) - 2px);
   }
 }
 
@@ -423,23 +419,8 @@
 }
 
 .bulk-deliver-btn {
-  background: var(--color-secondary);
-  color: white;
-  border: none;
-  padding: var(--space-2) var(--space-5);
-  border-radius: var(--radius-sm);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-sm);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  transition: opacity var(--duration-base);
-  -webkit-tap-highlight-color: transparent;
+  /* Replaced by shared .btn-warning system (see BulkActionsBar.jsx) */
 }
-
-.bulk-deliver-btn:hover  { opacity: 0.9; }
-.bulk-deliver-btn:active { opacity: 0.75; }
 
 /* ─── Outcome Form ───────────────────────────── */
 .outcome-form-container {
@@ -491,34 +472,49 @@
   justify-content: center;
 }
 
-/* ─── Quick Chips (reason selector) ─────────── */
-.quick-chips {
+/* ─── Outcome Mode Selector ──────────────────── */
+.outcome-mode-selector {
+  margin-bottom: var(--space-4);
+}
+
+.outcome-mode-selector > div {
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
-.chip {
-  padding: 0.45rem 0.9rem;
-  border-radius: var(--radius-pill);
-  border: 2px solid var(--border-soft);
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-semibold);
+.outcome-mode-selector .chip {
+  flex: 1;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Outcome Form helpers ───────────────────── */
+.outcome-payment-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.outcome-sub-wrap {
+  margin-top: var(--space-2);
+}
+
+.outcome-sub-select {
+  width: 100%;
+  margin-top: var(--space-1);
+}
+
+.outcome-msg {
   font-size: var(--font-size-sm);
-  font-family: inherit;
-  cursor: pointer;
-  transition: all var(--duration-base);
-  -webkit-tap-highlight-color: transparent;
 }
 
-.chip:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.outcome-msg--muted { color: var(--text-muted); }
+.outcome-msg--danger { color: var(--danger); }
 
-.chip.active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
+/* ─── Quick Chips (reason selector) ───────────
+   Base .chip styles live in components.css — only
+   delivery-specific tweaks below. */
 
 /* ─── Delivery Filters (desktop) ────────────── */
 .delivery-filters-desktop {
@@ -730,13 +726,13 @@
 
   /* Tighten gap further on desktop */
   .delivery-board.view-stack {
-    gap: var(--space-4);
+    gap: var(--space-2);
   }
 
   /* Reduce header bottom padding — the global value (2rem) is too generous
      for a page where the surface card sits directly below */
   .delivery-page-header {
-    padding-bottom: var(--space-3);
+    padding-bottom: var(--space-1);
   }
 
   /* Tighter filter bar — 1.5rem top/bottom is generous for two compact rows */
@@ -766,188 +762,191 @@
 }
 
 /* ═══════════════════════════════════════════════
-   MOBILE COMPACT OVERRIDES  (≤ 767px)
+   DELIVERY CARD INTERNALS (all breakpoints)
+   ═══════════════════════════════════════════════ */
+
+/* ── Section 1: customer row ────────────────── */
+.dc-customer-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.dc-checkbox {
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--color-secondary);
+}
+
+.dc-customer-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dc-customer-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--line-height-tight);
+  cursor: pointer;
+}
+
+.dc-customer-sub {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.dc-customer-meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.dc-price {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary-dark);
+  line-height: 1;
+}
+
+.dc-tags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dc-tags .status-tag {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Section 2: info rows ───────────────────── */
+.dc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-soft);
+}
+
+.dc-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.dc-info-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.dc-info-primary {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.dc-info-secondary {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.dc-info-sep {
+  font-size: var(--font-size-xs);
+  color: var(--border-strong);
+  line-height: 1.4;
+}
+
+.dc-info-address {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.dc-info-address .dc-info-secondary {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+/* ── Section 3: footer ──────────────────────── */
+.dc-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-soft);
+}
+
+.dc-outcome {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.dc-outcome-icon--ok   { color: var(--success); flex-shrink: 0; }
+.dc-outcome-icon--fail { color: var(--danger);  flex-shrink: 0; }
+
+.dc-btn-deliver {
+  /* Replaced by shared .btn-warning system (see DeliveryCard.jsx) */
+  width: 100%;
+}
+
+
+/* ═══════════════════════════════════════════════
+   MOBILE OVERRIDES  (≤ 767px)
    ═══════════════════════════════════════════════ */
 @media (max-width: 767px) {
 
-  /* ─── Card list ─────────────────────────── */
-  .delivery-card-list {
-    gap: var(--space-2);
-  }
-
-  /* ─── Card shell ────────────────────────── */
-  .delivery-card {
-    padding: 0.75rem;
-    gap: 0.45rem;
-    border-radius: var(--radius-sm);
-  }
-
-  /* ─── Card head ─────────────────────────── */
-  .stop-pill {
-    font-size: 0.62rem;
-    padding: 0.15rem 0.45rem;
-    letter-spacing: 0.03em;
-  }
-
-  /* Shrink status tags inside card head */
-  .delivery-head-tags .status-tag {
-    padding: 0.2rem 0.45rem;
-    font-size: 0.62rem;
-    letter-spacing: 0.03em;
-  }
-
-  /* ─── Card content ──────────────────────── */
-  .customer-name {
-    font-size: 0.9rem;
-  }
-
-  .customer-contact {
-    font-size: var(--font-size-xs);
-    margin-top: 0.1rem;
-  }
-
-  /* Compact meta grid */
-  .delivery-meta-grid {
-    margin-top: var(--space-2);
-    padding: 0.4rem 0;
-    gap: 0.3rem 0.5rem;
-  }
-
-  .meta-item span {
-    font-size: 0.62rem;
-    letter-spacing: 0.03em;
-  }
-
-  .meta-item strong {
-    font-size: var(--font-size-xs);
-  }
-
-  .delivery-address {
-    font-size: var(--font-size-xs);
-    margin-top: 0.25rem;
-  }
-
-  .outcome-summary {
-    font-size: var(--font-size-xs);
-    padding: 0.25rem 0.5rem;
-    gap: var(--space-2);
-    margin-top: 0.25rem;
-  }
-
-  /* ─── Card actions ──────────────────────── */
-  .delivery-actions-mobile {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: var(--space-2) !important;
-    margin-top: var(--space-2) !important;
-    width: 100% !important;
-    align-items: stretch !important;
-  }
-
-  .delivery-card .action-btn-primary {
-    flex: 1 !important;
-    width: auto !important;
-    padding: 0.55rem var(--space-3) !important;
-    font-size: var(--font-size-sm) !important;
-    border-radius: var(--radius-sm) !important;
-  }
-
-  .delivery-dropdown-container {
-    position: relative;
-    display: flex;
-    align-items: stretch;
-  }
-
-  .delivery-dropdown-container .dropdown-toggle {
-    height: 100% !important;
-    min-height: 38px !important;
-    font-size: var(--font-size-sm) !important;
-    padding: 0 var(--space-3) !important;
-    border-radius: var(--radius-sm) !important;
-    white-space: nowrap;
-  }
+  .delivery-card-list { gap: var(--space-2); }
 
   /* ─── List section header ───────────────── */
-  .delivery-list-section .list-header {
-    margin-bottom: var(--space-3);
-  }
+  .delivery-list-section .list-header { margin-bottom: var(--space-3); }
+  .delivery-list-section .list-header h3 { font-size: var(--font-size-lg); }
 
-  .delivery-list-section .list-header h3 {
-    font-size: var(--font-size-lg);
-  }
+  /* ─── Outcome form ──────────────────────── */
+  .outcome-form-container { gap: var(--space-4); }
+  .outcome-confirm-btn { margin-top: var(--space-4); }
 
-  /* ─── Outcome form (bottom sheet) ──────── */
-  .outcome-form-container {
-    gap: var(--space-4);
-  }
+  /* ─── Filter sheet ──────────────────────── */
+  .delivery-filters-content { gap: var(--space-4); }
+  .filter-pill { padding: 0.35rem 0.75rem; font-size: var(--font-size-xs); }
+  .chip { padding: 0.35rem 0.75rem; font-size: var(--font-size-xs); }
 
-  .outcome-confirm-btn {
-    margin-top: var(--space-4);
-  }
-
-  /* ─── Filter sheet content ──────────────── */
-  .delivery-filters-content {
-    gap: var(--space-4);
-  }
-
-  .filter-pill {
-    padding: 0.35rem 0.75rem;
-    font-size: var(--font-size-xs);
-  }
-
-  .chip {
-    padding: 0.35rem 0.75rem;
-    font-size: var(--font-size-xs);
-  }
-
-  /* ─── Page header (delivery board) ─────── */
-
-  /* Title + filter button on one row instead of stacked */
+  /* ─── Page header ───────────────────────── */
   .delivery-page-header {
     flex-direction: row;
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-3);
-    padding-bottom: var(--space-3);
+    padding-bottom: var(--space-1);
   }
+  .delivery-page-header .page-header-left { flex: 1; width: auto; min-width: 0; gap: var(--space-1); }
+  .delivery-page-header .page-header-title { font-size: var(--font-size-xl); }
+  .delivery-page-header .page-header-right { width: auto; flex-shrink: 0; padding-top: 3px; }
+  .delivery-page-header .filter-toggle-btn { padding: var(--space-2) var(--space-3); font-size: 0.75rem; gap: var(--space-1); border-radius: var(--radius-sm); }
 
-  .delivery-page-header .page-header-left {
-    flex: 1;
-    width: auto;
-    min-width: 0;
-    gap: var(--space-1);
-  }
-
-  /* Smaller title — sharing a row with the filter button */
-  .delivery-page-header .page-header-title {
-    font-size: var(--font-size-xl);
-  }
-
-  /* Auto-width right slot so it doesn't stretch full-width */
-  .delivery-page-header .page-header-right {
-    width: auto;
-    flex-shrink: 0;
-    padding-top: 3px; /* optical align with title baseline */
-  }
-
-  /* Compact filter button */
-  .delivery-page-header .filter-toggle-btn {
-    padding: var(--space-2) var(--space-3);
-    font-size: 0.75rem;
-    gap: var(--space-1);
-    border-radius: var(--radius-sm);
-  }
-
-  /* ─── Surface section (delivery board) ─── */
-
-  /* Tighter search bar padding; border handled by metric row below */
-  .delivery-surface .surface-filters {
-    padding: var(--space-3);
-    border-bottom: none;
-  }
-
-  /* Tighter metrics strip padding */
-  .delivery-surface .delivery-summary-row {
-    padding: var(--space-2) var(--space-3) var(--space-3);
-  }
+  /* ─── Surface ───────────────────────────── */
+  .delivery-surface .surface-filters { padding: var(--space-3); border-bottom: none; }
+  .delivery-surface .delivery-summary-row { padding: var(--space-2) var(--space-3); }
 }

@@ -1,15 +1,14 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { RefreshCw, CheckCheck, AlertTriangle, Download, ChevronDown, SquarePen } from "lucide-react";
+import { CheckCheck, AlertTriangle, Download, ChevronDown, SquarePen, CalendarDays, Ban, Phone, Search, X } from "lucide-react";
 import { apiRequest } from "../api/client";
+import { formatCurrency } from "../utils/format";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { useDebounce } from "../hooks/useDebounce";
 import PageHeader from "../components/ui/PageHeader";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import QuickChips from "../components/ui/QuickChips";
-import SearchInput from "../components/ui/SearchInput";
 import StickyActionBar from "../components/ui/StickyActionBar";
 import Modal from "../components/ui/Modal";
 import EmptyState from "../components/ui/EmptyState";
@@ -19,13 +18,6 @@ import toast from "react-hot-toast";
 
 function todayStr() {
   return new Date().toISOString().split("T")[0];
-}
-
-function formatCurrency(val) {
-  return `₹${Number(val || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
 }
 
 function formatDate(val) {
@@ -102,6 +94,12 @@ const SESSION_OPTIONS = [
   { label: "Evening", value: "evening" },
 ];
 
+const HISTORY_SESSION_OPTIONS = [
+  { label: "All", value: "" },
+  { label: "Morning", value: "morning" },
+  { label: "Evening", value: "evening" },
+];
+
 const fetchSuppliersList = createApiFetch("/api/suppliers");
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -115,7 +113,6 @@ export default function MilkCollectionsPage() {
   const [loading, setLoading] = useState(true);
   const [sessionFilter, setSessionFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 250);
 
   // Per-row edit state: { [id]: { actualQty, ratePerLiter, fatContent, snf } }
   const [edits, setEdits] = useState({});
@@ -128,6 +125,7 @@ export default function MilkCollectionsPage() {
 
   // Input refs for keyboard navigation (actualQty inputs keyed by collection id)
   const inputRefs = useRef({});
+  const dateInputRef = useRef(null);
 
   // Collapsible cards — all cards start closed
   const [openCards, setOpenCards] = useState(() => new Set());
@@ -150,7 +148,11 @@ export default function MilkCollectionsPage() {
   const suppliersList = suppliersData?.suppliers ?? [];
 
   // History
-  const [historyFilters, setHistoryFilters] = useState({ supplierId: "", from: "", to: "", session: "" });
+  const [historyFilters, setHistoryFilters] = useState({ supplierId: "", from: "", to: "" });
+  const [historySessionFilter, setHistorySessionFilter] = useState("");
+  const [historyDateOpen, setHistoryDateOpen] = useState(false);
+  const [historyFarmerOpen, setHistoryFarmerOpen] = useState(false);
+  const farmerDropdownRef = useRef(null);
   const [history, setHistory] = useState([]);
   const [historySummary, setHistorySummary] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -162,15 +164,20 @@ export default function MilkCollectionsPage() {
 
   // ─── Derived data ──────────────────────────────────────────────────────────
 
+  const displayedHistory = useMemo(
+    () => historySessionFilter ? history.filter((c) => c.session === historySessionFilter) : history,
+    [history, historySessionFilter]
+  );
+
   const filtered = useMemo(() => {
     let result = collections;
     if (sessionFilter !== "all") result = result.filter((c) => c.session === sessionFilter);
-    if (debouncedSearch.trim()) {
-      const term = debouncedSearch.toLowerCase();
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
       result = result.filter((c) => c.supplierId?.name?.toLowerCase().includes(term));
     }
     return result;
-  }, [collections, sessionFilter, debouncedSearch]);
+  }, [collections, sessionFilter, searchTerm]);
 
   const summary = useMemo(() => buildSummary(filtered), [filtered]);
   const progressPct = summary.total > 0 ? Math.round((summary.confirmed / summary.total) * 100) : 0;
@@ -234,20 +241,19 @@ export default function MilkCollectionsPage() {
     return () => clearTimeout(draftTimer.current);
   }, [edits, selectedDate]);
 
-  // ─── Missing entries check (last 3 days, skip today) ──────────────────────
+  // ─── Missing entries check (last 3 days, excluding today) ─────────────────
 
   useEffect(() => {
-    const today = todayStr();
     const from = new Date();
     from.setDate(from.getDate() - 3);
     const fromStr = from.toISOString().split("T")[0];
 
-    // Calculate "yesterday" as toDate (exclude today from missing check)
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const toStr = yesterday.toISOString().split("T")[0];
 
-    if (fromStr >= today) return;
+    // No missing entries possible if window is today-only
+    if (fromStr > toStr) return;
 
     apiRequest(`/api/milk-collections/missing?from=${fromStr}&to=${toStr}`)
       .then((r) => r.json())
@@ -429,7 +435,6 @@ export default function MilkCollectionsPage() {
       if (historyFilters.supplierId) params.set("supplierId", historyFilters.supplierId);
       if (historyFilters.from) params.set("from", historyFilters.from);
       if (historyFilters.to) params.set("to", historyFilters.to);
-      if (historyFilters.session) params.set("session", historyFilters.session);
       const res = await apiRequest(`/api/milk-collections?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
@@ -480,12 +485,20 @@ export default function MilkCollectionsPage() {
     }
   }, [colEditTarget, colEditForm, fetchHistory]);
 
-  const fetchHistoryRef = useRef(fetchHistory);
-  useEffect(() => { fetchHistoryRef.current = fetchHistory; }, [fetchHistory]);
+  useEffect(() => {
+    if (view === "history") fetchHistory();
+  }, [view, fetchHistory]);
 
   useEffect(() => {
-    if (view === "history") fetchHistoryRef.current();
-  }, [view]);
+    if (!historyFarmerOpen) return;
+    const handler = (e) => {
+      if (farmerDropdownRef.current && !farmerDropdownRef.current.contains(e.target)) {
+        setHistoryFarmerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [historyFarmerOpen]);
 
   // ─── Missing entries grouped by date ─────────────────────────────────────
 
@@ -516,7 +529,7 @@ export default function MilkCollectionsPage() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="view-stack">
+    <div className="view-stack milk-collections-page">
       <PageHeader
         title="Milk Collections"
         subtitle="Daily inbound collection confirmation from farmers"
@@ -531,7 +544,7 @@ export default function MilkCollectionsPage() {
           onClick={() => setShowMissingModal(true)}
           onKeyDown={(e) => e.key === "Enter" && setShowMissingModal(true)}
         >
-          <AlertTriangle size={16} color="var(--color-warning)" style={{ flexShrink: 0 }} />
+          <AlertTriangle size={16} className="mc-alert-icon" style={{ flexShrink: 0 }} />
           <span className="mc-missing-alert-text">
             {missing.length} missing {missing.length === 1 ? "entry" : "entries"} from the last 3 days
           </span>
@@ -543,13 +556,13 @@ export default function MilkCollectionsPage() {
       <div className="surface" style={{ padding: 0 }}>
         <div className="mc-tabs">
           <button
-            className={`filter-tab ${view === "daily" ? "active" : ""}`}
+            className={`mc-tab ${view === "daily" ? "active" : ""}`}
             onClick={() => setView("daily")}
           >
             Daily Confirmation
           </button>
           <button
-            className={`filter-tab ${view === "history" ? "active" : ""}`}
+            className={`mc-tab ${view === "history" ? "active" : ""}`}
             onClick={() => setView("history")}
           >
             History
@@ -560,94 +573,127 @@ export default function MilkCollectionsPage() {
         {view === "daily" && (
           <div className="mc-content">
 
-            {/* ── Toolbar ────────────────────────────────────────────── */}
+            {/* ── Toolbar ─────────────────────────────────────────────── */}
             <div className="mc-toolbar">
-              <div className="mc-toolbar-left">
+              {/* Inline search — full control over height */}
+              <div className="mc-search">
+                <Search size={14} className="mc-search-icon" aria-hidden />
                 <input
-                  type="date"
-                  className="mc-date-input"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  type="text"
+                  className="mc-search-input"
+                  placeholder="Search farmer…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <button
-                  className="mini-button"
-                  onClick={() => fetchDaily(selectedDate)}
-                  title="Refresh"
-                  aria-label="Refresh"
-                >
-                  <RefreshCw size={14} />
-                </button>
-              </div>
-              <div className="mc-toolbar-right">
-                {totalPendingCount > 0 && !isMobile && (
+                {searchTerm && (
                   <button
-                    className="mini-button active"
-                    onClick={() => setShowBulkDialog(true)}
-                    disabled={bulkConfirming}
-                    title="Confirm all pending entries for the day using expected quantities"
+                    type="button"
+                    className="mc-search-clear"
+                    onClick={() => setSearchTerm("")}
+                    aria-label="Clear search"
                   >
-                    <CheckCheck size={14} style={{ marginRight: 4 }} />
-                    {bulkConfirming ? "Confirming…" : `Confirm All (${totalPendingCount})`}
+                    <X size={14} aria-hidden />
                   </button>
                 )}
               </div>
+
+              {/* Date button — shows formatted date, hidden input opens picker */}
+              <div className="mc-date-group">
+                <button
+                  className="mc-date-btn"
+                  onClick={() => dateInputRef.current?.showPicker()}
+                  title="Change date"
+                >
+                  <CalendarDays size={13} />
+                  <span>{new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}</span>
+                </button>
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  className="mc-date-input-hidden"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+              </div>
+              {!isToday && (
+                <button
+                  className="mini-button mc-today-btn"
+                  onClick={() => setSelectedDate(todayStr())}
+                  title="Jump to today"
+                >
+                  Today
+                </button>
+              )}
+
+              <div className="mc-toolbar-divider" />
+
+              {/* Confirm All — desktop only */}
+              {totalPendingCount > 0 && !isMobile && (
+                <button
+                  className="btn btn-primary mc-confirm-all-btn"
+                  onClick={() => setShowBulkDialog(true)}
+                  disabled={bulkConfirming}
+                >
+                  <CheckCheck size={14} />
+                  {bulkConfirming ? "Confirming…" : `Confirm All (${totalPendingCount})`}
+                </button>
+              )}
             </div>
 
             {/* ── Backdate banner ─────────────────────────────────────── */}
             {!isToday && (
               <div className="mc-backdate-banner">
-                <AlertTriangle size={14} />
-                Viewing backdated entries for {formatDate(selectedDate)}. Late entries are allowed and will be timestamped.
+                <AlertTriangle size={13} />
+                Backdated — {formatDate(selectedDate)}. Late entries are timestamped automatically.
               </div>
             )}
 
-            {/* ── Session filter + search ─────────────────────────────── */}
-            {collections.length > 0 && (
-              <div className="mc-filters">
-                <QuickChips
-                  options={SESSION_OPTIONS}
-                  selected={sessionFilter}
-                  onSelect={setSessionFilter}
-                />
-                <SearchInput
-                  placeholder="Search farmer…"
-                  value={searchTerm}
-                  onChange={setSearchTerm}
-                />
+            {/* ── All confirmed banner ─────────────────────────────────── */}
+            {collections.length > 0 && totalPendingCount === 0 && (
+              <div className="mc-day-complete">
+                <CheckCheck size={14} />
+                <span>All {collections.length} entries confirmed for {formatDate(selectedDate)}</span>
               </div>
             )}
 
-            {/* ── Progress summary ─────────────────────────────────────── */}
+            {/* ── Compact summary bar ──────────────────────────────────── */}
             {collections.length > 0 && (
               <div className="mc-summary">
-                <div className="mc-summary-chips">
-                  <div className="supplier-default-chip">
-                    <span>Total</span>
-                    <strong>{summary.total}</strong>
-                  </div>
-                  <div className="supplier-default-chip mc-chip--pending">
-                    <span>Pending</span>
-                    <strong>{summary.pending}</strong>
-                  </div>
-                  <div className="supplier-default-chip mc-chip--confirmed">
-                    <span>Confirmed</span>
-                    <strong>{summary.confirmed}</strong>
-                  </div>
-                  <div className="supplier-default-chip">
-                    <span>Collected</span>
-                    <strong>{Number(summary.totalLiters).toFixed(1)} L</strong>
-                  </div>
-                  <div className="supplier-default-chip">
-                    <span>Amount</span>
-                    <strong>{formatCurrency(summary.totalAmount)}</strong>
-                  </div>
-                </div>
                 <div className="mc-progress-track">
-                  <div className="mc-progress-fill" style={{ width: `${progressPct}%` }} />
+                  <div className="mc-progress-fill" style={{ width: `${progressPct}%` }}>
+                    {progressPct >= 15 && (
+                      <span className="mc-progress-pct-inside">{progressPct}%</span>
+                    )}
+                  </div>
                 </div>
-                <p className="mc-progress-label">{progressPct}% confirmed</p>
+                <div className="mc-summary-meta">
+                  <span className="mc-summary-meta-item">
+                    <span className="mc-summary-meta-label">Collected</span>
+                    <strong>{Number(summary.totalLiters).toFixed(1)} L</strong>
+                  </span>
+                  <span className="mc-summary-meta-dot" aria-hidden="true">·</span>
+                  <span className="mc-summary-meta-item">
+                    <span className="mc-summary-meta-label">Amount</span>
+                    <strong>{formatCurrency(summary.totalAmount)}</strong>
+                  </span>
+                  <span className="mc-summary-meta-item mc-summary-meta-item--pct">
+                    <strong>{progressPct}%</strong>
+                    <span className="mc-summary-meta-label">confirmed</span>
+                  </span>
+                </div>
               </div>
             )}
+
+            {/* ── Session filter tabs ─────────────────────────────────── */}
+            <div className="mc-session-tabs">
+              <QuickChips
+                options={SESSION_OPTIONS}
+                selected={sessionFilter}
+                onSelect={setSessionFilter}
+              />
+            </div>
 
             {/* ── Empty state ─────────────────────────────────────────── */}
             {filtered.length === 0 && (
@@ -655,7 +701,7 @@ export default function MilkCollectionsPage() {
                 {collections.length === 0 ? (
                   <>
                     <p>No active suppliers with collection schedules found for this date.</p>
-                    <p style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>
+                    <p className="mc-empty-hint">
                       Entries are auto-generated when suppliers have a default quantity set.
                     </p>
                   </>
@@ -711,6 +757,7 @@ export default function MilkCollectionsPage() {
                                 type="number"
                                 min="0"
                                 step="0.1"
+                                inputMode="decimal"
                                 className="mc-input"
                                 value={edit.actualQty ?? ""}
                                 onChange={(e) => setEdit(c._id, "actualQty", e.target.value)}
@@ -724,6 +771,7 @@ export default function MilkCollectionsPage() {
                                 type="number"
                                 min="0"
                                 step="0.1"
+                                inputMode="decimal"
                                 className="mc-input mc-input--narrow"
                                 value={edit.fatContent ?? ""}
                                 onChange={(e) => setEdit(c._id, "fatContent", e.target.value)}
@@ -738,6 +786,7 @@ export default function MilkCollectionsPage() {
                                 type="number"
                                 min="0"
                                 step="0.1"
+                                inputMode="decimal"
                                 className="mc-input mc-input--narrow"
                                 value={edit.snf ?? ""}
                                 onChange={(e) => setEdit(c._id, "snf", e.target.value)}
@@ -752,6 +801,7 @@ export default function MilkCollectionsPage() {
                                 type="number"
                                 min="0"
                                 step="0.01"
+                                inputMode="decimal"
                                 className="mc-input"
                                 value={edit.ratePerLiter ?? ""}
                                 onChange={(e) => setEdit(c._id, "ratePerLiter", e.target.value)}
@@ -767,15 +817,16 @@ export default function MilkCollectionsPage() {
                             {isPending ? (
                               <div className="mc-row-actions">
                                 <button
-                                  className="mini-button"
+                                  className="mini-button mc-no-supply-btn"
                                   onClick={() => handleNoSupply(c)}
                                   disabled={confirmingId === c._id}
                                   title="Record no supply (0 L)"
                                 >
-                                  0
+                                  <Ban size={12} />
+                                  <span>0 L</span>
                                 </button>
                                 <button
-                                  className="mini-button active"
+                                  className="btn mc-confirm-row-btn"
                                   onClick={() => handleConfirmOne(c)}
                                   disabled={confirmingId === c._id}
                                 >
@@ -803,8 +854,10 @@ export default function MilkCollectionsPage() {
                 }).map((c) => {
                   const isPending = c.status === "pending";
                   const edit = edits[c._id] || {};
+                  const qty = parseFloat(edit.actualQty);
+                  const rate = parseFloat(edit.ratePerLiter);
                   const previewAmt = isPending
-                    ? (parseFloat(edit.actualQty || 0) * parseFloat(edit.ratePerLiter || 0)).toFixed(2)
+                    ? (isNaN(qty) || isNaN(rate) ? 0 : qty * rate).toFixed(2)
                     : (c.totalAmount || 0).toFixed(2);
                   const isOpen = openCards.has(c._id);
 
@@ -813,7 +866,7 @@ export default function MilkCollectionsPage() {
                       key={c._id}
                       className={`mc-card ${isPending ? "mc-card--pending" : "mc-card--confirmed"}`}
                     >
-                      {/* ── Collapsible header (always visible) ── */}
+                      {/* ── Header ── */}
                       <div
                         className="mc-card-head"
                         onClick={() => toggleCard(c._id)}
@@ -825,85 +878,109 @@ export default function MilkCollectionsPage() {
                         <div className="mc-card-identity">
                           <span className="mc-card-name">{c.supplierId?.name || "—"}</span>
                           {c.supplierId?.phone && (
-                            <span className="mc-card-phone">{c.supplierId.phone}</span>
+                            <a
+                              href={`tel:${c.supplierId.phone}`}
+                              className="mc-card-phone-icon"
+                              onClick={(e) => e.stopPropagation()}
+                              title={c.supplierId.phone}
+                              aria-label={`Call ${c.supplierId.name}`}
+                            >
+                              <Phone size={12} />
+                            </a>
                           )}
                         </div>
                         <div className="mc-card-head-right">
-                          {isPending
-                            ? <span className="mc-card-head-meta">Exp: {c.expectedQty ?? "—"} L</span>
-                            : <span className="mc-card-head-amount">{formatCurrency(c.totalAmount)}</span>
-                          }
                           <span className={`mc-session-pill ${c.session}`}>{c.session}</span>
-                          {isPending && <StatusTag value={c.status} />}
+                          {isPending ? (
+                            <span className="mc-card-head-meta">{c.expectedQty ?? "—"} L</span>
+                          ) : (
+                            <span className="mc-card-head-amount">{formatCurrency(c.totalAmount)}</span>
+                          )}
                           <ChevronDown size={15} className={`mc-card-chevron${isOpen ? " open" : ""}`} />
                         </div>
                       </div>
 
-                      {/* ── Collapsible body ── */}
+                      {/* ── Body ── */}
                       {isOpen && (
                         <div className="mc-card-body">
+
                           {isPending ? (
                             <>
-                              {/* Input grid: 2×2 */}
                               <div className="mc-card-inputs">
-                                <div className="mc-card-field">
-                                  <span className="mc-card-field-label">Actual Qty (L)</span>
-                                  <input
-                                    ref={(el) => { inputRefs.current[c._id] = el; }}
-                                    type="number" min="0" step="0.1"
-                                    value={edit.actualQty ?? ""}
-                                    onChange={(e) => setEdit(c._id, "actualQty", e.target.value)}
-                                    onKeyDown={(e) => handleInputKeyDown(e, c)}
-                                    inputMode="decimal"
-                                  />
+                                <div className="mc-card-field mc-card-field--primary">
+                                  <span className="mc-card-field-label">
+                                    Actual Qty
+                                    {c.expectedQty != null && c.expectedQty > 0 && (
+                                      <span className="mc-card-field-hint">exp. {c.expectedQty} L</span>
+                                    )}
+                                  </span>
+                                  <div className="mc-card-input-wrap">
+                                    <input
+                                      ref={(el) => { inputRefs.current[c._id] = el; }}
+                                      type="number" min="0" step="0.1"
+                                      value={edit.actualQty ?? ""}
+                                      onChange={(e) => setEdit(c._id, "actualQty", e.target.value)}
+                                      onKeyDown={(e) => handleInputKeyDown(e, c)}
+                                      inputMode="decimal"
+                                      placeholder="0.0"
+                                      disabled={confirmingId === c._id}
+                                    />
+                                    <span className="mc-card-input-unit">L</span>
+                                  </div>
+                                </div>
+                                <div className="mc-card-field mc-card-field--primary">
+                                  <span className="mc-card-field-label">Rate / Litre</span>
+                                  <div className="mc-card-input-wrap">
+                                    <span className="mc-card-input-prefix">₹</span>
+                                    <input
+                                      type="number" min="0" step="0.01"
+                                      value={edit.ratePerLiter ?? ""}
+                                      onChange={(e) => setEdit(c._id, "ratePerLiter", e.target.value)}
+                                      inputMode="decimal"
+                                      placeholder="0.00"
+                                      disabled={confirmingId === c._id}
+                                    />
+                                  </div>
                                 </div>
                                 <div className="mc-card-field">
-                                  <span className="mc-card-field-label">Rate / L (₹)</span>
-                                  <input
-                                    type="number" min="0" step="0.01"
-                                    value={edit.ratePerLiter ?? ""}
-                                    onChange={(e) => setEdit(c._id, "ratePerLiter", e.target.value)}
-                                    inputMode="decimal"
-                                  />
-                                </div>
-                                <div className="mc-card-field">
-                                  <span className="mc-card-field-label">Fat %</span>
+                                  <span className="mc-card-field-label">Fat % <span className="mc-card-field-opt">opt</span></span>
                                   <input
                                     type="number" min="0" step="0.1"
                                     value={edit.fatContent ?? ""}
                                     onChange={(e) => setEdit(c._id, "fatContent", e.target.value)}
-                                    placeholder="opt."
                                     inputMode="decimal"
+                                    placeholder="—"
+                                    disabled={confirmingId === c._id}
                                   />
                                 </div>
                                 <div className="mc-card-field">
-                                  <span className="mc-card-field-label">SNF %</span>
+                                  <span className="mc-card-field-label">SNF % <span className="mc-card-field-opt">opt</span></span>
                                   <input
                                     type="number" min="0" step="0.1"
                                     value={edit.snf ?? ""}
                                     onChange={(e) => setEdit(c._id, "snf", e.target.value)}
-                                    placeholder="opt."
                                     inputMode="decimal"
+                                    placeholder="—"
+                                    disabled={confirmingId === c._id}
                                   />
                                 </div>
                               </div>
 
-                              {/* Footer: amount preview + action buttons */}
                               <div className="mc-card-footer">
-                                <div className="mc-card-amount-row">
-                                  <span className="mc-card-amount-label">Amount</span>
-                                  <span className="mc-card-amount-value">₹{previewAmt}</span>
+                                <div className="mc-card-footer-est">
+                                  <span className="mc-card-footer-est-label">Est. Amount</span>
+                                  <span className="mc-card-footer-amount">₹{previewAmt}</span>
                                 </div>
                                 <div className="mc-card-actions">
                                   <button
-                                    className="mini-button"
+                                    className="mc-card-nosupply-btn"
                                     onClick={() => handleNoSupply(c)}
                                     disabled={confirmingId === c._id}
                                   >
                                     No Supply
                                   </button>
                                   <button
-                                    className="mini-button active"
+                                    className="mc-card-confirm-btn"
                                     onClick={() => handleConfirmOne(c)}
                                     disabled={confirmingId === c._id}
                                   >
@@ -913,30 +990,31 @@ export default function MilkCollectionsPage() {
                               </div>
                             </>
                           ) : (
-                            /* Confirmed: compact read-only stats */
-                            <div className="mc-card-confirmed-body">
-                              <div className="mc-card-confirmed-stat">
-                                <span>Actual</span>
-                                <strong>{c.actualQty != null ? `${c.actualQty} L` : "—"}</strong>
-                              </div>
-                              {c.fatContent != null && (
-                                <div className="mc-card-confirmed-stat">
-                                  <span>Fat %</span>
-                                  <strong>{c.fatContent}</strong>
+                            <div className="mc-card-data">
+                              <div className="mc-card-data-main">
+                                <div className="mc-card-datum">
+                                  <span>Collected</span>
+                                  <strong>{c.actualQty != null ? `${c.actualQty} L` : "—"}</strong>
                                 </div>
-                              )}
-                              {c.snf != null && (
-                                <div className="mc-card-confirmed-stat">
-                                  <span>SNF %</span>
-                                  <strong>{c.snf}</strong>
+                                <div className="mc-card-datum">
+                                  <span>Rate / L</span>
+                                  <strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong>
                                 </div>
-                              )}
-                              <div className="mc-card-confirmed-stat">
-                                <span>Rate</span>
-                                <strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong>
+                                {c.fatContent != null && (
+                                  <div className="mc-card-datum">
+                                    <span>Fat %</span>
+                                    <strong>{c.fatContent}%</strong>
+                                  </div>
+                                )}
+                                {c.snf != null && (
+                                  <div className="mc-card-datum">
+                                    <span>SNF %</span>
+                                    <strong>{c.snf}%</strong>
+                                  </div>
+                                )}
                               </div>
-                              <div className="mc-card-confirmed-stat amount">
-                                <span>Amount</span>
+                              <div className="mc-card-total">
+                                <span>Total Amount</span>
                                 <strong>{formatCurrency(c.totalAmount)}</strong>
                               </div>
                             </div>
@@ -953,11 +1031,11 @@ export default function MilkCollectionsPage() {
             <StickyActionBar visible={isMobile && totalPendingCount > 0}>
               <div className="mc-sticky-confirm">
                 <button
-                  className="mini-button active"
+                  className="btn btn-primary mc-sticky-confirm-btn"
                   onClick={() => setShowBulkDialog(true)}
                   disabled={bulkConfirming}
                 >
-                  <CheckCheck size={16} style={{ marginRight: 6 }} />
+                  <CheckCheck size={16} />
                   {bulkConfirming ? "Confirming…" : `Confirm All (${totalPendingCount})`}
                 </button>
               </div>
@@ -970,129 +1048,184 @@ export default function MilkCollectionsPage() {
           <div className="mc-content">
 
             {/* ── Filters ─────────────────────────────────────────────── */}
-            <div className="mc-history-filters">
-              <label className="form-field">
-                <span>Farmer</span>
-                <select
-                  value={historyFilters.supplierId}
-                  onChange={(e) => setHistoryFilters((f) => ({ ...f, supplierId: e.target.value }))}
-                >
-                  <option value="">All Farmers</option>
-                  {suppliersList.map((s) => (
-                    <option key={s._id} value={s._id}>{s.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="form-field">
-                <span>Session</span>
-                <select
-                  value={historyFilters.session}
-                  onChange={(e) => setHistoryFilters((f) => ({ ...f, session: e.target.value }))}
-                >
-                  <option value="">All Sessions</option>
-                  <option value="morning">Morning</option>
-                  <option value="evening">Evening</option>
-                </select>
-              </label>
-              <label className="form-field">
-                <span>From</span>
-                <input
-                  type="date"
-                  value={historyFilters.from}
-                  onChange={(e) => setHistoryFilters((f) => ({ ...f, from: e.target.value }))}
-                />
-              </label>
-              <label className="form-field">
-                <span>To</span>
-                <input
-                  type="date"
-                  value={historyFilters.to}
-                  onChange={(e) => setHistoryFilters((f) => ({ ...f, to: e.target.value }))}
-                />
-              </label>
-              <div className="mc-history-filter-actions">
+            <div className="mc-hist-filters">
+              <div className="mc-hist-filter-row">
+                {/* Farmer custom dropdown */}
+                <div className="mc-hist-dropdown" ref={farmerDropdownRef}>
+                  <button
+                    type="button"
+                    className={`mc-hist-dropdown-trigger${historyFarmerOpen ? " open" : ""}${historyFilters.supplierId ? " has-value" : ""}`}
+                    onClick={() => setHistoryFarmerOpen((o) => !o)}
+                    aria-expanded={historyFarmerOpen}
+                    aria-haspopup="listbox"
+                  >
+                    <span className="mc-hist-dropdown-value">
+                      {historyFilters.supplierId
+                        ? suppliersList.find((s) => s._id === historyFilters.supplierId)?.name ?? "Farmer"
+                        : "All Farmers"}
+                    </span>
+                    <ChevronDown size={13} className={`mc-hist-chevron${historyFarmerOpen ? " open" : ""}`} />
+                  </button>
+                  {historyFarmerOpen && (
+                    <div className="mc-hist-dropdown-menu" role="listbox">
+                      {[{ _id: "", name: "All Farmers" }, ...suppliersList].map((s) => (
+                        <button
+                          key={s._id}
+                          type="button"
+                          role="option"
+                          aria-selected={historyFilters.supplierId === s._id}
+                          className={`mc-hist-dropdown-option${historyFilters.supplierId === s._id ? " selected" : ""}`}
+                          onClick={() => { setHistoryFilters((f) => ({ ...f, supplierId: s._id })); setHistoryFarmerOpen(false); }}
+                        >
+                          {s._id === "" && <span className="mc-hist-dropdown-all-icon">·</span>}
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Date range toggle */}
                 <button
-                  className="mini-button active"
-                  onClick={fetchHistory}
-                  disabled={historyLoading}
+                  className={`mc-hist-date-toggle${historyDateOpen ? " active" : ""}${(historyFilters.from || historyFilters.to) ? " has-value" : ""}`}
+                  type="button"
+                  onClick={() => setHistoryDateOpen((o) => !o)}
+                  aria-expanded={historyDateOpen}
                 >
-                  {historyLoading ? "Loading…" : "Apply"}
+                  <CalendarDays size={14} />
+                  <span className="mc-hist-date-label">
+                    {historyFilters.from || historyFilters.to
+                      ? `${historyFilters.from || "…"} – ${historyFilters.to || "…"}`
+                      : "Date Range"}
+                  </span>
+                  <ChevronDown size={12} className={`mc-hist-chevron${historyDateOpen ? " open" : ""}`} />
                 </button>
+
+                {/* Loading indicator */}
+                {historyLoading && <span className="mc-hist-loading-dot" aria-label="Loading" />}
+
+                {/* Export icon */}
                 {history.length > 0 && (
                   <button
-                    className="mini-button"
+                    className="mc-hist-export-icon"
                     onClick={() => downloadCSV(history)}
-                    title="Export to CSV"
+                    title="Export CSV"
+                    aria-label="Export to CSV"
                   >
-                    <Download size={14} style={{ marginRight: 4 }} />
-                    Export
+                    <Download size={15} />
                   </button>
                 )}
               </div>
+
+              {/* Collapsible date inputs */}
+              {historyDateOpen && (
+                <div className="mc-hist-date-row">
+                  <input
+                    className="mc-hist-date-input"
+                    type="date"
+                    value={historyFilters.from}
+                    onChange={(e) => setHistoryFilters((f) => ({ ...f, from: e.target.value }))}
+                  />
+                  <span className="mc-hist-date-sep" aria-hidden="true">–</span>
+                  <input
+                    className="mc-hist-date-input"
+                    type="date"
+                    value={historyFilters.to}
+                    onChange={(e) => { setHistoryFilters((f) => ({ ...f, to: e.target.value })); setHistoryDateOpen(false); }}
+                  />
+                  {(historyFilters.from || historyFilters.to) && (
+                    <button
+                      className="mc-hist-date-clear"
+                      type="button"
+                      onClick={() => { setHistoryFilters((f) => ({ ...f, from: "", to: "" })); }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* ── History summary totals ───────────────────────────────── */}
+            {/* ── Summary strip ───────────────────────────────────────── */}
             {historySummary && history.length > 0 && (
-              <div className="mc-history-summary">
-                <div className="mc-history-total-chip">
+              <div className="mc-hist-summary">
+                <div className="mc-hist-summary-card mc-hist-summary-card--liters">
                   <span>Total Collected</span>
-                  <strong>{Number(historySummary.totalLiters).toFixed(1)} L</strong>
+                  <strong>{Number(historySummary.totalLiters).toFixed(1)}<em>L</em></strong>
                 </div>
-                <div className="mc-history-total-chip">
+                <div className="mc-hist-summary-card mc-hist-summary-card--amount">
                   <span>Total Amount</span>
                   <strong>{formatCurrency(historySummary.totalAmount)}</strong>
                 </div>
-                {historySummary.avgFat != null && (
-                  <div className="mc-history-total-chip">
-                    <span>Avg Fat %</span>
-                    <strong>{historySummary.avgFat}</strong>
-                  </div>
-                )}
-                {historySummary.avgSNF != null && (
-                  <div className="mc-history-total-chip">
-                    <span>Avg SNF %</span>
-                    <strong>{historySummary.avgSNF}</strong>
+                {(historySummary.avgFat != null || historySummary.avgSNF != null) && (
+                  <div className="mc-hist-summary-secondary">
+                    {historySummary.avgFat != null && (
+                      <div className="mc-hist-summary-sub">
+                        <span>Avg Fat</span>
+                        <strong>{historySummary.avgFat}%</strong>
+                      </div>
+                    )}
+                    {historySummary.avgSNF != null && (
+                      <div className="mc-hist-summary-sub">
+                        <span>Avg SNF</span>
+                        <strong>{historySummary.avgSNF}%</strong>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
 
+            {/* ── Session tabs ─────────────────────────────────────────── */}
+            {history.length > 0 && (
+              <div className="mc-session-tabs">
+                <QuickChips
+                  options={HISTORY_SESSION_OPTIONS}
+                  selected={historySessionFilter}
+                  onSelect={setHistorySessionFilter}
+                />
+              </div>
+            )}
+
             {/* ── History table/cards ──────────────────────────────────── */}
             {historyLoading ? (
-              <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
-                Loading…
-              </div>
+              <div className="mc-loading-state">Loading…</div>
             ) : history.length === 0 ? (
               <EmptyState text="No collections found. Set filters above and click Apply to search." />
+            ) : displayedHistory.length === 0 ? (
+              <EmptyState text="No records for the selected session." />
             ) : isMobile ? (
               /* Mobile: history cards */
-              <div className="sc-list">
-                {history.map((c) => (
-                  <div key={c._id} className="sc-card">
-                    <div className="sc-card-head">
-                      <div className="sc-card-date">
-                        <strong>{formatDate(c.date)}</strong>
-                        <span className="sc-session">{c.session}</span>
-                      </div>
-                      <div className="sc-card-badges">
-                        <StatusTag value={c.status} />
-                        {c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}
-                        <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit">
+              <div className="mc-hist-list">
+                {displayedHistory.map((c) => (
+                  <div key={c._id} className={`mc-hist-card mc-hist-card--${c.session}`}>
+                    {/* Top row: name + date/edit */}
+                    <div className="mc-hist-card-top">
+                      <span className="mc-hist-card-name">{c.supplierId?.name || "—"}</span>
+                      <div className="mc-hist-card-aside">
+                        <span className="mc-hist-card-date">{formatDate(c.date)}</span>
+                        <button className="mc-edit-btn" onClick={() => openColEdit(c)} title="Edit entry" aria-label="Edit entry">
                           <SquarePen size={13} />
                         </button>
                       </div>
                     </div>
-                    <div className="sc-card-head" style={{ background: "var(--surface)", borderTop: 0, paddingTop: 4, paddingBottom: 4 }}>
-                      <strong style={{ fontSize: "var(--font-size-xs)" }}>{c.supplierId?.name || "—"}</strong>
+                    {/* Badge row */}
+                    <div className="mc-hist-card-badges">
+                      <span className={`mc-badge mc-badge--session mc-badge--${c.session}`}>{c.session}</span>
+                      <span className={`mc-badge mc-badge--${c.status}`}>{c.status}</span>
+                      <span className={`mc-badge mc-badge--${c.paymentId ? "paid" : "unpaid"}`}>{c.paymentId ? "paid" : "unpaid"}</span>
                     </div>
-                    <div className="sc-card-stats">
-                      <div className="sc-stat"><span>Actual</span><strong>{c.actualQty != null ? `${c.actualQty} L` : "—"}</strong></div>
-                      <div className="sc-stat"><span>Fat %</span><strong>{c.fatContent != null ? c.fatContent : "—"}</strong></div>
-                      <div className="sc-stat"><span>SNF %</span><strong>{c.snf != null ? c.snf : "—"}</strong></div>
+                    {/* Stats grid */}
+                    <div className="mc-hist-card-stats">
+                      <div className="mc-hist-stat-cell"><span>Qty</span><strong>{c.actualQty != null ? `${c.actualQty} L` : "—"}</strong></div>
+                      <div className="mc-hist-stat-cell"><span>Fat %</span><strong>{c.fatContent ?? "—"}</strong></div>
+                      <div className="mc-hist-stat-cell"><span>SNF %</span><strong>{c.snf ?? "—"}</strong></div>
+                      <div className="mc-hist-stat-cell"><span>Rate / L</span><strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong></div>
                     </div>
-                    <div className="sc-card-stats sc-card-stats--bottom">
-                      <div className="sc-stat"><span>Rate / L</span><strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong></div>
-                      <div className="sc-stat sc-stat--amount"><span>Amount</span><strong>{c.totalAmount != null ? formatCurrency(c.totalAmount) : "—"}</strong></div>
+                    {/* Amount footer */}
+                    <div className="mc-hist-card-amount">
+                      <span>Total Amount</span>
+                      <strong>{c.totalAmount != null ? formatCurrency(c.totalAmount) : "—"}</strong>
                     </div>
                   </div>
                 ))}
@@ -1100,7 +1233,7 @@ export default function MilkCollectionsPage() {
             ) : (
               /* Desktop: history table */
               <div className="mc-table-wrap">
-                <table className="mc-table">
+                <table className="mc-table mc-history-table">
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -1116,7 +1249,7 @@ export default function MilkCollectionsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {history.map((c) => (
+                    {displayedHistory.map((c) => (
                       <tr key={c._id}>
                         <td>{formatDate(c.date)}</td>
                         <td>
@@ -1134,7 +1267,7 @@ export default function MilkCollectionsPage() {
                           {c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />}
                         </td>
                         <td>
-                          <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit">
+                          <button className="mc-edit-btn" onClick={() => openColEdit(c)} title="Edit">
                             <SquarePen size={13} />
                           </button>
                         </td>
@@ -1223,7 +1356,7 @@ export default function MilkCollectionsPage() {
           </div>
         }
       >
-        <p style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: "var(--space-3)" }}>
+        <p className="mc-missing-desc">
           These suppliers have no collection records for the dates below. Click "Fix" to generate and fill them.
         </p>
         <div className="mc-missing-list">
@@ -1232,8 +1365,7 @@ export default function MilkCollectionsPage() {
               <div className="mc-missing-group-date">
                 {formatDate(date)} — {items.length} missing
                 <button
-                  className="mini-button active"
-                  style={{ marginLeft: "var(--space-3)", padding: "2px 10px", fontSize: "var(--font-size-xs)" }}
+                  className="mini-button active mc-missing-fix-btn"
                   onClick={() => handleFixMissing(date)}
                   disabled={fixingDate === date}
                 >

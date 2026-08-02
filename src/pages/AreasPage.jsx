@@ -4,11 +4,13 @@ import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import StatusTag from "../components/ui/StatusTag";
+import SearchInput from "../components/ui/SearchInput";
 import toast from "react-hot-toast";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 
@@ -20,7 +22,7 @@ const EMPTY_FORM = { name: "", pincodes: "", localities: "", assignedAgent: "" }
 export default function AreasPage() {
   const { data: areaData, loading, error, refetch } = useApiData(fetchAreas);
   const { data: agentData } = useApiData(fetchAgents);
-  const areas = areaData?.areas ?? [];
+  const areas = useMemo(() => areaData?.areas ?? [], [areaData?.areas]);
   const agents = agentData?.agents ?? [];
   const isMobile = useMediaQuery("(max-width: 768px)");
 
@@ -105,7 +107,7 @@ export default function AreasPage() {
   };
 
   if (loading) return <LoadingScreen />;
-  if (error) return <div className="page-error">{error}</div>;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack areas-page">
@@ -122,18 +124,7 @@ export default function AreasPage() {
 
       <div className="surface">
         <div className="surface-filters">
-          <div className="search-input-wrap">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search by area name, pincode, or locality..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
-            )}
-          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by area name, pincode, or locality..." />
         </div>
 
         {filtered.length === 0 ? (

@@ -3,27 +3,20 @@ import LoadingSkeleton from "./LoadingSkeleton";
 
 const PageSkeleton = () => {
   return (
-    <div style={{ padding: "var(--space-6)" }}>
-      <div style={{ marginBottom: "var(--space-8)" }}>
-        <LoadingSkeleton width="200px" height="32px" />
-        <div style={{ height: "var(--space-2)" }} />
-        <LoadingSkeleton width="120px" height="16px" />
+    <div className="page-skeleton" role="status" aria-label="Loading page">
+      <div className="page-skeleton-header">
+        <LoadingSkeleton width="220px" height="32px" />
+        <LoadingSkeleton width="140px" height="16px" />
       </div>
 
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", 
-        gap: "var(--space-4)",
-        marginBottom: "var(--space-8)" 
-      }}>
-        <LoadingSkeleton height="120px" />
-        <LoadingSkeleton height="120px" />
-        <LoadingSkeleton height="120px" />
-        <LoadingSkeleton height="120px" />
+      <div className="page-skeleton-grid">
+        {[0, 1, 2, 3].map((i) => (
+          <LoadingSkeleton key={i} width="100%" height="110px" />
+        ))}
       </div>
 
-      <div>
-        <LoadingSkeleton height="400px" />
+      <div className="page-skeleton-body">
+        <LoadingSkeleton rows={4} columns={4} />
       </div>
     </div>
   );

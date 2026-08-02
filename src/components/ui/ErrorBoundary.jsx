@@ -22,33 +22,23 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ 
-          display: "flex", 
-          flexDirection: "column", 
-          alignItems: "center", 
-          justifyContent: "center", 
-          height: "100vh",
-          padding: "2rem",
-          textAlign: "center",
-          backgroundColor: "var(--color-background)"
-        }}>
-          <h1 style={{ color: "var(--color-primary-dark)", marginBottom: "1rem" }}>
-            Something went wrong
-          </h1>
-          <p style={{ color: "var(--text-secondary)", marginBottom: "2rem" }}>
-            An unexpected error occurred. We've been notified and are looking into it.
+        <div className="error-boundary" role="alert">
+          <div className="error-boundary-icon" aria-hidden>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h1>Something went wrong</h1>
+          <p>
+            An unexpected error occurred. We've been notified and are looking
+            into it.
           </p>
-          <button 
+          <button
+            type="button"
+            className="btn btn-primary"
             onClick={this.handleRetry}
-            style={{
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "var(--color-secondary)",
-              color: "white",
-              border: "none",
-              borderRadius: "var(--radius-sm)",
-              fontWeight: "600",
-              cursor: "pointer"
-            }}
           >
             Retry
           </button>

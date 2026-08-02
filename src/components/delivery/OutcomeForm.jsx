@@ -1,7 +1,7 @@
 import { useState } from "react";
 import QuickChips from "../ui/QuickChips";
 
-export default function OutcomeForm({ mode, scheduled, unit, form, onChange }) {
+export default function OutcomeForm({ mode, scheduled, unit, form, onChange, item, subscriptions = [], subscriptionsLoading = false }) {
   const [showOther, setShowOther] = useState(false);
 
   const skipReasons = [
@@ -87,6 +87,66 @@ export default function OutcomeForm({ mode, scheduled, unit, form, onChange }) {
           rows={2}
         />
       </div>
+
+      {(mode === "delivered" || mode === "change") && item?.type === "order" && (
+        <div className="form-group">
+          <label>Payment Method</label>
+          <div className="outcome-payment-row">
+            <button
+              type="button"
+              className={`chip ${(!form.paymentMode || form.paymentMode === "pay_at_delivery") ? "active" : ""}`}
+              onClick={() => onChange({ paymentMode: "pay_at_delivery", selectedSubscriptionId: null })}
+            >
+              Pay at Delivery
+            </button>
+            <button
+              type="button"
+              className={`chip ${form.paymentMode === "subscription_ledger" ? "active" : ""}`}
+              disabled={subscriptionsLoading || subscriptions.length === 0}
+              onClick={() => {
+                onChange({
+                  paymentMode: "subscription_ledger",
+                  selectedSubscriptionId: subscriptions.length === 1 ? String(subscriptions[0]._id) : null,
+                });
+              }}
+              title={!subscriptionsLoading && subscriptions.length === 0 ? "No active subscriptions" : ""}
+            >
+              Add to Subscription Ledger{subscriptionsLoading ? " …" : ""}
+            </button>
+          </div>
+
+          {form.paymentMode === "subscription_ledger" && (
+            <div className="outcome-sub-wrap">
+              {subscriptionsLoading && (
+                <p className="outcome-msg outcome-msg--muted">Loading subscriptions…</p>
+              )}
+              {!subscriptionsLoading && subscriptions.length === 0 && (
+                <p className="outcome-msg outcome-msg--danger">No active subscriptions found.</p>
+              )}
+              {!subscriptionsLoading && subscriptions.length === 1 && (
+                <p className="outcome-msg outcome-msg--muted">
+                  Will be added to: <strong>{subscriptions[0].productName}</strong> ({subscriptions[0].deliverySchedule}) — Pending: ₹{subscriptions[0].pendingAmount}
+                </p>
+              )}
+              {!subscriptionsLoading && subscriptions.length >= 2 && (
+                <select
+                  value={form.selectedSubscriptionId || ""}
+                  onChange={(e) => onChange({ selectedSubscriptionId: e.target.value || null })}
+                  required
+                  className="outcome-sub-select"
+                >
+                  <option value="">— Select a subscription —</option>
+                  {subscriptions.map((sub) => (
+                    <option key={String(sub._id)} value={String(sub._id)}>
+                      {sub.productName} ({sub.deliverySchedule}) — Pending: ₹{sub.pendingAmount}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

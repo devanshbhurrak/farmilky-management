@@ -283,33 +283,33 @@ export default function AgentDetailPage() {
       {isMobile ? (
         <BottomSheet isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Agent">
           {form && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Name <em style={{ color: "var(--danger)" }}>*</em></span>
+            <div className="form-stack">
+              <label className="form-field">
+                <span>Name <em className="required-mark">*</em></span>
                 <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Email <em style={{ color: "var(--danger)" }}>*</em></span>
+              <label className="form-field">
+                <span>Email <em className="required-mark">*</em></span>
                 <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Phone <em style={{ color: "var(--danger)" }}>*</em></span>
+              <label className="form-field">
+                <span>Phone <em className="required-mark">*</em></span>
                 <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} required />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Password (leave blank to keep)</span>
+              <label className="form-field">
+                <span>Password (leave blank to keep)</span>
                 <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Joining Date</span>
+              <label className="form-field">
+                <span>Joining Date</span>
                 <input type="date" value={form.joiningDate} onChange={(e) => setForm((f) => ({ ...f, joiningDate: e.target.value }))} />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Vehicle Type</span>
+              <label className="form-field">
+                <span>Vehicle Type</span>
                 <input type="text" value={form.vehicleType} onChange={(e) => setForm((f) => ({ ...f, vehicleType: e.target.value }))} placeholder="e.g. Bike, Van" />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Max Capacity</span>
+              <label className="form-field">
+                <span>Max Capacity</span>
                 <input type="number" value={form.maxCapacity} onChange={(e) => setForm((f) => ({ ...f, maxCapacity: e.target.value }))} placeholder="Max items per trip" />
               </label>
               <div className="modal-actions">
@@ -327,42 +327,42 @@ export default function AgentDetailPage() {
           onClose={() => setEditOpen(false)}
           title="Edit Agent"
           footer={
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
-              <button className="mini-button" onClick={() => setEditOpen(false)} disabled={saving}>Cancel</button>
-              <button className="mini-button active" onClick={handleSave} disabled={saving}>
+            <div className="modal-actions">
+              <button className="btn btn-secondary btn-sm" onClick={() => setEditOpen(false)} disabled={saving}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save"}
               </button>
             </div>
           }
         >
           {form && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Name <em style={{ color: "var(--danger)" }}>*</em></span>
+            <div className="form-stack">
+              <label className="form-field">
+                <span>Name <em className="required-mark">*</em></span>
                 <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Email <em style={{ color: "var(--danger)" }}>*</em></span>
+              <label className="form-field">
+                <span>Email <em className="required-mark">*</em></span>
                 <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Phone <em style={{ color: "var(--danger)" }}>*</em></span>
+              <label className="form-field">
+                <span>Phone <em className="required-mark">*</em></span>
                 <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} required />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Password (leave blank to keep)</span>
+              <label className="form-field">
+                <span>Password (leave blank to keep)</span>
                 <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Joining Date</span>
+              <label className="form-field">
+                <span>Joining Date</span>
                 <input type="date" value={form.joiningDate} onChange={(e) => setForm((f) => ({ ...f, joiningDate: e.target.value }))} />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Vehicle Type</span>
+              <label className="form-field">
+                <span>Vehicle Type</span>
                 <input type="text" value={form.vehicleType} onChange={(e) => setForm((f) => ({ ...f, vehicleType: e.target.value }))} placeholder="e.g. Bike, Van" />
               </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <span style={{ fontSize: "var(--font-size-sm)", fontWeight: 600 }}>Max Capacity</span>
+              <label className="form-field">
+                <span>Max Capacity</span>
                 <input type="number" value={form.maxCapacity} onChange={(e) => setForm((f) => ({ ...f, maxCapacity: e.target.value }))} placeholder="Max items per trip" />
               </label>
             </div>

@@ -1,10 +1,12 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Pencil } from "lucide-react";
+import { formatCurrency } from "../utils/format";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import DataTable from "../components/ui/DataTable";
 import PageHeader from "../components/ui/PageHeader";
+import SearchInput from "../components/ui/SearchInput";
 import RightDrawer from "../components/ui/RightDrawer";
 import BottomSheet from "../components/ui/BottomSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
@@ -31,15 +33,11 @@ const STATUS_FILTERS = [
   { id: "inactive", label: "Inactive" },
 ];
 
-function formatCurrency(val) {
-  return `₹${Number(val || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 export default function SuppliersPage() {
   const navigate = useNavigate();
   const { data, loading, refetch } = useApiData(fetchSuppliers);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const suppliers = data?.suppliers ?? [];
+  const suppliers = useMemo(() => data?.suppliers ?? [], [data?.suppliers]);
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -328,7 +326,7 @@ export default function SuppliersPage() {
       label: "Outstanding",
       sortable: true,
       render: (row) => (
-        <span style={{ color: row.outstandingAmount > 0 ? "var(--color-warning, #d97706)" : "inherit", fontWeight: row.outstandingAmount > 0 ? 600 : 400 }}>
+        <span className={row.outstandingAmount > 0 ? "danger-text strong-text" : undefined}>
           {formatCurrency(row.outstandingAmount)}
         </span>
       ),
@@ -407,18 +405,7 @@ export default function SuppliersPage() {
               </button>
             ))}
           </div>
-          <div className="search-input-wrap">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search name, phone or location..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button className="search-clear-btn" onClick={() => setSearchQuery("")} aria-label="Clear">&times;</button>
-            )}
-          </div>
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, phone or location..." />
         </div>
 
         <DataTable

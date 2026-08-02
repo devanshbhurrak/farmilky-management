@@ -1,15 +1,15 @@
 import { Loader2, RefreshCw } from "lucide-react";
-import { formatTime } from "../../utils/format";
 import UserMenu from "./UserMenu";
 
-export default function Topbar({ lastUpdatedAt, onRefresh, loading }) {
+export default function Topbar({ onRefresh, loading }) {
   return (
     <header className="site-topbar">
       <div className="topbar-inner">
+        <div className="topbar-left">
+          <span className="brand-mark">Farmilky</span>
+          <span className="topbar-caption">Dashboard</span>
+        </div>
         <div className="topbar-right">
-          <span className="updated-pill">
-            Updated: {lastUpdatedAt ? formatTime(lastUpdatedAt) : "Not yet"}
-          </span>
           <button
             className="mini-button refresh-button with-icon"
             type="button"

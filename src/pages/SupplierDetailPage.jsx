@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Pencil, ChevronDown, SquarePen, Trash2 } from "lucide-react";
 import { apiRequest } from "../api/client";
+import { formatCurrency } from "../utils/format";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
@@ -11,10 +12,6 @@ import EmptyState from "../components/ui/EmptyState";
 import PageHeader from "../components/ui/PageHeader";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
-
-function formatCurrency(val) {
-  return `₹${Number(val || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function formatDate(val) {
   if (!val) return "—";

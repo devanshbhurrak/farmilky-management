@@ -1,73 +1,93 @@
 import StatusTag from "../ui/StatusTag";
 import { formatCurrency } from "../../utils/format";
+import { Package, Clock, MapPin, CheckCircle2, XCircle } from "lucide-react";
 
-export default function DeliveryCard({ item, index, onSelect, isSelected, onAction }) {
+const STATUS_ACCENT = {
+  delivered: "dc-accent--delivered",
+  failed:    "dc-accent--failed",
+  skipped:   "dc-accent--skipped",
+};
+
+export default function DeliveryCard({ item, onSelect, isSelected, onAction }) {
+  const accentClass = STATUS_ACCENT[item.deliveryStatus] ?? "dc-accent--pending";
+
   return (
-    <div className={`delivery-card ${isSelected ? 'selected' : ''}`}>
-      <div className="delivery-head">
-        <div className="stop-selector">
-          {item.canRecordOutcome !== false && (
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => onSelect(item.id)}
-              id={`stop-${item.id}`}
-              aria-label={`Select stop ${index + 1} — ${item.customerName || "Unknown Customer"}`}
-            />
+    <div className={`delivery-card dc ${accentClass} ${isSelected ? "selected" : ""}`}>
+
+      {/* ── Section 1: customer ───────────────────── */}
+      <div className="dc-customer-row">
+        {item.canRecordOutcome !== false && (
+          <input
+            type="checkbox"
+            id={`dc-${item.id}`}
+            checked={isSelected}
+            onChange={() => onSelect(item.id)}
+            className="dc-checkbox"
+            aria-label={`Select ${item.customerName || "Unknown"}`}
+          />
+        )}
+        <div className="dc-customer-body">
+          <label htmlFor={`dc-${item.id}`} className="dc-customer-name">
+            {item.customerName || "Unknown Customer"}
+          </label>
+          {(item.phone || item.email) && (
+            <span className="dc-customer-sub">{item.phone || item.email}</span>
           )}
-          <label htmlFor={`stop-${item.id}`} className="stop-pill">Stop {index + 1}</label>
         </div>
-        <div className="delivery-head-tags">
-          <StatusTag value={item.type} />
-          <StatusTag value={item.deliveryStatus} />
+        <div className="dc-customer-meta">
+          <span className="dc-price">{formatCurrency(item.amount)}</span>
+          <div className="dc-tags">
+            <StatusTag value={item.type} />
+            {item.deliveryStatus !== "pending" && <StatusTag value={item.deliveryStatus} />}
+          </div>
         </div>
       </div>
-      
-      <div className="delivery-content">
-        <h4 className="customer-name">{item.customerName || "Unknown Customer"}</h4>
-        <p className="customer-contact">{item.phone || item.email || "No contact info"}</p>
-        
-        <div className="delivery-meta-grid">
-          <div className="meta-item">
-            <span>Product</span>
-            <strong>{item.productLabel}</strong>
-          </div>
-          <div className="meta-item">
-            <span>Quantity</span>
-            <strong>{item.quantity} {item.unit}</strong>
-          </div>
-          <div className="meta-item">
-            <span>Schedule</span>
-            <strong>{item.schedule}</strong>
-          </div>
-          <div className="meta-item">
-            <span>Amount</span>
-            <strong>{formatCurrency(item.amount)}</strong>
-          </div>
+
+      {/* ── Section 2: delivery info ──────────────── */}
+      <div className="dc-info">
+        <div className="dc-info-row">
+          <Package size={12} className="dc-info-icon" />
+          <span className="dc-info-primary">{item.productLabel}</span>
+          <span className="dc-info-sep">·</span>
+          <span className="dc-info-secondary">{item.quantity} {item.unit}</span>
+          <span className="dc-info-sep">·</span>
+          <Clock size={11} className="dc-info-icon" />
+          <span className="dc-info-secondary">{item.schedule}</span>
         </div>
-        
-        {item.address && <p className="delivery-address">{item.address}</p>}
-        
-        {item.outcome && (
-          <div className="outcome-summary">
-            {item.outcome.actualQuantity != null && (
-              <span>Delivered: {item.outcome.actualQuantity} {item.unit || ""}</span>
-            )}
-            {item.outcome.reason && <span>Reason: {item.outcome.reason}</span>}
+        {item.address && (
+          <div className="dc-info-row dc-info-address">
+            <MapPin size={12} className="dc-info-icon" />
+            <span className="dc-info-secondary">{item.address}</span>
           </div>
         )}
       </div>
 
-      {item.canRecordOutcome && (
-        <div className="delivery-actions-mobile">
-          <button
-            className="action-btn-primary"
-            onClick={() => onAction(item, "delivered")}
-          >
-            Deliver
-          </button>
+      {/* ── Section 3: outcome + action ──────────── */}
+      {(item.outcome || item.canRecordOutcome) && (
+        <div className="dc-footer">
+          {item.outcome && (
+            <div className="dc-outcome">
+              {item.deliveryStatus === "delivered"
+                ? <CheckCircle2 size={13} className="dc-outcome-icon dc-outcome-icon--ok" />
+                : <XCircle size={13} className="dc-outcome-icon dc-outcome-icon--fail" />
+              }
+              <span>
+                {item.outcome.actualQuantity != null && `${item.outcome.actualQuantity} ${item.unit || ""} delivered`}
+                {item.outcome.reason && ` · ${item.outcome.reason}`}
+              </span>
+            </div>
+          )}
+          {item.canRecordOutcome && (
+            <button
+              className="dc-btn-deliver"
+              onClick={() => onAction(item, "delivered")}
+            >
+              Mark as Delivered
+            </button>
+          )}
         </div>
       )}
+
     </div>
   );
 }

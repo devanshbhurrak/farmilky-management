@@ -40,19 +40,21 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
 
   return (
     <form id="subscription-form" onSubmit={onSubmit} className="form-stack">
-      <div className="form-group">
-        <label>Customer</label>
-        <select
-          value={form.userId}
-          onChange={(e) => onChange({ userId: e.target.value })}
-          required
-        >
-          <option value="">Select Customer</option>
-          {(customers || []).map(c => (
-            <option key={c._id} value={c._id}>{c.name} ({c.phone})</option>
-          ))}
-        </select>
-      </div>
+      {(customers || []).length > 1 && (
+        <div className="form-group">
+          <label>Customer</label>
+          <select
+            value={form.userId}
+            onChange={(e) => onChange({ userId: e.target.value })}
+            required
+          >
+            <option value="">Select Customer</option>
+            {(customers || []).map(c => (
+              <option key={c._id} value={c._id}>{c.name} ({c.phone})</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="form-group">
         <label>Product</label>
@@ -115,6 +117,15 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
           )}
         </div>
       </div>
+
+      {selectedProduct && form.quantityPerDay > 0 && form.pricePerUnit > 0 && (
+        <div className="sub-preview-banner">
+          <span className="sub-preview-label">Daily total</span>
+          <strong className="sub-preview-value">
+            {`₹${(Number(form.quantityPerDay) * Number(form.pricePerUnit)).toFixed(2)}/day`}
+          </strong>
+        </div>
+      )}
 
       <div className="form-group">
         <label>Start Date</label>

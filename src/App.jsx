@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import { usePortalData } from "./context/PortalDataContext";
 import { apiRequest } from "./api/client";
@@ -13,7 +13,6 @@ import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminRoute from "./components/layout/AdminRoute";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import PageSkeleton from "./components/ui/PageSkeleton";
-import { useMediaQuery } from "./hooks/useMediaQuery";
 
 // Lazy-loaded pages
 const LoginPage = lazy(() => import("./pages/LoginPage"));
@@ -54,9 +53,12 @@ import "./styles/pages/areas.css";
 import "./styles/pages/support.css";
 import "./styles/pages/suppliers.css";
 import "./styles/pages/milk-collections.css";
+import "./styles/pages/customers.css";
+import "./styles/pages/orders.css";
+import "./styles/pages/subscriptions.css";
 
 function App() {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const location = useLocation();
   const { data: portalData, loading: portalLoading, lastUpdatedAt, refreshData } = usePortalData();
   const [collapsed, setCollapsed] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -122,17 +124,21 @@ function App() {
               element={
                 <div className="admin-shell">
                   <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
-                  <MobileHeader
-                    lastUpdatedAt={lastUpdatedAt}
-                    onRefresh={() => refreshData(true)}
-                    loading={portalLoading}
-                  />
-                  <div className="main-area">
-                    <Topbar
+                  {location.pathname === "/" && (
+                    <MobileHeader
                       lastUpdatedAt={lastUpdatedAt}
                       onRefresh={() => refreshData(true)}
                       loading={portalLoading}
                     />
+                  )}
+                  <div className="main-area">
+                    {location.pathname === "/" && (
+                      <Topbar
+                        lastUpdatedAt={lastUpdatedAt}
+                        onRefresh={() => refreshData(true)}
+                        loading={portalLoading}
+                      />
+                    )}
                     <main className="page-content">
                       <Routes>
                         <Route element={<AdminRoute />}>
@@ -200,20 +206,6 @@ function App() {
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
                     </main>
-                    <footer className="portal-footer">
-                      <div className="footer-inner">
-                        <div className="footer-left">
-                          <span className="footer-brand">Farmilky</span>
-                          <span className="footer-tagline">Fresh dairy, delivered daily.</span>
-                        </div>
-                        <div className="footer-links">
-                          <span>Privacy</span>
-                          <span>Terms</span>
-                          <span>Support</span>
-                        </div>
-                        <span className="footer-copy">&copy; {new Date().getFullYear()} Farmilky</span>
-                      </div>
-                    </footer>
                   </div>
                   <BottomNav onMoreClick={() => setIsDrawerOpen(true)} />
                   <MobileDrawer 

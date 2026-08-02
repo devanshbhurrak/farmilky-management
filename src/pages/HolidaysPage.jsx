@@ -4,6 +4,7 @@ import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
@@ -124,11 +125,11 @@ export default function HolidaysPage() {
         <div className="mc-identity">
           <span className="mc-name">{h.name}</span>
           <span className="mc-sub">
-            {new Date(h.date).toLocaleDateString(undefined, {
-              weekday: "long",
+            {new Date(h.date).toLocaleDateString("en-IN", {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
               year: "numeric",
-              month: "long",
-              day: "numeric",
             })}
           </span>
         </div>
@@ -146,7 +147,7 @@ export default function HolidaysPage() {
   );
 
   if (loading) return <LoadingScreen />;
-  if (error) return <div className="page-error">{error}</div>;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack holidays-page">

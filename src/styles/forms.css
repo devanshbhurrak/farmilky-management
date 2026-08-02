@@ -362,7 +362,7 @@
 
 .search-box input {
   width: 100%;
-  padding: var(--space-3) var(--space-4) var(--space-3) 2.75rem;
+  padding: var(--space-3) 2.75rem var(--space-3) 2.75rem;
   border-radius: var(--radius-pill);
   border: 2px solid var(--border-soft);
   background: var(--surface-muted);
@@ -371,9 +371,15 @@
 }
 
 .search-box input:focus {
-  background: #fff;
+  background: var(--surface);
   border-color: var(--color-primary);
   box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+/* Inside filter rows, let the search box flex and shrink on narrow screens */
+.surface-filters .search-box {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .search-box-icon {
@@ -388,16 +394,9 @@
   justify-content: center;
 }
 
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Clear button inside SearchInput */
+.search-box .search-clear-btn {
+  right: 0.375rem;
 }
 
 /* ─── Login Card Specifics ───────────────────── */
@@ -546,6 +545,9 @@
   .form-group input,
   .form-group select,
   .form-group textarea,
+  .form-field input,
+  .form-field select,
+  .form-field textarea,
   .modal-body input,
   .modal-body select,
   .modal-body textarea,
@@ -628,7 +630,12 @@
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 4px var(--focus-ring);
-  background: #fff;
+  background: var(--surface);
+}
+
+.required-mark {
+  color: var(--danger);
+  font-style: normal;
 }
 
 .form-field textarea {

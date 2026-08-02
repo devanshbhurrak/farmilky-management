@@ -1,6 +1,9 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+
+const CLOSE_THRESHOLD = 90;
 
 /**
  * Reusable Bottom Sheet component
@@ -10,61 +13,70 @@ import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
  * @param {React.ReactNode} children - Content of the sheet
  */
 export default function BottomSheet({ isOpen, onClose, title, children }) {
-  const sheetRef = useRef(null);
-  const onCloseRef = useRef(null);
   useBodyScrollLock(isOpen);
+  const sheetRef = useFocusTrap({ active: isOpen, onClose });
 
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  });
+  const startY = useRef(null);
+  const [dragY, setDragY] = useState(0);
+  const dragging = dragY > 0;
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const onTouchStart = useCallback((e) => {
+    const touch = e.touches[0];
+    startY.current = touch.clientY;
+  }, []);
 
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onCloseRef.current();
-      if (e.key === "Tab") {
-        const focusableElements = sheetRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
+  const onTouchMove = useCallback((e) => {
+    if (startY.current == null) return;
+    const dy = e.touches[0].clientY - startY.current;
+    if (dy > 0) {
+      setDragY(dy);
+    }
+  }, []);
 
-        if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement.focus();
-            e.preventDefault();
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus();
-            e.preventDefault();
-          }
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+  const onTouchEnd = useCallback(() => {
+    if (dragY >= CLOSE_THRESHOLD) {
+      onClose();
+    }
+    startY.current = null;
+    setDragY(0);
+  }, [dragY, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="bottom-sheet-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby={title ? "sheet-title" : undefined}>
-      <div className="bottom-sheet-content" onClick={(e) => e.stopPropagation()} ref={sheetRef}>
-        <div className="bottom-sheet-header">
+    <div
+      className="bottom-sheet-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? "sheet-title" : undefined}
+      aria-label={title ? undefined : "Options"}
+    >
+      <div
+        className={`bottom-sheet-content${dragging ? " dragging" : ""}`}
+        style={dragging ? { transform: `translateY(${dragY}px)` } : undefined}
+        onClick={(e) => e.stopPropagation()}
+        ref={sheetRef}
+      >
+        <div
+          className="bottom-sheet-header"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <div className="bottom-sheet-drag-handle" aria-hidden="true" />
           <div className="bottom-sheet-header-main">
             {title && <h3 id="sheet-title">{title}</h3>}
-            <button className="bottom-sheet-close" onClick={onClose} aria-label="Close sheet">
-              <X size={20} />
+            <button
+              className="surface-close"
+              onClick={onClose}
+              aria-label="Close sheet"
+            >
+              <X size={20} aria-hidden />
             </button>
           </div>
         </div>
-        <div className="bottom-sheet-body">
-          {children}
-        </div>
+        <div className="bottom-sheet-body">{children}</div>
       </div>
     </div>
   );

@@ -3,14 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Filter, Plus } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
-import ActionRow from "../components/ui/ActionRow";
 import DataTable from "../components/ui/DataTable";
 import FilterSheet from "../components/ui/FilterSheet";
 import PageHeader from "../components/ui/PageHeader";
+import SearchInput from "../components/ui/SearchInput";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import OrderForm from "../components/order/OrderForm";
-import { useDebounce } from "../hooks/useDebounce";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
@@ -43,7 +42,7 @@ export default function OrdersPage({ orders, onRefresh }) {
     }
   }, [modalOpen]);
 
-  const debouncedSearch = useDebounce(search, 300);
+  const debouncedSearch = useMemo(() => search.trim(), [search]);
 
   const filtered = useMemo(() => {
     let items = orders || [];
@@ -98,7 +97,7 @@ export default function OrdersPage({ orders, onRefresh }) {
       render: (r) => (
         <>
           <strong>{r.userId?.name || "Unknown"}</strong>
-          <span>{r.userId?.phone || r.userId?.email || ""}</span>
+          <span className="cell-sub">{r.userId?.phone || r.userId?.email || ""}</span>
         </>
       ),
     },
@@ -106,14 +105,14 @@ export default function OrdersPage({ orders, onRefresh }) {
     {
       key: "totalAmount",
       label: "Amount",
-      render: (r) => <strong style={{ color: "var(--text-primary)" }}>{formatCurrency(r.totalAmount)}</strong>,
+      render: (r) => <strong>{formatCurrency(r.totalAmount)}</strong>,
     },
     {
       key: "paymentMethod",
       label: "Payment",
       render: (r) => (
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-          <span style={{ fontWeight: "bold", fontSize: "11px", color: "var(--text-muted)" }}>{r.paymentMethod}</span>
+        <div className="stack-cell">
+          <span className="cell-sub">{r.paymentMethod}</span>
           <StatusTag value={r.paymentStatus} />
         </div>
       ),
@@ -125,12 +124,16 @@ export default function OrdersPage({ orders, onRefresh }) {
     },
   ];
 
+  const payStatusClass = { paid: "success", pending: "muted", failed: "danger" };
+
   const renderOrderCard = (order) => (
     <>
       <div className="mc-head">
         <div className="mc-identity">
           <span className="mc-name">{order.userId?.name || "Unknown"}</span>
-          <span className="mc-sub">{order.paymentMethod} · {formatDate(order.createdAt)}</span>
+          <span className="mc-sub">
+            {order.userId?.phone || order.userId?.email || ""}&nbsp;&middot;&nbsp;{formatDate(order.createdAt)}
+          </span>
         </div>
         <StatusTag value={order.orderStatus} />
       </div>
@@ -140,12 +143,14 @@ export default function OrdersPage({ orders, onRefresh }) {
           <span className="mc-stat-value">{formatCurrency(order.totalAmount)}</span>
         </div>
         <div className="mc-stat">
-          <span className="mc-stat-label">Payment</span>
-          <StatusTag value={order.paymentStatus} />
+          <span className="mc-stat-label">Method</span>
+          <span className="mc-stat-value">{order.paymentMethod || "—"}</span>
         </div>
         <div className="mc-stat">
-          <span className="mc-stat-label">Time</span>
-          <span className="mc-stat-value muted">{order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}</span>
+          <span className="mc-stat-label">Payment</span>
+          <span className={`mc-stat-value ${payStatusClass[order.paymentStatus] || "muted"}`}>
+            {order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : "—"}
+          </span>
         </div>
       </div>
     </>
@@ -194,7 +199,7 @@ export default function OrdersPage({ orders, onRefresh }) {
   );
 
   return (
-    <div className="view-stack">
+    <div className="orders-page view-stack">
       <PageHeader
         title="Orders"
         subtitle={`Showing ${sorted.length} orders total`}
@@ -207,18 +212,12 @@ export default function OrdersPage({ orders, onRefresh }) {
 
       <div className="surface">
         <div className="surface-filters">
-          <div className="search-input-wrap">
-            <input
-              type="text"
-              placeholder="Search name, email, phone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input"
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
-            )}
-          </div>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search name, email, phone..."
+            aria-label="Search orders"
+          />
           {!isMobile && (
             <div className="desktop-filters">
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>

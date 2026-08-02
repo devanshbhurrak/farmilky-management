@@ -3,12 +3,35 @@ import Modal from "../ui/Modal";
 import BottomSheet from "../ui/BottomSheet";
 import OutcomeForm from "./OutcomeForm";
 import toast from "react-hot-toast";
+import { apiRequest } from "../../api/client";
 
 export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfirm, onFormChange }) {
   const [localMode, setLocalMode] = useState(null);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setLocalMode(outcomeModal ? outcomeModal.mode : null); }, [outcomeModal]);
+
+  useEffect(() => {
+    if (
+      outcomeModal?.item?.type === "order" &&
+      localMode === "delivered" &&
+      outcomeModal?.item?.userId
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSubscriptionsLoading(true);
+      apiRequest(`/api/subscriptions/admin/user/${outcomeModal.item.userId}/active`)
+        .then(async (res) => {
+          const data = await res.json();
+          setSubscriptions(data.subscriptions || []);
+        })
+        .catch(() => setSubscriptions([]))
+        .finally(() => setSubscriptionsLoading(false));
+    } else {
+      setSubscriptions([]);
+    }
+  }, [outcomeModal?.item?.id, outcomeModal?.item?.type, outcomeModal?.item?.userId, localMode]);
 
   if (!outcomeModal || !localMode) return null;
 
@@ -20,13 +43,19 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
     let status, actualQuantity;
 
     if (localMode === "delivered" || localMode === "change") {
-      const formQty = form?.actualQuantity !== undefined ? Number(form.actualQuantity) : scheduled;
-      if (isNaN(formQty) || formQty < 0) {
-        toast.error("Invalid quantity.");
-        return;
+      // Orders have fixed items — always "delivered"; quantity variance only applies to subscriptions
+      if (item?.type === "order") {
+        status = "delivered";
+        actualQuantity = scheduled;
+      } else {
+        const formQty = form?.actualQuantity !== undefined ? Number(form.actualQuantity) : scheduled;
+        if (isNaN(formQty) || formQty < 0) {
+          toast.error("Invalid quantity.");
+          return;
+        }
+        status = formQty === scheduled ? "delivered" : (formQty > scheduled ? "extra" : "partial");
+        actualQuantity = formQty;
       }
-      status = formQty === scheduled ? "delivered" : (formQty > scheduled ? "extra" : "partial");
-      actualQuantity = formQty;
     }
     else if (localMode === "skip") {
       status = "skipped";
@@ -42,7 +71,25 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
       return;
     }
 
-    onConfirm({ status, actualQuantity, reason: form.reason, notes: form.notes });
+    if (
+      (localMode === "delivered" || localMode === "change") &&
+      item?.type === "order" &&
+      form?.paymentMode === "subscription_ledger"
+    ) {
+      if (subscriptions.length >= 2 && !form?.selectedSubscriptionId) {
+        toast.error("Please select a subscription to link the payment to.");
+        return;
+      }
+    }
+
+    onConfirm({
+      status,
+      actualQuantity,
+      reason: form.reason,
+      notes: form.notes,
+      paymentMode: form.paymentMode || "pay_at_delivery",
+      subscriptionId: form.selectedSubscriptionId || undefined,
+    });
   }
 
   const title =
@@ -57,17 +104,14 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
   ];
 
   const modeSelector = (
-    <div className="outcome-mode-selector" style={{ marginBottom: "var(--space-4)" }}>
-      <label style={{ display: "block", marginBottom: "var(--space-2)", fontSize: "var(--font-size-xs)", fontWeight: "var(--font-weight-bold)", textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
-        Delivery Outcome
-      </label>
-      <div style={{ display: "flex", gap: "var(--space-2)" }}>
+    <div className="outcome-mode-selector">
+      <span className="eyebrow">Delivery Outcome</span>
+      <div>
         {modeOptions.map((opt) => (
           <button
             key={opt.value}
             type="button"
             className={`chip ${localMode === opt.value ? "active" : ""}`}
-            style={{ flex: 1, height: "38px", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: "600" }}
             onClick={() => setLocalMode(opt.value)}
           >
             {opt.label}
@@ -86,6 +130,9 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
         unit={unit}
         form={form || {}}
         onChange={onFormChange}
+        item={item}
+        subscriptions={subscriptions}
+        subscriptionsLoading={subscriptionsLoading}
       />
     </>
   );
@@ -94,7 +141,7 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
     return (
       <BottomSheet isOpen={!!outcomeModal} onClose={onClose} title={title}>
         {formEl}
-        <button className="btn btn-primary outcome-confirm-btn" onClick={handleConfirm} style={{ width: "100%", marginTop: "var(--space-4)" }}>
+        <button className="btn btn-primary outcome-confirm-btn" onClick={handleConfirm}>
           Confirm
         </button>
       </BottomSheet>

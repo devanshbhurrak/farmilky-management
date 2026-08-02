@@ -77,19 +77,42 @@ export default function DataTable({
     return <EmptyState text={emptyText} action={emptyAction || noMatchAction} />;
   }
 
+  const getCellValue = (row, col) =>
+    col.render
+      ? col.render(row)
+      : col.key.split(".").reduce((o, k) => o?.[k], row) ?? "-";
+
   const renderMobileView = () => (
     <div className="card-list">
       {paged.length === 0 ? (
         <EmptyState text="No matching records." action={noMatchAction} />
       ) : (
         paged.map((row, i) => (
-          <div 
-            key={row._id || row.id || i} 
+          <div
+            key={row._id || row.id || i}
             className="mobile-data-card"
             onClick={() => onRowClick?.(row)}
-            style={onRowClick ? { cursor: "pointer" } : undefined}
+            {...(onRowClick
+              ? {
+                  tabIndex: 0,
+                  role: "link",
+                  onKeyDown: (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onRowClick(row);
+                    }
+                  },
+                }
+              : {})}
           >
-            {renderCard(row)}
+            {renderCard ? (
+              renderCard(row)
+            ) : (
+              <div className="fallback-card-row">
+                <strong>{columns[0]?.render ? columns[0].render(row) : columns[0]?.key.split(".").reduce((o, k) => o?.[k], row) ?? "-"}</strong>
+                <span className="text-muted">{columns[1]?.key ? columns[1].key.split(".").reduce((o, k) => o?.[k], row) ?? "" : ""}</span>
+              </div>
+            )}
           </div>
         ))
       )}
@@ -101,21 +124,37 @@ export default function DataTable({
       <table>
         <thead>
           <tr>
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                scope="col"
-                onClick={() => col.sortable !== false && handleSort(col.key)}
-                style={col.sortable !== false ? { cursor: "pointer", userSelect: "none" } : undefined}
-              >
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                  {col.label}
-                  {sortKey === col.key && (
-                    sortDir === "asc" ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+            {columns.map((col) => {
+              const isSortable = sortable && col.sortable !== false;
+              const isSorted = sortKey === col.key;
+              return (
+                <th
+                  key={col.key}
+                  scope="col"
+                  aria-sort={
+                    isSorted
+                      ? sortDir === "asc" ? "ascending" : "descending"
+                      : undefined
+                  }
+                >
+                  {isSortable ? (
+                    <button
+                      type="button"
+                      className="th-sort-btn"
+                      onClick={() => handleSort(col.key)}
+                    >
+                      {col.label}
+                      {isSorted &&
+                        (sortDir === "asc"
+                          ? <ChevronUp size={14} aria-hidden />
+                          : <ChevronDown size={14} aria-hidden />)}
+                    </button>
+                  ) : (
+                    <span>{col.label}</span>
                   )}
-                </span>
-              </th>
-            ))}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -130,11 +169,21 @@ export default function DataTable({
               <tr
                 key={row._id || row.id || i}
                 onClick={() => onRowClick?.(row)}
-                style={onRowClick ? { cursor: "pointer" } : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
               >
                 {columns.map((col) => (
                   <td key={col.key} data-label={col.label}>
-                    {col.render ? col.render(row) : col.key.split(".").reduce((o, k) => o?.[k], row) ?? "-"}
+                    {getCellValue(row, col)}
                   </td>
                 ))}
               </tr>
@@ -145,31 +194,9 @@ export default function DataTable({
     </div>
   );
 
-  const renderFallbackMobileView = () => (
-    <div className="card-list">
-      {paged.length === 0 ? (
-        <EmptyState text="No matching records." action={noMatchAction} />
-      ) : (
-        paged.map((row, i) => (
-          <div
-            key={row._id || row.id || i}
-            className="mobile-data-card"
-            onClick={() => onRowClick?.(row)}
-            style={onRowClick ? { cursor: "pointer" } : undefined}
-          >
-            <div className="fallback-card-row">
-              <strong>{columns[0]?.render ? columns[0].render(row) : columns[0]?.key.split(".").reduce((o, k) => o?.[k], row) ?? "-"}</strong>
-              <span className="text-muted">{columns[1]?.key ? columns[1].key.split(".").reduce((o, k) => o?.[k], row) ?? "" : ""}</span>
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-
   return (
     <div>
-      {isMobile && renderCard ? renderMobileView() : isMobile && !renderCard ? renderFallbackMobileView() : renderDesktopView()}
+      {isMobile ? renderMobileView() : renderDesktopView()}
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );

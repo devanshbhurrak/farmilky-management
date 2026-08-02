@@ -30,11 +30,108 @@
   }
 }
 
+/* Comfortable page padding on mid-size phones (375-767px) */
+@media (min-width: 375px) and (max-width: 767px) {
+  .page-content {
+    padding: 0 var(--space-5) var(--space-5);
+  }
+}
+
 /* Extra-small screen padding reduction */
+@media (max-width: 374px) {
+  .page-content {
+    padding: 0 var(--space-3) var(--space-3);
+  }
+}
+
 @media (max-width: 320px) {
   .page-content {
     padding-left: var(--space-2);
     padding-right: var(--space-2);
+  }
+}
+
+/* ─── Touch-friendly tap targets ─────────────── */
+/* Ensure all interactive elements meet 44px minimum */
+@media (max-width: 767px) {
+  .btn:not(.btn-sm) {
+    min-height: var(--touch-min);
+  }
+
+  /* Small buttons — meet touch minimum on mobile */
+  .btn-sm,
+  .mini-button {
+    min-height: var(--touch-min);
+  }
+
+  .btn-ghost {
+    min-height: var(--touch-min);
+    padding-inline: var(--space-4);
+  }
+
+  /* Tabs with pills should meet touch minimum */
+  .tab-pill {
+    min-height: var(--touch-min);
+  }
+
+  /* Chips (QuickChips) — touch minimum */
+  .chip {
+    min-height: var(--touch-min);
+  }
+
+  /* Search clear button — generous hit area */
+  .search-clear-btn {
+    width: 44px;
+    height: 44px;
+    right: 0.25rem;
+    font-size: 16px;
+  }
+
+  /* Overlay close buttons */
+  .drawer-close,
+  .bottom-sheet-close,
+  .modal-close,
+  .right-drawer-close,
+  .surface-close {
+    width: var(--touch-min);
+    height: var(--touch-min);
+  }
+
+  /* User menu trigger */
+  .user-menu-trigger {
+    width: var(--touch-min);
+    height: var(--touch-min);
+  }
+
+  /* Pagination page buttons */
+  .pagination-pages .mini-button,
+  .pagination .mini-button {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+  }
+
+  /* Pagination nav buttons */
+  .pagination .btn-sm {
+    min-height: var(--touch-min);
+  }
+
+  /* Reduce card-list gap on very small screens */
+  @media (max-width: 374px) {
+    .card-list {
+      gap: var(--space-3);
+      padding: var(--space-3);
+    }
+  }
+
+  /* Surface filters compact on mobile */
+  .surface-filters {
+    gap: var(--space-2);
+    flex-wrap: nowrap;
+  }
+
+  /* Detail-actions buttons — full width on mobile for easy tapping */
+  .detail-actions {
+    width: 100%;
   }
 }
 

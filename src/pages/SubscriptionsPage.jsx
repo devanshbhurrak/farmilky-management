@@ -3,15 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Filter, Pause, Play, Plus } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
-import ActionRow from "../components/ui/ActionRow";
 import DataTable from "../components/ui/DataTable";
 import FilterSheet from "../components/ui/FilterSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageHeader from "../components/ui/PageHeader";
+import SearchInput from "../components/ui/SearchInput";
 import Modal from "../components/ui/Modal";
 import BottomSheet from "../components/ui/BottomSheet";
 import SubscriptionForm from "../components/subscription/SubscriptionForm";
-import { useDebounce } from "../hooks/useDebounce";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
@@ -47,14 +46,12 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
     }
   }, [modalOpen]);
 
-  const debouncedSearch = useDebounce(search, 300);
-
   const filtered = useMemo(() => {
     let items = subscriptions || [];
     if (statusFilter !== "all") items = items.filter((s) => s.status === statusFilter);
     if (scheduleFilter !== "all") items = items.filter((s) => s.deliverySchedule === scheduleFilter);
-    if (debouncedSearch.trim()) {
-      const q = debouncedSearch.toLowerCase();
+    if (search.trim()) {
+      const q = search.toLowerCase();
       items = items.filter(
         (s) =>
           (s.userId?.name || "").toLowerCase().includes(q) ||
@@ -64,7 +61,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       );
     }
     return items;
-  }, [subscriptions, statusFilter, scheduleFilter, debouncedSearch]);
+  }, [subscriptions, statusFilter, scheduleFilter, search]);
 
   const toggleSelect = (id) => setSelected((prev) => {
     const next = new Set(prev);
@@ -74,7 +71,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
   });
 
   const toggleSelectAll = () => {
-    if (selected.size === filtered.length) setSelected(new Set());
+    if (filtered.every((s) => selected.has(s._id))) setSelected(new Set());
     else setSelected(new Set(filtered.map((s) => s._id)));
   };
 
@@ -94,6 +91,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       toast.success(payload.message || `Bulk ${action} done.`);
       setSelected(new Set());
       setBulkConfirm(null);
+      if (onRefresh) onRefresh();
     } catch (err) {
       toast.error(err.message || `Bulk ${action} failed.`);
     } finally {
@@ -107,7 +105,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       label: (
         <input
           type="checkbox"
-          checked={filtered.length > 0 && selected.size === filtered.length}
+          checked={filtered.length > 0 && filtered.every((s) => selected.has(s._id))}
           onChange={toggleSelectAll}
         />
       ),
@@ -128,7 +126,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       render: (r) => (
         <>
           <strong>{r.userId?.name || "Unknown"}</strong>
-          <span>{r.userId?.phone || r.userId?.email || ""}</span>
+          <span className="cell-sub">{r.userId?.phone || r.userId?.email || ""}</span>
         </>
       ),
     },
@@ -138,7 +136,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       render: (r) => (
         <>
           <strong>{r.productId?.name || "Unknown"}</strong>
-          <span>{r.quantityPerDay} {r.productId?.unit} / {r.deliverySchedule}</span>
+          <span className="cell-sub">{r.quantityPerDay} {r.productId?.unit} / {r.deliverySchedule}</span>
         </>
       ),
     },
@@ -149,7 +147,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       render: (r) => {
         const isCustom = r.pricePerUnit != null && r.productId && r.pricePerUnit !== r.productId.price;
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <div className="stack-cell">
             <strong>{formatCurrency(r.totalPricePerDay)}</strong>
             {isCustom && (
               <span className="price-badge">
@@ -163,7 +161,11 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
     {
       key: "pendingAmount",
       label: "Pending",
-      render: (r) => <strong style={{ color: r.pendingAmount > 0 ? "var(--danger)" : "inherit" }}>{formatCurrency(r.pendingAmount)}</strong>,
+      render: (r) => (
+        <strong className={r.pendingAmount > 0 ? "danger-text" : undefined}>
+          {formatCurrency(r.pendingAmount)}
+        </strong>
+      ),
     },
     {
       key: "status",
@@ -172,28 +174,37 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
     },
   ];
 
+  const scheduleLabel = { daily: "Daily", alternate: "Alt. days", weekly: "Weekly", custom: "Custom" };
+
   const renderSubscriptionCard = (sub) => {
     const isCustomPrice = sub.pricePerUnit != null && sub.productId && sub.pricePerUnit !== sub.productId.price;
     return (
       <>
-        <div className="mc-head">
+        <div className={`mc-head mc-head--${sub.status}`}>
           <div className="mc-identity">
             <span className="mc-name">{sub.userId?.name || "Unknown"}</span>
-            <span className="mc-sub">{sub.productId?.name || "Unknown"} · {sub.quantityPerDay} {sub.productId?.unit} / {sub.deliverySchedule}</span>
+            <span className="mc-sub">
+              {sub.productId?.name || "Unknown"} &middot; {sub.quantityPerDay}&nbsp;{sub.productId?.unit}
+            </span>
           </div>
-          <StatusTag value={sub.status} />
+          <div className="mc-tags">
+            <StatusTag value={sub.status} />
+            <span className={`mc-schedule-tag schedule-${sub.deliverySchedule}`}>
+              {scheduleLabel[sub.deliverySchedule] || sub.deliverySchedule}
+            </span>
+          </div>
         </div>
         <div className="mc-stats">
           <div className="mc-stat">
             <span className="mc-stat-label">Daily Value</span>
             <span className="mc-stat-value">
               {formatCurrency(sub.totalPricePerDay)}
-              {isCustomPrice && <span style={{ fontSize: "10px", fontWeight: "bold", color: "#b45309", marginLeft: "4px" }}>CUSTOM</span>}
+              {isCustomPrice && <span className="mc-custom-badge">Custom</span>}
             </span>
           </div>
           <div className="mc-stat">
-            <span className="mc-stat-label">Schedule</span>
-            <span className="mc-stat-value">{sub.deliverySchedule}</span>
+            <span className="mc-stat-label">Since</span>
+            <span className="mc-stat-value">{formatDate(sub.startDate) || "—"}</span>
           </div>
           <div className="mc-stat">
             <span className="mc-stat-label">Pending</span>
@@ -275,7 +286,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
   );
 
   return (
-    <div className="view-stack">
+    <div className="view-stack subscriptions-page">
       <PageHeader
         title="Subscriptions"
         subtitle={`Total active subscriptions: ${subscriptions?.filter(s => s.status === "active").length || 0}`}
@@ -288,18 +299,12 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
 
       <div className="surface">
         <div className="surface-filters">
-          <div className="search-input-wrap">
-            <input
-              type="text"
-              placeholder="Search customer or product..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input"
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">&times;</button>
-            )}
-          </div>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search customer or product..."
+            aria-label="Search subscriptions"
+          />
           {!isMobile && (
             <div className="desktop-filters">
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -319,11 +324,11 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
           )}
           {isMobile && (
             <button
-              className="filter-toggle-btn"
+              className={`filter-toggle-btn${hasFilters ? " filter-toggle-btn--active" : ""}`}
               onClick={() => setIsFilterSheetOpen(true)}
             >
               <Filter size={16} />
-              <span>Filters</span>
+              <span>Filters{hasFilters ? " •" : ""}</span>
             </button>
           )}
         </div>
