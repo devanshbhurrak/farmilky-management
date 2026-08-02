@@ -15,7 +15,7 @@ export default function InfoCard({ title, value, icon: Icon, color = "primary", 
         <strong className="info-card-value">{value}</strong>
         {trend != null && (
           <span className="info-card-trend">
-            <TrendingUp size={12} strokeWidth={2.5} />
+            <TrendingUp size={14} strokeWidth={2.5} />
             {trend}%
           </span>
         )}

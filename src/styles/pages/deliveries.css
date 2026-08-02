@@ -462,7 +462,7 @@
 .reason-textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 /* ─── Outcome Confirm Button ─────────────────── */
@@ -548,7 +548,7 @@
 .search-row .search-box:focus-within {
   border-color: var(--color-primary);
   background: var(--surface);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .search-row .search-box svg {
@@ -586,7 +586,7 @@
 .date-input-desktop:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .search-row select {
@@ -606,7 +606,7 @@
 .search-row select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .tab-row {
@@ -669,7 +669,7 @@
 
 .delivery-filters-content .input-wrapper:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .delivery-filters-content .input-wrapper .input-icon {

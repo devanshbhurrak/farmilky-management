@@ -46,7 +46,7 @@ export default function DeliveryCard({ item, onSelect, isSelected, onAction }) {
       {/* ── Section 2: delivery info ──────────────── */}
       <div className="dc-info">
         <div className="dc-info-row">
-          <Package size={12} className="dc-info-icon" />
+          <Package size={14} className="dc-info-icon" />
           <span className="dc-info-primary">{item.productLabel}</span>
           <span className="dc-info-sep">·</span>
           <span className="dc-info-secondary">{item.quantity} {item.unit}</span>
@@ -56,7 +56,7 @@ export default function DeliveryCard({ item, onSelect, isSelected, onAction }) {
         </div>
         {item.address && (
           <div className="dc-info-row dc-info-address">
-            <MapPin size={12} className="dc-info-icon" />
+            <MapPin size={14} className="dc-info-icon" />
             <span className="dc-info-secondary">{item.address}</span>
           </div>
         )}
@@ -68,8 +68,8 @@ export default function DeliveryCard({ item, onSelect, isSelected, onAction }) {
           {item.outcome && (
             <div className="dc-outcome">
               {item.deliveryStatus === "delivered"
-                ? <CheckCircle2 size={13} className="dc-outcome-icon dc-outcome-icon--ok" />
-                : <XCircle size={13} className="dc-outcome-icon dc-outcome-icon--fail" />
+                ? <CheckCircle2 size={14} className="dc-outcome-icon dc-outcome-icon--ok" />
+                : <XCircle size={14} className="dc-outcome-icon dc-outcome-icon--fail" />
               }
               <span>
                 {item.outcome.actualQuantity != null && `${item.outcome.actualQuantity} ${item.unit || ""} delivered`}

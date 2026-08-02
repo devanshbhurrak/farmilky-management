@@ -149,7 +149,7 @@
 .mc-search-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .mc-search-clear {
@@ -174,7 +174,7 @@
 
 .mc-search-clear:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .mc-search-input:has(+ .mc-search-clear) {
@@ -581,7 +581,7 @@
 .mc-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   background: #fff;
 }
 
@@ -913,7 +913,7 @@
 .mc-card-input-wrap input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .mc-card-field input:disabled,
@@ -1350,7 +1350,7 @@
 
 .mc-hist-dropdown-trigger.open {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   color: var(--text-primary);
 }
 
@@ -1451,7 +1451,7 @@
 
 .mc-hist-date-toggle.active {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   color: var(--color-primary-dark);
 }
 
@@ -1525,7 +1525,7 @@
 .mc-hist-date-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .mc-hist-date-sep {

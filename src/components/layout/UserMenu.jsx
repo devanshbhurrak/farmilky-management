@@ -68,7 +68,7 @@ export default function UserMenu() {
             role="menuitem"
             onClick={logout}
           >
-            <LogOut size={15} aria-hidden />
+            <LogOut size={16} aria-hidden />
             Logout
           </button>
         </div>

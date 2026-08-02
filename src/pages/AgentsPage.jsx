@@ -282,7 +282,7 @@ export default function AgentsPage() {
         title="Delivery Agents"
         subtitle={`${agents.length} agent${agents.length !== 1 ? "s" : ""} in the system`}
         actions={
-          <button className="primary-button" onClick={openCreate}>
+          <button className="btn btn-primary" onClick={openCreate}>
             <Plus size={16} /> New Agent
           </button>
         }
@@ -318,7 +318,7 @@ export default function AgentsPage() {
           onRowClick={(row) => navigate(`/agents/${row._id}`)}
           emptyText="No delivery agents found."
           emptyAction={
-            <button className="primary-button" onClick={openCreate}>
+            <button className="btn btn-primary" onClick={openCreate}>
               <Plus size={16} /> Add First Agent
             </button>
           }

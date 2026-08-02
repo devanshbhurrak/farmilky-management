@@ -37,7 +37,7 @@ function InfoRow({ icon: Icon, label, value, children }) {
   return (
     <div className="od-info-row">
       <div className="od-info-icon-wrap">
-        <Icon size={13} />
+        <Icon size={14} />
       </div>
       <div className="od-info-body">
         <span className="od-info-label">{label}</span>
@@ -158,7 +158,7 @@ export default function OrderDetailPage() {
         return (
           <div key={s} className={`od-step${done ? " od-step--done" : ""}${active ? " od-step--active" : ""}`}>
             <div className="od-step-dot">
-              {done && <CheckCircle2 size={12} strokeWidth={2.5} />}
+              {done && <CheckCircle2 size={14} strokeWidth={2.5} />}
             </div>
             <span className="od-step-label">{s.charAt(0).toUpperCase() + s.slice(1)}</span>
             {i < STATUS_ORDER.length - 1 && (
@@ -252,7 +252,7 @@ export default function OrderDetailPage() {
             className="od-status-badge"
             style={{ background: statusMeta.bg, color: statusMeta.color }}
           >
-            <StatusIcon size={13} strokeWidth={2} />
+            <StatusIcon size={14} strokeWidth={2} />
             <span>{order.orderStatus}</span>
           </div>
         </div>
@@ -270,7 +270,7 @@ export default function OrderDetailPage() {
                 className="od-status-badge"
                 style={{ background: statusMeta.bg, color: statusMeta.color }}
               >
-                <StatusIcon size={13} strokeWidth={2} />
+                <StatusIcon size={14} strokeWidth={2} />
                 <span>{order.orderStatus}</span>
               </div>
             </div>
@@ -312,7 +312,7 @@ export default function OrderDetailPage() {
           <span className="od-action-strip-label">Quick Actions</span>
           <div className="od-action-strip-buttons">
             <button className="btn btn-secondary btn-sm" onClick={openEdit} disabled={statusLoading}>
-              <Edit2 size={13} /> Edit
+              <Edit2 size={14} /> Edit
             </button>
             {order.orderStatus === "placed" && (
               <button className="btn btn-primary btn-sm" onClick={() => handleStatusUpdate("confirmed")} disabled={statusLoading}>

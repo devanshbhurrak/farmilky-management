@@ -112,7 +112,7 @@ export default function HolidaysPage() {
             {r.isActive ? "Deactivate" : "Activate"}
           </button>
           <button className="icon-button danger" onClick={() => setDeleteConfirm(r)} title="Delete">
-            <Trash2 size={15} />
+            <Trash2 size={16} />
           </button>
         </div>
       ),

@@ -124,17 +124,14 @@
   color: var(--text-primary);
 }
 
-/* ─── Area modal form ────────────────────────── */
+/* ─── Area modal form — extends .form-stack ─── */
 .area-form-stack {
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
 }
 
 .area-form-stack .form-group {
-  margin-bottom: var(--space-4);
-}
-
-.area-form-stack .form-group:last-child {
   margin-bottom: 0;
 }
 

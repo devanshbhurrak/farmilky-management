@@ -640,7 +640,7 @@ export default function SupplierDetailPage() {
                         {c.status === "confirmed" && (c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />)}
                         {c.status === "pending"
                           ? <button className="mini-button active" style={{ fontSize: "11px", padding: "2px 8px" }} onClick={() => openColConfirm(c)}>Confirm</button>
-                          : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={13} /></button>
+                          : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={14} /></button>
                         }
                       </div>
                     </div>
@@ -720,7 +720,7 @@ export default function SupplierDetailPage() {
                         <td>
                           {c.status === "pending"
                             ? <button className="mini-button active" style={{ fontSize: "11px", padding: "2px 10px" }} onClick={() => openColConfirm(c)}>Confirm</button>
-                            : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={13} /></button>
+                            : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={14} /></button>
                           }
                         </td>
                       </tr>
@@ -737,7 +737,7 @@ export default function SupplierDetailPage() {
           <div className="tab-content">
             <div className="tab-action-row">
               <button
-                className="primary-button"
+                className="btn btn-primary"
                 onClick={openPaymentModal}
               >
                 Record Payment
@@ -817,7 +817,7 @@ export default function SupplierDetailPage() {
               <span style={{ fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
                 Passbook Balance: <strong className={passbookData?.supplier?.passbookBalance > 0 ? "danger-text" : passbookData?.supplier?.passbookBalance < 0 ? "success-text" : ""}>{formatCurrency(passbookData?.supplier?.passbookBalance || 0)}</strong>
               </span>
-              <button className="primary-button" onClick={() => setAdjOpen(true)}>
+              <button className="btn btn-primary" onClick={() => setAdjOpen(true)}>
                 Add Adjustment
               </button>
             </div>
@@ -853,7 +853,7 @@ export default function SupplierDetailPage() {
                           onClick={() => handleDeleteAdjustment(entry._id)}
                           title="Delete"
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={14} />
                         </button>
                       )}
                     </div>
@@ -1005,7 +1005,7 @@ export default function SupplierDetailPage() {
               <label className="form-field"><span>Notes</span><textarea value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} rows={2} /></label>
             </div>
             <div className="supplier-form-actions">
-              <button className="primary-button" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
               <div className="supplier-form-actions-row">
                 <button className={`mini-button ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
                   {supplier.isActive ? "Deactivate" : "Activate"}
@@ -1019,7 +1019,7 @@ export default function SupplierDetailPage() {
         <Modal open={editOpen} onClose={closeEdit} title="Edit Supplier" footer={
           <div className="modal-actions">
             <button className="mini-button" onClick={closeEdit} disabled={saving}>Cancel</button>
-            <button className="primary-button" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
             <span className="modal-actions-sep" />
             <button className={`mini-button ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
               {supplier.isActive ? "Deactivate" : "Activate"}

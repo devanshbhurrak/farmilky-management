@@ -332,12 +332,12 @@ export default function CustomerDetailPage() {
             <div className="customer-hero-contact">
               {user.phone && (
                 <span className="customer-hero-contact-item">
-                  <Phone size={12} />{user.phone}
+                  <Phone size={14} />{user.phone}
                 </span>
               )}
               {user.email && (
                 <span className="customer-hero-contact-item">
-                  <Mail size={12} />{user.email}
+                  <Mail size={14} />{user.email}
                 </span>
               )}
             </div>
@@ -379,7 +379,7 @@ export default function CustomerDetailPage() {
             <Repeat2 size={14} /> Subscribe
           </button>
           <button className="btn btn-primary btn-sm" onClick={openAddPayment}>
-            <IndianRupee size={12} /> Collect
+            <IndianRupee size={14} /> Collect
           </button>
         </div>
       </div>
@@ -420,7 +420,7 @@ export default function CustomerDetailPage() {
               className={`customer-tab-btn ${tab === key ? "active" : ""}`}
               onClick={() => setTab(key)}
             >
-              <Icon size={15} />
+              <Icon size={16} />
               {label}
               {count > 0 && <span className="customer-tab-count">{count}</span>}
             </button>

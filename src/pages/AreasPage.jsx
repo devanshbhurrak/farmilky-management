@@ -146,10 +146,10 @@ export default function AreasPage() {
                   </div>
                   <div className="area-card-actions">
                     <button className="icon-button" onClick={() => openEdit(area)} title="Edit area">
-                      <Edit2 size={15} />
+                      <Edit2 size={16} />
                     </button>
                     <button className="icon-button danger" onClick={() => setDeleteConfirm(area)} title="Delete area">
-                      <Trash2 size={15} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>

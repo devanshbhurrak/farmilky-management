@@ -68,7 +68,7 @@ export default function AgentDashboardPage() {
           </section>
 
           <button
-            className="primary-button"
+            className="btn btn-primary"
             style={{ width: "100%", height: "64px", fontSize: "1.2rem", marginTop: "var(--space-4)", borderRadius: "var(--radius)" }}
             onClick={() => navigate(`/agent/manifest/${manifest._id}`)}
           >

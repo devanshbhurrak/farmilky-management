@@ -68,7 +68,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <button className="primary-button login-submit-btn" type="submit" disabled={loading}>
+        <button className="btn btn-primary login-submit-btn" type="submit" disabled={loading}>
           {loading ? (
             <Loader2 size={20} className="spin-icon" aria-hidden />
           ) : (

@@ -91,6 +91,7 @@
   padding-top: var(--space-3);
 }
 
+.supplier-form-actions .btn-primary,
 .supplier-form-actions .primary-button {
   width: 100%;
   justify-content: center;
@@ -661,6 +662,7 @@
     margin-bottom: var(--space-2);
   }
 
+  .tab-action-row .btn-primary,
   .tab-action-row .primary-button {
     width: 100%;
     justify-content: center;

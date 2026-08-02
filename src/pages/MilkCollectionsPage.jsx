@@ -604,7 +604,7 @@ export default function MilkCollectionsPage() {
                   onClick={() => dateInputRef.current?.showPicker()}
                   title="Change date"
                 >
-                  <CalendarDays size={13} />
+                  <CalendarDays size={14} />
                   <span>{new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" })}</span>
                 </button>
                 <input
@@ -645,7 +645,7 @@ export default function MilkCollectionsPage() {
             {/* ── Backdate banner ─────────────────────────────────────── */}
             {!isToday && (
               <div className="mc-backdate-banner">
-                <AlertTriangle size={13} />
+                <AlertTriangle size={14} />
                 Backdated — {formatDate(selectedDate)}. Late entries are timestamped automatically.
               </div>
             )}
@@ -697,18 +697,11 @@ export default function MilkCollectionsPage() {
 
             {/* ── Empty state ─────────────────────────────────────────── */}
             {filtered.length === 0 && (
-              <div className="mc-empty">
-                {collections.length === 0 ? (
-                  <>
-                    <p>No active suppliers with collection schedules found for this date.</p>
-                    <p className="mc-empty-hint">
-                      Entries are auto-generated when suppliers have a default quantity set.
-                    </p>
-                  </>
-                ) : (
-                  <p>No entries match your current filters.</p>
-                )}
-              </div>
+              collections.length === 0 ? (
+                <EmptyState text="No active suppliers with collection schedules found for this date. Entries are auto-generated when suppliers have a default quantity set." />
+              ) : (
+                <EmptyState text="No entries match your current filters." />
+              )
             )}
 
             {/* ── Desktop table ────────────────────────────────────────── */}
@@ -822,7 +815,7 @@ export default function MilkCollectionsPage() {
                                   disabled={confirmingId === c._id}
                                   title="Record no supply (0 L)"
                                 >
-                                  <Ban size={12} />
+                                  <Ban size={14} />
                                   <span>0 L</span>
                                 </button>
                                 <button
@@ -885,7 +878,7 @@ export default function MilkCollectionsPage() {
                               title={c.supplierId.phone}
                               aria-label={`Call ${c.supplierId.name}`}
                             >
-                              <Phone size={12} />
+                              <Phone size={14} />
                             </a>
                           )}
                         </div>
@@ -896,7 +889,7 @@ export default function MilkCollectionsPage() {
                           ) : (
                             <span className="mc-card-head-amount">{formatCurrency(c.totalAmount)}</span>
                           )}
-                          <ChevronDown size={15} className={`mc-card-chevron${isOpen ? " open" : ""}`} />
+                          <ChevronDown size={16} className={`mc-card-chevron${isOpen ? " open" : ""}`} />
                         </div>
                       </div>
 
@@ -1064,7 +1057,7 @@ export default function MilkCollectionsPage() {
                         ? suppliersList.find((s) => s._id === historyFilters.supplierId)?.name ?? "Farmer"
                         : "All Farmers"}
                     </span>
-                    <ChevronDown size={13} className={`mc-hist-chevron${historyFarmerOpen ? " open" : ""}`} />
+                    <ChevronDown size={14} className={`mc-hist-chevron${historyFarmerOpen ? " open" : ""}`} />
                   </button>
                   {historyFarmerOpen && (
                     <div className="mc-hist-dropdown-menu" role="listbox">
@@ -1098,7 +1091,7 @@ export default function MilkCollectionsPage() {
                       ? `${historyFilters.from || "…"} – ${historyFilters.to || "…"}`
                       : "Date Range"}
                   </span>
-                  <ChevronDown size={12} className={`mc-hist-chevron${historyDateOpen ? " open" : ""}`} />
+                  <ChevronDown size={14} className={`mc-hist-chevron${historyDateOpen ? " open" : ""}`} />
                 </button>
 
                 {/* Loading indicator */}
@@ -1112,7 +1105,7 @@ export default function MilkCollectionsPage() {
                     title="Export CSV"
                     aria-label="Export to CSV"
                   >
-                    <Download size={15} />
+                    <Download size={16} />
                   </button>
                 )}
               </div>
@@ -1205,7 +1198,7 @@ export default function MilkCollectionsPage() {
                       <div className="mc-hist-card-aside">
                         <span className="mc-hist-card-date">{formatDate(c.date)}</span>
                         <button className="mc-edit-btn" onClick={() => openColEdit(c)} title="Edit entry" aria-label="Edit entry">
-                          <SquarePen size={13} />
+                          <SquarePen size={14} />
                         </button>
                       </div>
                     </div>
@@ -1268,7 +1261,7 @@ export default function MilkCollectionsPage() {
                         </td>
                         <td>
                           <button className="mc-edit-btn" onClick={() => openColEdit(c)} title="Edit">
-                            <SquarePen size={13} />
+                            <SquarePen size={14} />
                           </button>
                         </td>
                       </tr>

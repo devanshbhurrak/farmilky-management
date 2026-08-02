@@ -27,7 +27,7 @@
 
 .icon-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   border-color: var(--color-primary);
 }
 
@@ -47,6 +47,12 @@
   box-shadow: var(--shadow-soft);
   padding: var(--space-4) var(--space-5);
   border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+@media (min-width: 640px) {
+  .panel {
+    padding: var(--space-6);
+  }
 }
 
 @media (min-width: 768px) {
@@ -201,7 +207,7 @@
   padding: var(--space-5) var(--space-6);
   background: linear-gradient(135deg, var(--surface) 0%, var(--surface-inset) 100%);
   border-radius: var(--radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
   transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
@@ -246,7 +252,7 @@
 
 .info-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
 }
 
 /* Clickable InfoCard (rendered as <a> via Link) */
@@ -258,7 +264,7 @@
 }
 
 .info-card--clickable:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .info-card--clickable:active {
@@ -293,8 +299,8 @@
 }
 
 .info-card-icon {
-  width: 44px;
-  height: 44px;
+  width: var(--info-card-icon);
+  height: var(--info-card-icon);
   flex-shrink: 0;
   border-radius: 12px;
   background: linear-gradient(135deg, var(--success-bg) 0%, rgba(16, 185, 129, 0.06) 100%);
@@ -312,8 +318,6 @@
 
 @media (max-width: 639px) {
   .info-card-icon {
-    width: 36px;
-    height: 36px;
     border-radius: 10px;
   }
   .info-card-icon svg {
@@ -452,7 +456,7 @@
 .btn:focus-visible, .primary-button:focus-visible, .secondary-button:focus-visible,
 .mini-button:focus-visible, .action-btn:focus-visible, .btn-ghost:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   border-color: var(--color-primary);
 }
 
@@ -663,9 +667,9 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px 3px 8px;
+  padding: var(--status-tag-padding);
   border-radius: var(--radius-pill);
-  font-size: 11px;
+  font-size: var(--status-tag-font);
   font-weight: var(--font-weight-semibold);
   text-transform: capitalize;
   letter-spacing: 0.01em;
@@ -1568,11 +1572,6 @@
 
   /* info-card-value uses clamp() for fluid sizing */
 
-  .info-card-icon {
-    width: 40px;
-    height: 40px;
-  }
-
   .info-card-inner {
     gap: var(--space-3);
   }
@@ -1877,7 +1876,7 @@
 
 .surface-close:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   border-color: var(--color-primary);
 }
 
@@ -1935,7 +1934,7 @@
 
 .chip:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
   border-color: var(--color-primary);
 }
 
@@ -2135,11 +2134,11 @@
 .search-clear-btn:focus-visible,
 .user-menu-logout:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
 .tab-pill:focus-visible {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px var(--focus-ring);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }

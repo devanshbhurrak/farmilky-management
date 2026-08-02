@@ -36,7 +36,7 @@ const HISTORY_STATUS_COLOR = {
 function StatCard({ icon: Icon, label, value, valueColor, sub: subText }) {
   return (
     <div className="sd-stat">
-      <div className="sd-stat-icon"><Icon size={15} strokeWidth={1.75} /></div>
+      <div className="sd-stat-icon"><Icon size={16} strokeWidth={1.75} /></div>
       <div className="sd-stat-body">
         <span className="sd-stat-label">{label}</span>
         <span className="sd-stat-value" style={valueColor ? { color: valueColor } : undefined}>{value}</span>
@@ -150,7 +150,7 @@ export default function SubscriptionDetailPage() {
         <div className="sd-topbar-right">
           <span className="sd-topbar-ref">#{sub._id?.slice(-6).toUpperCase()}</span>
           <div className="sd-status-badge" style={{ background: statusMeta.bg, color: statusMeta.color }}>
-            <StatusIcon size={12} strokeWidth={2.5} />
+            <StatusIcon size={14} strokeWidth={2.5} />
             <span>{sub.status}</span>
           </div>
         </div>
@@ -169,7 +169,7 @@ export default function SubscriptionDetailPage() {
             <div className="sd-hero-top">
               <h1 className="sd-hero-name">{sub.productId?.name || "Unknown Product"}</h1>
               <div className="sd-status-badge" style={{ background: statusMeta.bg, color: statusMeta.color }}>
-                <StatusIcon size={12} strokeWidth={2.5} />
+                <StatusIcon size={14} strokeWidth={2.5} />
                 <span>{sub.status}</span>
               </div>
             </div>
@@ -228,20 +228,20 @@ export default function SubscriptionDetailPage() {
           <span className="sd-action-strip-label">Actions</span>
           <div className="sd-action-strip-buttons">
             <button className="btn btn-secondary btn-sm" onClick={openEdit}>
-              <Edit2 size={13} /> Edit
+              <Edit2 size={14} /> Edit
             </button>
             {sub.status !== "active" && (
               <button className="btn btn-primary btn-sm" onClick={() => handleStatusUpdate("active")}>
-                <Play size={13} /> Activate
+                <Play size={14} /> Activate
               </button>
             )}
             {sub.status === "active" && (
               <button className="btn btn-secondary btn-sm" onClick={() => handleStatusUpdate("paused")}>
-                <Pause size={13} /> Pause
+                <Pause size={14} /> Pause
               </button>
             )}
             <button className="btn btn-danger btn-sm" onClick={() => setCancelConfirm(true)}>
-              <XCircle size={13} /> Cancel
+              <XCircle size={14} /> Cancel
             </button>
           </div>
         </div>
@@ -284,7 +284,7 @@ export default function SubscriptionDetailPage() {
           {/* Plan details */}
           <div className="sd-card">
             <div className="sd-card-header">
-              <span className="sd-card-title"><Package size={13} className="sd-card-title-icon" /> Plan Details</span>
+              <span className="sd-card-title"><Package size={14} className="sd-card-title-icon" /> Plan Details</span>
             </div>
             <div className="sd-plan-rows">
               <div className="sd-plan-row">
@@ -326,7 +326,7 @@ export default function SubscriptionDetailPage() {
           {/* Customer */}
           <div className="sd-card">
             <div className="sd-card-header">
-              <span className="sd-card-title"><User size={13} className="sd-card-title-icon" /> Customer</span>
+              <span className="sd-card-title"><User size={14} className="sd-card-title-icon" /> Customer</span>
               {sub.userId?._id && (
                 <Link to={`/customers/${sub.userId._id}`} className="sd-card-link">View profile</Link>
               )}
@@ -336,13 +336,13 @@ export default function SubscriptionDetailPage() {
               <div className="sd-contact-rows">
                 {sub.userId?.phone && (
                   <div className="sd-contact-row">
-                    <Phone size={12} className="sd-contact-icon" />
+                    <Phone size={14} className="sd-contact-icon" />
                     <span>{sub.userId.phone}</span>
                   </div>
                 )}
                 {sub.userId?.email && (
                   <div className="sd-contact-row">
-                    <Mail size={12} className="sd-contact-icon" />
+                    <Mail size={14} className="sd-contact-icon" />
                     <span>{sub.userId.email}</span>
                   </div>
                 )}
@@ -356,7 +356,7 @@ export default function SubscriptionDetailPage() {
         <div className="sd-col">
           <div className="sd-card">
             <div className="sd-card-header">
-              <span className="sd-card-title"><Truck size={13} className="sd-card-title-icon" /> Delivery History</span>
+              <span className="sd-card-title"><Truck size={14} className="sd-card-title-icon" /> Delivery History</span>
               <span className="sd-card-badge">{history.length} records</span>
             </div>
 
@@ -434,15 +434,15 @@ export default function SubscriptionDetailPage() {
           <div className="sd-actions-row">
             {sub.status !== "active" ? (
               <button className="sd-action-btn sd-action-btn--primary" onClick={() => handleStatusUpdate("active")}>
-                <Play size={12} /> Activate
+                <Play size={14} /> Activate
               </button>
             ) : (
               <button className="sd-action-btn sd-action-btn--secondary" onClick={() => handleStatusUpdate("paused")}>
-                <Pause size={12} /> Pause
+                <Pause size={14} /> Pause
               </button>
             )}
             <button className="sd-action-btn sd-action-btn--secondary" onClick={openEdit}>
-              <Edit2 size={12} /> Edit Plan
+              <Edit2 size={14} /> Edit Plan
             </button>
           </div>
           <button className="sd-action-btn sd-action-btn--danger" onClick={() => setCancelConfirm(true)}>

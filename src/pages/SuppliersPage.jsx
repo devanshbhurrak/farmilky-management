@@ -272,7 +272,7 @@ export default function SuppliersPage() {
 
       {/* ── Save Actions ── */}
       <div className="supplier-form-actions">
-        <button className="primary-button" onClick={handleSave} disabled={saving}>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
           {saving ? "Saving..." : "Save"}
         </button>
         {modalMode === "edit" && editingSupplier && (
@@ -386,7 +386,7 @@ export default function SuppliersPage() {
         title="Suppliers"
         subtitle={`${suppliers.length} farmer${suppliers.length !== 1 ? "s" : ""} in the system`}
         actions={
-          <button className="primary-button" onClick={openCreate}>
+          <button className="btn btn-primary" onClick={openCreate}>
             <Plus size={16} /> Add Farmer
           </button>
         }
@@ -422,7 +422,7 @@ export default function SuppliersPage() {
           onRowClick={(row) => navigate(`/suppliers/${row._id}`)}
           emptyText="No suppliers found."
           emptyAction={
-            <button className="primary-button" onClick={openCreate}>
+            <button className="btn btn-primary" onClick={openCreate}>
               <Plus size={16} /> Add First Farmer
             </button>
           }
@@ -462,7 +462,7 @@ export default function SuppliersPage() {
                 </>
               )}
               <button className="mini-button" onClick={closeModal} disabled={saving}>Cancel</button>
-              <button className="primary-button" onClick={handleSave} disabled={saving}>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save"}
               </button>
             </div>

@@ -77,17 +77,14 @@
   margin: 0;
 }
 
-/* ─── Shared: form stack in modals ───────────── */
+/* ─── Shared: form stack in modals — extends .form-stack ─── */
 .support-form-stack {
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
 }
 
 .support-form-stack .form-group {
-  margin-bottom: var(--space-4);
-}
-
-.support-form-stack .form-group:last-child {
   margin-bottom: 0;
 }
 
