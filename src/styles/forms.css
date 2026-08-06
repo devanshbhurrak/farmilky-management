@@ -377,6 +377,7 @@
 }
 
 .search-box input:focus {
+  outline: none;
   background: var(--surface);
   border-color: var(--color-primary);
   box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
@@ -792,4 +793,11 @@
     grid-template-columns: 1fr;
     gap: var(--space-1);
   }
+}
+
+/* ─── Form hint inline label modifier ───────── */
+.form-hint {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--text-muted);
 }

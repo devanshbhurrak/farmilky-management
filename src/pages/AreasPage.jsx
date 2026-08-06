@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Plus, Edit2, Trash2, MapPin, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Edit2, Trash2, MapPin, User, ListOrdered } from "lucide-react";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import LoadingScreen from "../components/ui/LoadingScreen";
@@ -145,6 +146,9 @@ export default function AreasPage() {
                     <StatusTag value={area.isActive ? "active" : "cancelled"} />
                   </div>
                   <div className="area-card-actions">
+                    <Link to={`/areas/${area._id}/customers`} className="icon-button" title="Manage delivery sequence">
+                      <ListOrdered size={16} />
+                    </Link>
                     <button className="icon-button" onClick={() => openEdit(area)} title="Edit area">
                       <Edit2 size={16} />
                     </button>

@@ -8,68 +8,31 @@
   gap: var(--space-3); /* 0.75rem on mobile */
 }
 
-/* ─── Mobile Metric Strip ────────────────────── */
-.mobile-metric-strip {
+/* ─── Inline delivery stats (replaces stat cards) ── */
+.list-header-left {
   display: flex;
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
-.mobile-metric-strip .metric-chip {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  padding: var(--space-2) var(--space-1);
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  position: relative;
-}
-
-/* Dividers between chips */
-.mobile-metric-strip .metric-chip + .metric-chip::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 20%;
-  height: 60%;
-  width: 1px;
-  background: var(--border-soft);
-}
-
-.mobile-metric-strip .metric-chip strong {
-  color: var(--text-primary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-extrabold);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-.mobile-metric-strip .metric-chip span {
+.queue-count {
   color: var(--text-muted);
-  font-size: 0.62rem;
   font-weight: var(--font-weight-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1;
 }
 
-/* Color accents per position */
-.mobile-metric-strip .metric-chip:nth-child(1) strong { color: var(--color-primary); }
-.mobile-metric-strip .metric-chip:nth-child(2) strong { color: #16a34a; }
-.mobile-metric-strip .metric-chip:nth-child(3) strong { color: var(--danger-text); }
-
-/* ─── Desktop stat card (inline label + value) ── */
-.delivery-stat-card {
+.delivery-inline-stats {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
+
+.dis-pending { color: var(--color-primary); }
+.dis-done    { color: #16a34a; }
+.dis-alert   { color: var(--danger-text); }
+.dis-sep     { color: var(--border-strong); }
 
 /* ─── Delivery List Section ──────────────────── */
 .delivery-list-section .list-header {
@@ -521,53 +484,259 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  /* surface-filters padding handles outer spacing — no margin-top needed */
+  width: 100%;
 }
 
-.search-row {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-row .search-box {
-  flex: 1;
-  min-width: 200px;
+.df-row {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0 var(--space-3);
-  background: var(--surface-muted);
-  border: 2px solid var(--border-soft);
-  border-radius: var(--radius-pill);
-  height: 40px;
-  transition: border-color var(--duration-base), background var(--duration-base);
+  width: 100%;
 }
 
-.search-row .search-box:focus-within {
-  border-color: var(--color-primary);
+.df-row--primary {
+  gap: var(--space-3);
+}
+
+/* Row 2: quick dropdowns — stretch to full width */
+.df-row--quick {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border-soft);
+  gap: var(--space-2);
+}
+
+.df-row--quick .df-icon-select {
+  flex: 1;
+}
+
+.df-filter-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-soft);
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 var(--space-1);
+}
+
+/* ─── Icon Dropdown (Area / Sort) ─────────── */
+.df-icon-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
   background: var(--surface);
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-3);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: border-color var(--duration-base), box-shadow var(--duration-base),
+              background var(--duration-base);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.df-icon-select--active {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--surface));
+}
+
+.df-icon-select--active .df-icon-select-icon {
+  color: var(--color-primary);
+}
+
+.df-icon-select--open {
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
 }
 
-.search-row .search-box svg {
+.df-icon-select-icon {
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
-.search-row .search-box input {
+/* Trigger button (fills the select chip, holds label + chevron) */
+.df-icon-dropdown-trigger {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.df-icon-dropdown-trigger::after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4.5px solid var(--text-muted);
+  flex-shrink: 0;
+  transition: transform var(--duration-base), border-top-color var(--duration-base);
+}
+
+.df-icon-select--open .df-icon-dropdown-trigger::after {
+  transform: rotate(180deg);
+  border-top-color: var(--color-primary);
+}
+
+.df-icon-select--active .df-icon-dropdown-trigger::after {
+  border-top-color: var(--color-primary);
+}
+
+/* Chevron now lives in the trigger — tighten the wrapper padding */
+.df-icon-dropdown {
+  padding-right: var(--space-3);
+  position: relative;
+}
+
+/* Visible label text */
+.df-icon-select-label {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.delivery-surface {
+  overflow: visible;
+}
+
+/* Custom dropdown menu (Area / Sort) */
+.df-icon-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  background: var(--surface-raised, var(--surface));
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+  z-index: 200;
+  list-style: none;
+  margin: 0;
+  padding: var(--space-1) 0;
+  animation: df-dropdown-in 0.12s ease;
+}
+
+@keyframes df-dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Dropdown options */
+.df-icon-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.df-icon-dropdown-item:hover {
+  background: var(--surface-muted);
+  color: var(--text-primary);
+}
+
+.df-icon-dropdown-item.active {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+.df-icon-dropdown-check {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* Search box (delivery filter only — avoids conflict with global SearchInput .search-box) */
+.df-search-box {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) 0 var(--space-3);
+  background: var(--surface);
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  height: 40px;
+  transition: border-color var(--duration-base), box-shadow var(--duration-base);
+}
+
+.df-search-box:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
+}
+
+.df-search-box svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.df-search-box input {
+  border: none;
+  outline: none;
   background: transparent;
   padding: 0;
   font-size: var(--font-size-sm);
   width: 100%;
   color: var(--text-primary);
   font-family: inherit;
+  min-width: 0;
 }
 
-.search-row .search-box input:focus { outline: none; }
-.search-row .search-box input::placeholder { color: var(--text-muted); }
+.df-search-box input::placeholder { color: var(--text-muted); }
+
+/* ─── Mobile filter bar ──────────────────────── */
+.mobile-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.mobile-filter-bar .search-box {
+  max-width: none;
+  width: 100%;
+}
+
+.mobile-quick-selects {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.mobile-quick-selects .df-icon-select {
+  flex: 1;
+  height: 36px;
+}
+
+.mobile-quick-selects .df-icon-select .df-icon-select-label {
+  font-size: var(--font-size-xs);
+}
 
 .date-input-desktop {
   height: 40px;
@@ -581,64 +750,13 @@
   cursor: pointer;
   transition: border-color var(--duration-base);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .date-input-desktop:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
-}
-
-.search-row select {
-  height: 40px;
-  padding: 0 var(--space-4);
-  border: 2px solid var(--border-soft);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color var(--duration-base);
-}
-
-.search-row select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
-}
-
-.tab-row {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.tab-row .tab {
-  padding: 0.4rem var(--space-4);
-  border-radius: var(--radius-pill);
-  border: 2px solid var(--border-soft);
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
-  font-family: inherit;
-  cursor: pointer;
-  transition: all var(--duration-base);
-}
-
-.tab-row .tab:hover  { border-color: var(--border-strong); color: var(--text-primary); }
-
-.tab-row .tab.active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-/* ─── Delivery Summary Row (search → metrics) ── */
-.delivery-summary-row {
-  padding: var(--space-3) var(--space-3) var(--space-4);
 }
 
 /* ─── Delivery Filters (mobile/sheet) ────────── */
@@ -735,29 +853,11 @@
     padding-bottom: var(--space-1);
   }
 
-  /* Tighter filter bar — 1.5rem top/bottom is generous for two compact rows */
+  /* Tighter filter bar */
   .delivery-surface .surface-filters {
     padding-top: var(--space-4);
     padding-bottom: var(--space-4);
-    /* Border handled by the metric row's border-top below */
     border-bottom: none;
-  }
-
-  /* Add a subtle visual separator between filters and metrics,
-     and tighten padding on the metrics section */
-  .delivery-surface .delivery-summary-row {
-    border-top: 1px solid var(--border-soft);
-    padding: var(--space-4) var(--space-8) var(--space-5);
-  }
-
-  /* Compact metric cards — label + number don't need 1.25rem padding */
-  .delivery-summary-row .card-inset {
-    padding: var(--space-3) var(--space-5);
-  }
-
-  /* Tighter gap between the three metric cards */
-  .delivery-summary-row .card-grid {
-    gap: var(--space-4);
   }
 }
 
@@ -907,9 +1007,67 @@
 .dc-outcome-icon--ok   { color: var(--success); flex-shrink: 0; }
 .dc-outcome-icon--fail { color: var(--danger);  flex-shrink: 0; }
 
+.dc-footer-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.dc-btn-navigate {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dc-btn-navigate:hover {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
 .dc-btn-deliver {
-  /* Replaced by shared .btn-warning system (see DeliveryCard.jsx) */
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  background: var(--success);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.35);
+  transition: background var(--duration-base), transform var(--duration-fast),
+              box-shadow var(--duration-base);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dc-btn-deliver:hover {
+  background: #0da271;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+.dc-btn-deliver:active {
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+.dc-btn-deliver:focus-visible {
+  outline: 2px solid var(--success);
+  outline-offset: 2px;
 }
 
 
@@ -948,5 +1106,48 @@
 
   /* ─── Surface ───────────────────────────── */
   .delivery-surface .surface-filters { padding: var(--space-3); border-bottom: none; }
-  .delivery-surface .delivery-summary-row { padding: var(--space-2) var(--space-3); }
+
+  /* ─── List header ───────────────────────── */
+  .list-header-left { flex-wrap: wrap; gap: var(--space-1); }
+  .delivery-inline-stats { font-size: 0.7rem; }
+
+  /* ─── Mobile quick selects ──────────────── */
+  .mobile-filter-bar { gap: var(--space-2); }
+}
+
+/* ═══════════════════════════════════════════════
+   DELIVERY CARD — Sequence & Area enhancements
+   ═══════════════════════════════════════════════ */
+
+.dc-customer-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.dc-seq-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-bold);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+.dc-area-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-pill);
+  margin-top: 2px;
 }

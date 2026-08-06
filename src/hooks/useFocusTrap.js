@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 /**
  * Traps focus inside a container while active, restores focus to the
  * previously focused element (trigger) on close, and handles Escape.
+ * The effect only reacts to the `active` transition, so re-renders while
+ * open (e.g. typing in a form) never steal focus back to the first element.
  * @param {object} options
  * @param {boolean} options.active - Whether the trap is active
  * @param {() => void} options.onClose - Called on Escape
@@ -10,16 +12,22 @@ import { useEffect, useRef } from "react";
  */
 export function useFocusTrap({ active, onClose, autoFocus = true }) {
   const containerRef = useRef(null);
-  const triggerRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const autoFocusRef = useRef(autoFocus);
+  autoFocusRef.current = autoFocus;
+  const wasActiveRef = useRef(false);
 
   useEffect(() => {
+    const wasActive = wasActiveRef.current;
+    wasActiveRef.current = active;
+
     if (!active) return;
 
     const container = containerRef.current;
     if (!container) return;
 
     const previouslyFocused = document.activeElement;
-    triggerRef.current = previouslyFocused;
 
     const focusableSelector = [
       "a[href]",
@@ -35,7 +43,7 @@ export function useFocusTrap({ active, onClose, autoFocus = true }) {
         (el) => el.offsetParent !== null
       );
 
-    if (autoFocus) {
+    if (autoFocusRef.current && !wasActive) {
       const first = getFocusables()[0];
       if (first) first.focus();
     }
@@ -43,7 +51,7 @@ export function useFocusTrap({ active, onClose, autoFocus = true }) {
     function handleKeyDown(e) {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose?.();
+        onCloseRef.current?.();
         return;
       }
       if (e.key !== "Tab") return;
@@ -66,11 +74,11 @@ export function useFocusTrap({ active, onClose, autoFocus = true }) {
     document.addEventListener("keydown", handleKeyDown, true);
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
-      if (triggerRef.current && document.contains(triggerRef.current)) {
-        triggerRef.current.focus();
+      if (previouslyFocused && document.contains(previouslyFocused)) {
+        previouslyFocused.focus();
       }
     };
-  }, [active, onClose, autoFocus]);
+  }, [active]);
 
   return containerRef;
 }

@@ -126,6 +126,28 @@ export default function CustomerForm({ form, onChange, onSubmit }) {
           />
         </div>
       </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Latitude <span className="form-hint">(optional GPS)</span></label>
+          <input
+            type="number"
+            step="any"
+            value={form.address?.lat ?? ""}
+            onChange={(e) => onChange({ address: { ...form.address, lat: e.target.value !== "" ? parseFloat(e.target.value) : null } })}
+            placeholder="e.g. 12.9716"
+          />
+        </div>
+        <div className="form-group">
+          <label>Longitude <span className="form-hint">(optional GPS)</span></label>
+          <input
+            type="number"
+            step="any"
+            value={form.address?.lng ?? ""}
+            onChange={(e) => onChange({ address: { ...form.address, lng: e.target.value !== "" ? parseFloat(e.target.value) : null } })}
+            placeholder="e.g. 77.5946"
+          />
+        </div>
+      </div>
     </form>
   );
 }

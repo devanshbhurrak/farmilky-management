@@ -1,12 +1,12 @@
-import { Search, Filter, CheckSquare } from "lucide-react";
+import { Filter, CheckSquare, MapPin, ListOrdered } from "lucide-react";
 import PageHeader from "../components/ui/PageHeader";
 import SearchInput from "../components/ui/SearchInput";
+import IconDropdown from "../components/ui/IconDropdown";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { formatDate } from "../utils/format";
+import { formatDate, todayLocal } from "../utils/format";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import FilterSheet from "../components/ui/FilterSheet";
-import MetricChip from "../components/ui/MetricChip";
 import DeliveryCard from "../components/delivery/DeliveryCard";
 import OutcomeModal from "../components/delivery/OutcomeModal";
 import BulkActionsBar from "../components/delivery/BulkActionsBar";
@@ -16,23 +16,21 @@ import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
-function todayStr() {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
-}
-
 const fetchBoard = createApiFetch("/api/subscriptions/admin/delivery-board");
 
 export default function DeliveriesPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [date, setDate] = useState(todayStr);
+  const [date, setDate] = useState(todayLocal);
   const [searchValue, setSearchValue] = useState("");
   const [typeTab, setTypeTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [areaFilter, setAreaFilter] = useState("all");
+  const [sortMode, setSortMode] = useState("sequence");
   const [outcomeModal, setOutcomeModal] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [areas, setAreas] = useState([]);
   const PAGE_SIZE = 50;
 
   const queryParams = useMemo(() => ({ date, type: typeTab !== "all" ? typeTab : undefined, status: statusFilter !== "all" ? statusFilter : undefined }), [date, typeTab, statusFilter]);
@@ -40,6 +38,13 @@ export default function DeliveriesPage() {
   const { data, loading, refetch } = useApiData(fetchFn, false);
 
   useEffect(() => { refetch(); }, [refetch]);
+
+  useEffect(() => {
+    apiRequest("/api/areas")
+      .then((r) => r.json())
+      .then((d) => setAreas(d.areas || []))
+      .catch(() => {});
+  }, []);
 
   const deliveryBoard = useMemo(() => data || {}, [data]);
   const summary = useMemo(() => deliveryBoard.summary || {}, [deliveryBoard]);
@@ -50,15 +55,32 @@ export default function DeliveriesPage() {
     const query = searchValue.trim().toLowerCase();
     if (query) {
       items = items.filter((item) =>
-        [item.customerName, item.phone, item.email, item.productLabel, item.schedule, item.address, item.type]
+        [item.customerName, item.phone, item.email, item.productLabel, item.schedule, item.address, item.type, item.areaName]
           .filter(Boolean)
           .join(" ")
           .toLowerCase()
           .includes(query)
       );
     }
+    if (areaFilter !== "all") {
+      items = items.filter((item) => item.areaId === areaFilter);
+    }
+    if (sortMode === "sequence") {
+      items = [...items].sort((a, b) => {
+        if (a.canRecordOutcome !== b.canRecordOutcome) return a.canRecordOutcome ? -1 : 1;
+        if (a.sequence == null && b.sequence == null) return (a.customerName || "").localeCompare(b.customerName || "");
+        if (a.sequence == null) return 1;
+        if (b.sequence == null) return -1;
+        return a.sequence - b.sequence;
+      });
+    } else {
+      items = [...items].sort((a, b) => {
+        if (a.canRecordOutcome !== b.canRecordOutcome) return a.canRecordOutcome ? -1 : 1;
+        return (a.customerName || "").localeCompare(b.customerName || "");
+      });
+    }
     return items;
-  }, [deliveries, searchValue]);
+  }, [deliveries, searchValue, areaFilter, sortMode]);
 
   const totalPages = Math.ceil(filteredDeliveries.length / PAGE_SIZE);
   const pagedDeliveries = useMemo(
@@ -140,7 +162,7 @@ export default function DeliveriesPage() {
     setPage(1);
   };
 
-  useEffect(() => { setPage(1); }, [searchValue, typeTab, statusFilter, date]);
+  useEffect(() => { setPage(1); }, [searchValue, typeTab, statusFilter, date, areaFilter, sortMode]);
 
   if (loading && (!data || deliveries.length === 0)) return <LoadingScreen text="Loading route..." />;
 
@@ -163,7 +185,7 @@ export default function DeliveriesPage() {
       <div className="surface delivery-surface">
         <div className="surface-filters">
           {!isMobile ? (
-            <DeliveryFilters 
+            <DeliveryFilters
               searchValue={searchValue}
               onSearchChange={setSearchValue}
               date={date}
@@ -172,41 +194,61 @@ export default function DeliveriesPage() {
               onStatusChange={setStatusFilter}
               typeTab={typeTab}
               onTypeChange={setTypeTab}
+              areaFilter={areaFilter}
+              onAreaChange={setAreaFilter}
+              areas={areas}
+              sortMode={sortMode}
+              onSortModeChange={setSortMode}
             />
           ) : (
-            <SearchInput value={searchValue} onChange={setSearchValue} placeholder="Search customer, phone, or product..." />
+            <div className="mobile-filter-bar">
+              <SearchInput value={searchValue} onChange={setSearchValue} placeholder="Search customer, phone, or product..." />
+              <div className="mobile-quick-selects">
+                {areas.length > 0 && (
+                  <IconDropdown
+                    icon={<MapPin size={13} className="df-icon-select-icon" aria-hidden />}
+                    value={areaFilter}
+                    onChange={setAreaFilter}
+                    options={[
+                      { value: "all", label: "All Areas" },
+                      ...areas.map((a) => ({ value: a._id, label: a.name })),
+                    ]}
+                    ariaLabel="Filter by area"
+                  />
+                )}
+                <IconDropdown
+                  icon={<ListOrdered size={13} className="df-icon-select-icon" aria-hidden />}
+                  value={sortMode}
+                  onChange={setSortMode}
+                  options={[
+                    { value: "sequence", label: "By Sequence" },
+                    { value: "name", label: "By Name" },
+                  ]}
+                  ariaLabel="Sort order"
+                />
+              </div>
+            </div>
           )}
         </div>
 
-        <div className="delivery-summary-row">
-          {isMobile ? (
-            <div className="mobile-metric-strip">
-              <MetricChip label="Pending" value={summary.remainingDeliveries || 0} />
-              <MetricChip label="Done" value={summary.completedDeliveries || 0} />
-              <MetricChip label="Alerts" value={summary.exceptions || 0} />
-            </div>
-          ) : (
-            <div className="metrics-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-              <div className="card-inset delivery-stat-card">
-                 <span className="card-metric-label">PENDING STOPS</span>
-                 <strong className="card-metric-value">{summary.remainingDeliveries || 0}</strong>
-              </div>
-              <div className="card-inset delivery-stat-card">
-                 <span className="card-metric-label">COMPLETED</span>
-                 <strong className="card-metric-value" style={{ color: "var(--color-primary)" }}>{summary.completedDeliveries || 0}</strong>
-              </div>
-              <div className="card-inset delivery-stat-card">
-                 <span className="card-metric-label">EXCEPTIONS</span>
-                 <strong className="card-metric-value" style={{ color: "var(--danger)" }}>{summary.exceptions || 0}</strong>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       <section className="delivery-list-section">
         <div className="list-header">
-          <h3>Queue ({filteredDeliveries.length})</h3>
+          <div className="list-header-left">
+            <h3>Queue <span className="queue-count">({filteredDeliveries.length})</span></h3>
+            <div className="delivery-inline-stats">
+              <span className="dis-pending">{summary.remainingDeliveries || 0} pending</span>
+              <span className="dis-sep">·</span>
+              <span className="dis-done">{summary.completedDeliveries || 0} done</span>
+              {(summary.exceptions || 0) > 0 && (
+                <>
+                  <span className="dis-sep">·</span>
+                  <span className="dis-alert">{summary.exceptions} alert{summary.exceptions !== 1 ? "s" : ""}</span>
+                </>
+              )}
+            </div>
+          </div>
           {!isMobile && filteredDeliveries.some((d) => d.canRecordOutcome !== false) && (
              <div className="bulk-selection-controls">
                 <label className="checkbox-label">
@@ -261,6 +303,11 @@ export default function DeliveriesPage() {
           onStatusChange={setStatusFilter}
           typeTab={typeTab}
           onTypeChange={setTypeTab}
+          areaFilter={areaFilter}
+          onAreaChange={setAreaFilter}
+          areas={areas}
+          sortMode={sortMode}
+          onSortModeChange={setSortMode}
         />
       </FilterSheet>
 

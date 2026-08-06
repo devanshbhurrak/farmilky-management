@@ -1,82 +1,131 @@
-import { Search, Calendar } from "lucide-react";
+import { Search, Calendar, MapPin, ListOrdered } from "lucide-react";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
+import IconDropdown from "../ui/IconDropdown";
 
-export default function DeliveryFilters({ 
-  searchValue, 
-  onSearchChange, 
-  date, 
-  onDateChange, 
-  statusFilter, 
-  onStatusChange, 
-  typeTab, 
-  onTypeChange 
+const SORT_OPTIONS = [
+  { value: "sequence", label: "By Sequence" },
+  { value: "name",     label: "By Name" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "all",       label: "All Status" },
+  { value: "pending",   label: "Pending" },
+  { value: "delivered", label: "Delivered" },
+  { value: "partial",   label: "Partial" },
+  { value: "extra",     label: "Extra" },
+  { value: "skipped",   label: "Skipped" },
+  { value: "failed",    label: "Failed" },
+];
+
+export default function DeliveryFilters({
+  searchValue,
+  onSearchChange,
+  date,
+  onDateChange,
+  statusFilter,
+  onStatusChange,
+  typeTab,
+  onTypeChange,
+  areaFilter,
+  onAreaChange,
+  areas,
+  sortMode,
+  onSortModeChange,
 }) {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const dateId = "route-date";
-  const searchId = "delivery-search";
 
-  const statuses = [
-    { value: "all", label: "All Status" },
-    { value: "pending", label: "Pending" },
-    { value: "delivered", label: "Delivered" },
-    { value: "skipped", label: "Skipped" },
-    { value: "failed", label: "Failed" },
+  const areaOptions = [
+    { value: "all", label: "All Areas" },
+    ...(areas || []).map((a) => ({ value: a._id, label: a.name })),
   ];
 
-  const renderContent = () => (
-    <div className="delivery-filters-content">
-      <div className="form-group">
-        <label htmlFor={dateId}>Route Date</label>
-        <div className="input-wrapper">
-          <Calendar size={18} className="input-icon" aria-hidden />
-          <input
-            id={dateId}
-            type="date"
-            value={date}
-            onChange={(e) => onDateChange(e.target.value)}
-          />
+  // Mobile: rendered inside FilterSheet
+  if (isMobile) {
+    return (
+      <div className="delivery-filters-content">
+        <div className="form-group">
+          <label>Route Date</label>
+          <div className="input-wrapper">
+            <Calendar size={18} className="input-icon" aria-hidden />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => onDateChange(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {areas?.length > 0 && (
+          <div className="form-group">
+            <label>Area</label>
+            <select value={areaFilter} onChange={(e) => onAreaChange(e.target.value)}>
+              {areaOptions.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="form-group">
+          <label>Status</label>
+          <div className="filter-pill-group">
+            {STATUS_OPTIONS.map((s) => (
+              <button
+                key={s.value}
+                className={statusFilter === s.value ? "filter-pill active" : "filter-pill"}
+                onClick={() => onStatusChange(s.value)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Sort By</label>
+          <div className="filter-pill-group">
+            {SORT_OPTIONS.map((s) => (
+              <button
+                key={s.value}
+                className={sortMode === s.value ? "filter-pill active" : "filter-pill"}
+                onClick={() => onSortModeChange(s.value)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Type</label>
+          <div className="filter-pill-group">
+            {["all", "subscription", "order"].map((t) => (
+              <button
+                key={t}
+                className={typeTab === t ? "filter-pill active" : "filter-pill"}
+                onClick={() => onTypeChange(t)}
+              >
+                {t === "all" ? "All" : t.charAt(0).toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+    );
+  }
 
-      <div className="form-group">
-        <label>Status</label>
-        <select value={statusFilter} onChange={(e) => onStatusChange(e.target.value)}>
-          {statuses.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label>Type</label>
-        <div className="filter-pill-group">
-          {["all", "subscription", "order"].map((t) => (
-            <button
-              key={t}
-              className={typeTab === t ? "filter-pill active" : "filter-pill"}
-              onClick={() => onTypeChange(t)}
-            >
-              {t === "all" ? "All" : t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  if (isMobile) return renderContent();
-
+  // Desktop
   return (
     <div className="delivery-filters-desktop">
-      <div className="search-row">
-        <div className="search-box">
-          <Search size={18} aria-hidden />
+      {/* Row 1: Search + Date */}
+      <div className="df-row df-row--primary">
+        <div className="df-search-box">
+          <Search size={16} aria-hidden />
           <input
-            id={searchId}
             type="text"
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search customer, phone, or product"
+            placeholder="Search customer, phone, or product…"
           />
         </div>
         <input
@@ -86,25 +135,26 @@ export default function DeliveryFilters({
           className="date-input-desktop"
           aria-label="Route date"
         />
-        <select value={statusFilter} onChange={(e) => onStatusChange(e.target.value)}
-          aria-label="Filter by status">
-          {statuses.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
       </div>
-      <div role="tablist" aria-label="Delivery type" className="tab-row">
-        {["all", "subscription", "order"].map((t) => (
-          <button
-            key={t}
-            role="tab"
-            aria-selected={typeTab === t}
-            className={typeTab === t ? "tab active" : "tab"}
-            onClick={() => onTypeChange(t)}
-          >
-            {t === "all" ? "All" : t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
+
+      {/* Row 2: Area + Sort quick dropdowns */}
+      <div className="df-row df-row--quick">
+        {areas?.length > 0 && (
+          <IconDropdown
+            icon={<MapPin size={13} className="df-icon-select-icon" aria-hidden />}
+            value={areaFilter}
+            onChange={onAreaChange}
+            options={areaOptions}
+            ariaLabel="Filter by area"
+          />
+        )}
+        <IconDropdown
+          icon={<ListOrdered size={13} className="df-icon-select-icon" aria-hidden />}
+          value={sortMode}
+          onChange={onSortModeChange}
+          options={SORT_OPTIONS}
+          ariaLabel="Sort order"
+        />
       </div>
     </div>
   );

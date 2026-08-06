@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, MapPin, CheckCircle, XCircle, SkipForward, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Navigation, CheckCircle, XCircle, SkipForward, ChevronDown, ChevronUp, ArrowUp, ArrowDown, ListOrdered } from "lucide-react";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import { formatDate } from "../utils/format";
@@ -42,6 +42,9 @@ export default function ManifestDetailPage() {
   const [notes, setNotes] = useState({});
   const [reason, setReason] = useState({});
   const [showCompleted, setShowCompleted] = useState(false);
+  const [reorderMode, setReorderMode] = useState(false);
+  const [localOrder, setLocalOrder] = useState([]);
+  const [resequencing, setResequencing] = useState(false);
 
   const { pendingEntries, completedEntries } = useMemo(() => {
     if (!manifest?.entries) return { pendingEntries: [], completedEntries: [] };
@@ -70,6 +73,40 @@ export default function ManifestDetailPage() {
       refetch();
     } catch (err) {
       toast.error(err.message || "Failed to update.");
+    }
+  };
+
+  const startReorder = () => {
+    setLocalOrder(pendingEntries.map((e) => e._id));
+    setReorderMode(true);
+  };
+
+  const moveEntry = (index, delta) => {
+    setLocalOrder((prev) => {
+      const next = [...prev];
+      const target = index + delta;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const saveResequence = async () => {
+    setResequencing(true);
+    try {
+      const res = await apiRequest(`/api/manifests/${id}/resequence`, {
+        method: "PUT",
+        body: JSON.stringify({ orderedEntryIds: localOrder }),
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.message);
+      toast.success("Route order saved.");
+      setReorderMode(false);
+      refetch();
+    } catch (err) {
+      toast.error(err.message || "Failed to save order.");
+    } finally {
+      setResequencing(false);
     }
   };
 
@@ -142,7 +179,7 @@ export default function ManifestDetailPage() {
     </div>
   );
 
-  function renderEntryCard(entry, isNextStop = false) {
+  function renderEntryCard(entry, isNextStop = false, orderIndex = null) {
     const IconComp = STATUS_ICON[entry.status];
     const isExpanded = actionState[entry._id] || isNextStop;
 
@@ -159,6 +196,9 @@ export default function ManifestDetailPage() {
               {isNextStop && entry.status === "pending" && (
                 <span className="manifest-next-badge">NEXT STOP</span>
               )}
+              {entry.sequence != null && (
+                <span className="manifest-seq-badge">#{entry.sequence}</span>
+              )}
               <strong className="manifest-entry-name">{entry.customerName}</strong>
               <StatusTag value={entry.status} />
             </div>
@@ -172,34 +212,61 @@ export default function ManifestDetailPage() {
           </div>
 
           <div className="manifest-entry-side">
-            {entry.address && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(entry.address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-secondary btn-sm"
-                title="Open Map"
-              >
-                <MapPin size={16} />
-              </a>
-            )}
+            {(() => {
+              const hasGPS = entry.lat != null && entry.lng != null && isFinite(entry.lat) && isFinite(entry.lng);
+              if (!hasGPS && !entry.address) return null;
+              return (
+                <a
+                  href={
+                    hasGPS
+                      ? `https://www.google.com/maps/dir/?api=1&destination=${entry.lat},${entry.lng}`
+                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(entry.address)}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary btn-sm"
+                  title={hasGPS ? "Navigate (GPS)" : "Open Map"}
+                >
+                  <Navigation size={16} />
+                </a>
+              );
+            })()}
             {entry.phone && (
               <a href={`tel:${entry.phone}`} className="btn btn-secondary btn-sm" title="Call Customer">
                 <Phone size={16} />
               </a>
             )}
-            {entry.status === "pending" && !isNextStop && (
+            {entry.status === "pending" && reorderMode ? (
+              <div className="reorder-controls">
+                <button
+                  className="btn btn-secondary btn-sm"
+                  disabled={orderIndex === 0}
+                  onClick={() => moveEntry(orderIndex, -1)}
+                  aria-label="Move up"
+                >
+                  <ArrowUp size={16} />
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  disabled={orderIndex === localOrder.length - 1}
+                  onClick={() => moveEntry(orderIndex, 1)}
+                  aria-label="Move down"
+                >
+                  <ArrowDown size={16} />
+                </button>
+              </div>
+            ) : entry.status === "pending" && !isNextStop ? (
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => setActionState((p) => ({ ...p, [entry._id]: !p[entry._id] }))}
               >
                 {isExpanded ? "Close" : "Update"}
               </button>
-            )}
+            ) : null}
           </div>
         </div>
 
-        {entry.status === "pending" && isExpanded && (
+        {entry.status === "pending" && isExpanded && !reorderMode && (
           <div className="manifest-action-form">
             <div className="form-group">
               <label>Delivery Notes</label>
@@ -262,14 +329,33 @@ export default function ManifestDetailPage() {
   }
 
   function renderEntryList() {
+    const pendingOrdered = reorderMode
+      ? localOrder.map((entryId) => pendingEntries.find((e) => e._id === entryId)).filter(Boolean)
+      : pendingEntries;
+
     return (
       <div>
-        <p className="eyebrow manifest-queue-heading">Queue ({pendingEntries.length})</p>
-        {pendingEntries.length === 0 ? (
+        <div className="manifest-queue-row">
+          <p className="eyebrow manifest-queue-heading">Queue ({pendingEntries.length})</p>
+          {isAdmin && pendingEntries.length > 1 && !reorderMode && (
+            <button className="btn btn-secondary btn-sm" onClick={startReorder} title="Reorder pending stops">
+              <ListOrdered size={16} /> Edit Order
+            </button>
+          )}
+          {isAdmin && reorderMode && (
+            <div className="resequence-actions">
+              <button className="btn btn-secondary btn-sm" onClick={() => setReorderMode(false)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={saveResequence} disabled={resequencing}>
+                {resequencing ? "Saving..." : "Save Order"}
+              </button>
+            </div>
+          )}
+        </div>
+        {pendingOrdered.length === 0 ? (
           <EmptyState text="No pending stops left! High five." icon={CheckCircle} />
         ) : (
           <div className="manifest-entry-list">
-            {pendingEntries.map((entry, i) => renderEntryCard(entry, i === 0))}
+            {pendingOrdered.map((entry, i) => renderEntryCard(entry, i === 0, reorderMode ? i : null))}
           </div>
         )}
 

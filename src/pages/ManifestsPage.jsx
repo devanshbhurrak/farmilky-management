@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ClipboardList, RefreshCw, Play } from "lucide-react";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
-import { formatDate } from "../utils/format";
+import { formatDate, todayLocal } from "../utils/format";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
@@ -11,13 +11,11 @@ import EmptyState from "../components/ui/EmptyState";
 import StatusTag from "../components/ui/StatusTag";
 import toast from "react-hot-toast";
 
-const todayStr = () => new Date().toISOString().split("T")[0];
-
 const fetchManifests = createApiFetch("/api/manifests");
 
 export default function ManifestsPage() {
   const navigate = useNavigate();
-  const [date, setDate] = useState(todayStr());
+  const [date, setDate] = useState(todayLocal());
   const { data, loading, error, refetch } = useApiData(() => fetchManifests({ date }), true);
   const manifests = data?.manifests ?? [];
   const [generating, setGenerating] = useState(false);

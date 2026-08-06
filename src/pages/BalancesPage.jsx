@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Filter, IndianRupee } from "lucide-react";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, todayLocal } from "../utils/format";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
 import PageSkeleton from "../components/ui/PageSkeleton";
@@ -27,7 +27,7 @@ export default function BalancesPage() {
   const { data, loading, error, refetch } = useApiData(fetchCustomersWithBalance);
   const [search, setSearch] = useState("");
   const [payModal, setPayModal] = useState(null);
-  const [payForm, setPayForm] = useState({ amount: "", transactionId: "", notes: "", date: new Date().toISOString().split("T")[0] });
+  const [payForm, setPayForm] = useState({ amount: "", transactionId: "", notes: "", date: todayLocal() });
   const [paying, setPaying] = useState(false);
 
 
@@ -161,6 +161,10 @@ export default function BalancesPage() {
             <div className="form-group">
               <label>Date</label>
               <input type="date" value={payForm.date} onChange={(e) => setPayForm({ ...payForm, date: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Transaction ID / Ref</label>
+              <input type="text" value={payForm.transactionId} onChange={(e) => setPayForm({ ...payForm, transactionId: e.target.value })} placeholder="Optional" />
             </div>
             <div className="form-group">
               <label>Notes</label>

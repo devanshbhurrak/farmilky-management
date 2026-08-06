@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Pause, Play, Plus } from "lucide-react";
-import { formatCurrency, formatDate } from "../utils/format";
+import { formatCurrency, formatDate, todayLocal } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
 import DataTable from "../components/ui/DataTable";
 import FilterSheet from "../components/ui/FilterSheet";
@@ -25,12 +25,14 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
   const [selected, setSelected] = useState(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkConfirm, setBulkConfirm] = useState(null);
+  const [pauseFrom, setPauseFrom] = useState(todayLocal());
+  const [pauseUntil, setPauseUntil] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState({ userId: "", productId: "", variantId: null, quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
+  const [form, setForm] = useState({ userId: "", productId: "", variantId: null, quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: todayLocal() });
 
   useEffect(() => {
     if (modalOpen) {
@@ -79,12 +81,21 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
     if (selected.size === 0) return;
     setBulkLoading(true);
     try {
+      if (action === "pause" && (!pauseFrom || !pauseUntil)) {
+        throw new Error("Pause requires both a start and end date.");
+      }
+      if (action === "pause" && new Date(pauseUntil) <= new Date(pauseFrom)) {
+        throw new Error("Pause end date must be after the start date.");
+      }
       const url = action === "pause"
         ? "/api/admin/subscriptions/bulk-pause"
         : "/api/admin/subscriptions/bulk-resume";
       const res = await apiRequest(url, {
         method: "PUT",
-        body: JSON.stringify({ subscriptionIds: Array.from(selected) }),
+        body: JSON.stringify({
+          subscriptionIds: Array.from(selected),
+          ...(action === "pause" ? { pauseFrom, pauseUntil } : {}),
+        }),
       });
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.message);
@@ -249,7 +260,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
   };
 
   function openCreate() {
-    setForm({ userId: "", productId: "", variantId: null, quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: new Date().toISOString().split("T")[0] });
+    setForm({ userId: "", productId: "", variantId: null, quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: todayLocal() });
     setModalOpen(true);
   }
 
@@ -384,7 +395,20 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
         confirmText={bulkConfirm === "pause" ? "Pause" : "Resume"}
         loading={bulkLoading}
         variant={bulkConfirm === "pause" ? "danger" : "primary"}
-      />
+      >
+        {bulkConfirm === "pause" && (
+          <div className="bulk-pause-dates">
+            <div className="form-group">
+              <label>Pause From</label>
+              <input type="date" value={pauseFrom} onChange={(e) => setPauseFrom(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>Pause Until</label>
+              <input type="date" value={pauseUntil} onChange={(e) => setPauseUntil(e.target.value)} />
+            </div>
+          </div>
+        )}
+      </ConfirmDialog>
 
       {isMobile ? (
         <BottomSheet

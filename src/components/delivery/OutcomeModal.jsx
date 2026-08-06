@@ -53,6 +53,10 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
           toast.error("Invalid quantity.");
           return;
         }
+        if (formQty === 0) {
+          toast.error("Quantity must be at least 1. Use Skip or Failed for a zero delivery.");
+          return;
+        }
         status = formQty === scheduled ? "delivered" : (formQty > scheduled ? "extra" : "partial");
         actualQuantity = formQty;
       }

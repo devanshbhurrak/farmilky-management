@@ -23,7 +23,9 @@ function buildOverview(data) {
   const supplySummary = data?.supply?.summary || {};
 
   return {
-    revenue: orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
+    revenue: orders
+      .filter((order) => order.orderStatus !== "cancelled")
+      .reduce((sum, order) => sum + (order.totalAmount || 0), 0),
     pendingCodOrders: orders.filter(
       (order) => order.paymentMethod === "COD" && order.paymentStatus === "pending"
     ).length,

@@ -1,6 +1,6 @@
 import StatusTag from "../ui/StatusTag";
 import { formatCurrency } from "../../utils/format";
-import { Package, Clock, MapPin, CheckCircle2, XCircle } from "lucide-react";
+import { Package, Clock, MapPin, CheckCircle2, XCircle, Navigation } from "lucide-react";
 
 const STATUS_ACCENT = {
   delivered: "dc-accent--delivered",
@@ -8,8 +8,15 @@ const STATUS_ACCENT = {
   skipped:   "dc-accent--skipped",
 };
 
+const hasValidCoords = (lat, lng) =>
+  lat != null && lng != null && isFinite(lat) && isFinite(lng);
+
 export default function DeliveryCard({ item, onSelect, isSelected, onAction }) {
   const accentClass = STATUS_ACCENT[item.deliveryStatus] ?? "dc-accent--pending";
+  const canNavigate = hasValidCoords(item.lat, item.lng);
+  const mapsUrl = canNavigate
+    ? `https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}`
+    : null;
 
   return (
     <div className={`delivery-card dc ${accentClass} ${isSelected ? "selected" : ""}`}>
@@ -27,11 +34,21 @@ export default function DeliveryCard({ item, onSelect, isSelected, onAction }) {
           />
         )}
         <div className="dc-customer-body">
-          <label htmlFor={`dc-${item.id}`} className="dc-customer-name">
-            {item.customerName || "Unknown Customer"}
-          </label>
+          <div className="dc-customer-name-row">
+            {item.sequence != null && (
+              <span className="dc-seq-badge">#{item.sequence}</span>
+            )}
+            <label htmlFor={`dc-${item.id}`} className="dc-customer-name">
+              {item.customerName || "Unknown Customer"}
+            </label>
+          </div>
           {(item.phone || item.email) && (
             <span className="dc-customer-sub">{item.phone || item.email}</span>
+          )}
+          {item.areaName && (
+            <span className="dc-area-chip">
+              <MapPin size={10} /> {item.areaName}
+            </span>
           )}
         </div>
         <div className="dc-customer-meta">
@@ -63,7 +80,7 @@ export default function DeliveryCard({ item, onSelect, isSelected, onAction }) {
       </div>
 
       {/* ── Section 3: outcome + action ──────────── */}
-      {(item.outcome || item.canRecordOutcome) && (
+      {(item.outcome || item.canRecordOutcome || canNavigate) && (
         <div className="dc-footer">
           {item.outcome && (
             <div className="dc-outcome">
@@ -77,14 +94,29 @@ export default function DeliveryCard({ item, onSelect, isSelected, onAction }) {
               </span>
             </div>
           )}
-          {item.canRecordOutcome && (
-            <button
-              className="dc-btn-deliver"
-              onClick={() => onAction(item, "delivered")}
-            >
-              Mark as Delivered
-            </button>
-          )}
+          <div className="dc-footer-actions">
+            {canNavigate && (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dc-btn-navigate"
+                title="Open in Google Maps"
+              >
+                <Navigation size={14} />
+                Navigate
+              </a>
+            )}
+            {item.canRecordOutcome && (
+              <button
+                className="dc-btn-deliver"
+                onClick={() => onAction(item, "delivered")}
+              >
+                <CheckCircle2 size={16} />
+                Mark as Delivered
+              </button>
+            )}
+          </div>
         </div>
       )}
 

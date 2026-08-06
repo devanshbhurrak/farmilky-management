@@ -10,6 +10,7 @@ export default function ConfirmDialog({
   cancelText = "Cancel",
   loading = false,
   variant = "danger",
+  children,
 }) {
   return (
     <Modal
@@ -38,6 +39,7 @@ export default function ConfirmDialog({
       }
     >
       <p className="confirm-message">{message}</p>
+      {children}
     </Modal>
   );
 }

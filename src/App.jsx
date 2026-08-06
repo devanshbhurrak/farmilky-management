@@ -27,6 +27,7 @@ const CustomerDetailPage = lazy(() => import("./pages/CustomerDetailPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const BalancesPage = lazy(() => import("./pages/BalancesPage"));
 const AreasPage = lazy(() => import("./pages/AreasPage"));
+const AreaCustomersPage = lazy(() => import("./pages/AreaCustomersPage"));
 const HolidaysPage = lazy(() => import("./pages/HolidaysPage"));
 const ManifestsPage = lazy(() => import("./pages/ManifestsPage"));
 const ManifestDetailPage = lazy(() => import("./pages/ManifestDetailPage"));
@@ -188,6 +189,7 @@ function App() {
                           <Route path="products" element={<ProductsPage />} />
                           <Route path="invoices" element={<BalancesPage />} />
                           <Route path="areas" element={<AreasPage />} />
+                          <Route path="areas/:id/customers" element={<AreaCustomersPage />} />
                           <Route path="agents" element={<AgentsPage />} />
                           <Route path="agents/:id" element={<AgentDetailPage />} />
                           <Route path="complaints" element={<ComplaintsPage />} />

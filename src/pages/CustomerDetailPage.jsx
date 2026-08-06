@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2 } from "lucide-react";
+import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck } from "lucide-react";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
@@ -36,6 +36,9 @@ export default function CustomerDetailPage() {
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(null);
+  const [areas, setAreas] = useState([]);
+  const [deliveryConfig, setDeliveryConfig] = useState({ assignedArea: "", deliverySequence: "" });
+  const [savingConfig, setSavingConfig] = useState(false);
 
   const fetchCustomer = useCallback(async () => {
     setLoading(true);
@@ -47,7 +50,13 @@ export default function CustomerDetailPage() {
         const p = await safeParseJson(res);
         throw new Error(p?.message || "Failed to load customer");
       }
-      setCustomer(await res.json());
+      const payload = await res.json();
+      setCustomer(payload);
+      const u = payload.user || payload;
+      setDeliveryConfig({
+        assignedArea: u.assignedArea?._id || u.assignedArea || "",
+        deliverySequence: u.deliverySequence ?? "",
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -72,6 +81,13 @@ export default function CustomerDetailPage() {
   useEffect(() => { if (tab === "ledger") fetchPassbook(); }, [tab, fetchPassbook]);
 
   useEffect(() => {
+    apiRequest("/api/areas")
+      .then((r) => r.json())
+      .then((data) => setAreas(data.areas || []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (modalType === "subscription" || modalType === "order") {
       apiRequest("/api/products")
         .then((r) => r.json())
@@ -87,6 +103,26 @@ export default function CustomerDetailPage() {
   const user = customer.user || customer;
   const orders = customer.recentOrders || [];
   const subscriptions = customer.subscriptions || [];
+
+  async function saveDeliveryConfig() {
+    setSavingConfig(true);
+    try {
+      const res = await apiRequest(`/api/user/admin/${id}/delivery-config`, {
+        method: "PUT",
+        body: JSON.stringify({
+          assignedArea: deliveryConfig.assignedArea || null,
+          deliverySequence: deliveryConfig.deliverySequence !== "" ? Number(deliveryConfig.deliverySequence) : null,
+        }),
+      });
+      const data = await safeParseJson(res);
+      if (!res.ok) throw new Error(data?.message || "Failed to save delivery config.");
+      toast.success("Delivery configuration saved.");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSavingConfig(false);
+    }
+  }
 
   function openEditCustomer() {
     setForm({
@@ -406,6 +442,48 @@ export default function CustomerDetailPage() {
             <span className="customer-metric-label">Orders</span>
           </div>
           <span className="customer-metric-value">{orders.length}</span>
+        </div>
+      </div>
+
+      {/* Delivery Configuration */}
+      <div className="surface customer-delivery-config">
+        <div className="cdc-header">
+          <Truck size={16} />
+          <span className="cdc-title">Delivery Configuration</span>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Assigned Area</label>
+            <select
+              value={deliveryConfig.assignedArea}
+              onChange={(e) => setDeliveryConfig((p) => ({ ...p, assignedArea: e.target.value }))}
+            >
+              <option value="">— Unassigned —</option>
+              {areas.map((a) => (
+                <option key={a._id} value={a._id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Delivery Sequence</label>
+            <input
+              type="number"
+              min="1"
+              value={deliveryConfig.deliverySequence}
+              onChange={(e) => setDeliveryConfig((p) => ({ ...p, deliverySequence: e.target.value }))}
+              placeholder="e.g. 5"
+            />
+          </div>
+        </div>
+        <div className="cdc-actions">
+          <button className="btn btn-primary btn-sm" onClick={saveDeliveryConfig} disabled={savingConfig}>
+            {savingConfig ? "Saving…" : "Save Config"}
+          </button>
+          {deliveryConfig.assignedArea && (
+            <Link to={`/areas/${deliveryConfig.assignedArea}/customers`} className="btn btn-secondary btn-sm">
+              Manage Area Sequence
+            </Link>
+          )}
         </div>
       </div>
 
