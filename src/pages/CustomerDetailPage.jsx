@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck } from "lucide-react";
+import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck, ArrowLeftRight } from "lucide-react";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
@@ -149,19 +149,39 @@ export default function CustomerDetailPage() {
     setModalType("payment");
   }
 
+  function openAddAdjustment() {
+    setForm({
+      userId: id, adjType: "credit_adjustment", amount: "", notes: "",
+      date: new Date().toISOString().split("T")[0],
+    });
+    setModalType("adjustment");
+  }
+
   async function handleSave(e) {
     if (e) e.preventDefault();
+
+    if (modalType === "adjustment") {
+      const parsedAmt = parseFloat(form?.amount);
+      if (isNaN(parsedAmt) || parsedAmt <= 0) {
+        toast.error("Enter a valid positive amount.");
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       let endpoint, method;
-      if (modalType === "subscription") { endpoint = "/api/subscriptions/admin/create"; method = "POST"; }
-      else if (modalType === "order")   { endpoint = "/api/order/admin/create";           method = "POST"; }
-      else if (modalType === "customer"){ endpoint = `/api/user/admin/${id}`;             method = "PUT"; }
-      else if (modalType === "payment") { endpoint = "/api/payments/admin/record";        method = "POST"; }
+      if (modalType === "subscription")  { endpoint = "/api/subscriptions/admin/create"; method = "POST"; }
+      else if (modalType === "order")    { endpoint = "/api/order/admin/create";          method = "POST"; }
+      else if (modalType === "customer") { endpoint = `/api/user/admin/${id}`;            method = "PUT"; }
+      else if (modalType === "payment")  { endpoint = "/api/payments/admin/record";       method = "POST"; }
+      else if (modalType === "adjustment") { endpoint = "/api/payments/admin/record";     method = "POST"; }
 
       const body =
         modalType === "customer"
           ? { ...form, addresses: form.address.street ? [form.address] : [] }
+          : modalType === "adjustment"
+          ? { userId: form.userId, type: form.adjType, amount: parseFloat(form.amount), notes: form.notes, date: form.date }
           : form;
 
       const res = await apiRequest(endpoint, { method, body: JSON.stringify(body) });
@@ -171,7 +191,7 @@ export default function CustomerDetailPage() {
       toast.success(`${modalType.charAt(0).toUpperCase() + modalType.slice(1)} saved!`);
       setModalType(null);
       fetchCustomer();
-      if (modalType === "payment") fetchPassbook();
+      if (modalType === "payment" || modalType === "adjustment") fetchPassbook();
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -181,9 +201,11 @@ export default function CustomerDetailPage() {
 
   /* ─── Modal content ─────────────────────────── */
   const modalTitle =
-    modalType === "customer" ? "Edit Customer" :
-    modalType === "subscription" ? "Add Subscription" :
-    modalType === "order" ? "Add Order" : "Collect Payment";
+    modalType === "customer"    ? "Edit Customer" :
+    modalType === "subscription"? "Add Subscription" :
+    modalType === "order"       ? "Add Order" :
+    modalType === "adjustment"  ? "Add Account Adjustment" :
+                                  "Collect Payment";
 
   const modalContent = (() => {
     if (modalType === "customer")
@@ -284,12 +306,76 @@ export default function CustomerDetailPage() {
           </div>
         </div>
       );
+    if (modalType === "adjustment")
+      return (
+        <div className="payment-form">
+          {/* Type toggle */}
+          <div className="adj-type-toggle">
+            <button
+              type="button"
+              className={`adj-type-btn${form?.adjType === "credit_adjustment" ? " active" : ""}`}
+              onClick={() => setForm((f) => ({ ...f, adjType: "credit_adjustment" }))}
+            >
+              Credit — Add Money
+            </button>
+            <button
+              type="button"
+              className={`adj-type-btn adj-type-btn--debit${form?.adjType === "debit_adjustment" ? " active" : ""}`}
+              onClick={() => setForm((f) => ({ ...f, adjType: "debit_adjustment" }))}
+            >
+              Debit — Add Charge
+            </button>
+          </div>
+          <p className="adj-type-hint">
+            {form?.adjType === "credit_adjustment"
+              ? "Reduces the customer's balance — use for refunds, goodwill credits, or corrections."
+              : "Increases the customer's balance — use for missed charges or corrections."}
+          </p>
+
+          {/* Amount */}
+          <div className="payment-amount-wrap">
+            <span className="payment-currency">₹</span>
+            <input
+              type="number"
+              className="payment-amount-input"
+              value={form?.amount || ""}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              placeholder="0"
+              min="0"
+              step="0.01"
+              autoFocus
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Date</label>
+              <input
+                type="date"
+                value={form?.date || ""}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Notes (optional)</label>
+            <textarea
+              value={form?.notes || ""}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="Any additional details"
+              rows={2}
+            />
+          </div>
+        </div>
+      );
     return null;
   })();
 
   const saveLabel =
     saving ? "Saving…" :
-    modalType === "payment" ? "Record Payment" :
+    modalType === "payment"    ? "Record Payment" :
+    modalType === "adjustment" ? "Save Adjustment" :
     `Save ${modalType || ""}`;
 
   /* ─── Tab data ──────────────────────────────── */
@@ -416,6 +502,9 @@ export default function CustomerDetailPage() {
           </button>
           <button className="btn btn-primary btn-sm" onClick={openAddPayment}>
             <IndianRupee size={14} /> Collect
+          </button>
+          <button className="btn btn-secondary btn-sm" onClick={openAddAdjustment}>
+            <ArrowLeftRight size={14} /> Adjust
           </button>
         </div>
       </div>

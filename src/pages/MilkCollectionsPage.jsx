@@ -477,13 +477,14 @@ export default function MilkCollectionsPage() {
       if (!res.ok) throw new Error(data.message);
       toast.success("Collection updated.");
       setColEditTarget(null);
-      fetchHistory();
+      if (view === "history") fetchHistory();
+      else fetchDaily(selectedDate);
     } catch (err) {
       toast.error(err.message || "Failed to update collection.");
     } finally {
       setSavingCol(false);
     }
-  }, [colEditTarget, colEditForm, fetchHistory]);
+  }, [colEditTarget, colEditForm, view, fetchHistory, fetchDaily, selectedDate]);
 
   useEffect(() => {
     if (view === "history") fetchHistory();
@@ -827,7 +828,14 @@ export default function MilkCollectionsPage() {
                                 </button>
                               </div>
                             ) : (
-                              <span className="mc-confirm-icon">✓</span>
+                              <button
+                                className="mc-edit-btn"
+                                onClick={() => openColEdit(c)}
+                                title="Edit confirmed entry"
+                                aria-label="Edit confirmed entry"
+                              >
+                                <SquarePen size={14} />
+                              </button>
                             )}
                           </td>
                         </tr>
@@ -1009,6 +1017,16 @@ export default function MilkCollectionsPage() {
                               <div className="mc-card-total">
                                 <span>Total Amount</span>
                                 <strong>{formatCurrency(c.totalAmount)}</strong>
+                              </div>
+                              <div className="mc-card-footer" style={{ justifyContent: "flex-end" }}>
+                                <button
+                                  className="mini-button"
+                                  onClick={() => openColEdit(c)}
+                                  title="Edit confirmed entry"
+                                >
+                                  <SquarePen size={13} style={{ marginRight: 4 }} />
+                                  Edit Entry
+                                </button>
                               </div>
                             </div>
                           )}

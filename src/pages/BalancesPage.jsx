@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Filter, IndianRupee } from "lucide-react";
+import { Filter, IndianRupee, ArrowLeftRight } from "lucide-react";
 import { formatCurrency, todayLocal } from "../utils/format";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
@@ -29,6 +29,10 @@ export default function BalancesPage() {
   const [payModal, setPayModal] = useState(null);
   const [payForm, setPayForm] = useState({ amount: "", transactionId: "", notes: "", date: todayLocal() });
   const [paying, setPaying] = useState(false);
+
+  const [adjModal, setAdjModal] = useState(null);
+  const [adjForm, setAdjForm] = useState({ adjType: "credit_adjustment", amount: "", notes: "", date: todayLocal() });
+  const [adjusting, setAdjusting] = useState(false);
 
 
   const filteredUsers = useMemo(() => {
@@ -75,6 +79,37 @@ export default function BalancesPage() {
     }
   }
 
+  async function handleRecordAdjustment(e) {
+    if (e) e.preventDefault();
+    const parsedAdjAmount = parseFloat(adjForm.amount);
+    if (isNaN(parsedAdjAmount) || parsedAdjAmount <= 0) return toast.error("Enter a valid positive amount");
+
+    setAdjusting(true);
+    try {
+      const res = await apiRequest("/api/payments/admin/record", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: adjModal._id,
+          type: adjForm.adjType,
+          amount: parsedAdjAmount,
+          notes: adjForm.notes,
+          date: adjForm.date,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await safeParseJson(res);
+        throw new Error(payload?.message || "Failed to record adjustment");
+      }
+      toast.success("Adjustment recorded!");
+      setAdjModal(null);
+      refetch();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setAdjusting(false);
+    }
+  }
+
   const columns = [
     { key: "name", label: "Customer", render: (r) => (
       <div>
@@ -93,12 +128,21 @@ export default function BalancesPage() {
       key: "_actions",
       label: "Actions",
       render: (r) => (
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={(e) => { e.stopPropagation(); setPayModal(r); setPayForm(f => ({ ...f, amount: Math.max(0, r.accountBalance) })); }}
-        >
-          Collect Payment
-        </button>
+        <div style={{ display: "flex", gap: "var(--space-2)" }}>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={(e) => { e.stopPropagation(); setPayModal(r); setPayForm(f => ({ ...f, amount: Math.max(0, r.accountBalance) })); }}
+          >
+            Collect Payment
+          </button>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={(e) => { e.stopPropagation(); setAdjModal(r); setAdjForm({ adjType: "credit_adjustment", amount: "", notes: "", date: todayLocal() }); }}
+            title="Add manual credit or debit adjustment"
+          >
+            <ArrowLeftRight size={13} /> Adjust
+          </button>
+        </div>
       ),
     },
   ];
@@ -139,6 +183,12 @@ export default function BalancesPage() {
                   onClick={() => { setPayModal(u); setPayForm(f => ({ ...f, amount: Math.max(0, u.accountBalance) })); }}
                 >
                   Collect Payment
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => { setAdjModal(u); setAdjForm({ adjType: "credit_adjustment", amount: "", notes: "", date: todayLocal() }); }}
+                >
+                  <ArrowLeftRight size={13} /> Adjust
                 </button>
               </div>
             </>
@@ -205,6 +255,106 @@ export default function BalancesPage() {
             <div className="form-group">
               <label>Notes</label>
               <textarea value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })} placeholder="e.g. Cash collected" />
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Adjustment modal ── */}
+      {isMobile ? (
+        <BottomSheet
+          isOpen={!!adjModal}
+          onClose={() => setAdjModal(null)}
+          title={`Adjust Account — ${adjModal?.name}`}
+        >
+          <div className="form-stack">
+            <div className="adj-type-toggle">
+              <button
+                type="button"
+                className={`adj-type-btn${adjForm.adjType === "credit_adjustment" ? " active" : ""}`}
+                onClick={() => setAdjForm((f) => ({ ...f, adjType: "credit_adjustment" }))}
+              >
+                Credit — Add Money
+              </button>
+              <button
+                type="button"
+                className={`adj-type-btn adj-type-btn--debit${adjForm.adjType === "debit_adjustment" ? " active" : ""}`}
+                onClick={() => setAdjForm((f) => ({ ...f, adjType: "debit_adjustment" }))}
+              >
+                Debit — Add Charge
+              </button>
+            </div>
+            <p className="adj-type-hint">
+              {adjForm.adjType === "credit_adjustment"
+                ? "Reduces balance — refunds, goodwill, corrections."
+                : "Increases balance — missed charges, corrections."}
+            </p>
+            <div className="form-group">
+              <label>Amount (₹)</label>
+              <input type="number" value={adjForm.amount} onChange={(e) => setAdjForm({ ...adjForm, amount: e.target.value })} min="0" step="0.01" />
+            </div>
+            <div className="form-group">
+              <label>Date</label>
+              <input type="date" value={adjForm.date} onChange={(e) => setAdjForm({ ...adjForm, date: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Notes (optional)</label>
+              <textarea value={adjForm.notes} onChange={(e) => setAdjForm({ ...adjForm, notes: e.target.value })} placeholder="Any additional details" rows={2} />
+            </div>
+          </div>
+          <button className="btn btn-primary btn-full-width" style={{ marginTop: "var(--space-4)" }} onClick={handleRecordAdjustment} disabled={adjusting}>
+            {adjusting ? "Saving…" : "Save Adjustment"}
+          </button>
+        </BottomSheet>
+      ) : (
+        <Modal
+          open={!!adjModal}
+          onClose={() => setAdjModal(null)}
+          title={`Adjust Account — ${adjModal?.name}`}
+          footer={
+            <div className="product-modal-footer-right">
+              <button className="btn btn-secondary btn-sm" onClick={() => setAdjModal(null)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleRecordAdjustment} disabled={adjusting}>
+                {adjusting ? "Saving…" : "Save Adjustment"}
+              </button>
+            </div>
+          }
+        >
+          <div className="form-stack">
+            <div className="adj-type-toggle">
+              <button
+                type="button"
+                className={`adj-type-btn${adjForm.adjType === "credit_adjustment" ? " active" : ""}`}
+                onClick={() => setAdjForm((f) => ({ ...f, adjType: "credit_adjustment" }))}
+              >
+                Credit — Add Money
+              </button>
+              <button
+                type="button"
+                className={`adj-type-btn adj-type-btn--debit${adjForm.adjType === "debit_adjustment" ? " active" : ""}`}
+                onClick={() => setAdjForm((f) => ({ ...f, adjType: "debit_adjustment" }))}
+              >
+                Debit — Add Charge
+              </button>
+            </div>
+            <p className="adj-type-hint">
+              {adjForm.adjType === "credit_adjustment"
+                ? "Reduces balance — refunds, goodwill, corrections."
+                : "Increases balance — missed charges, corrections."}
+            </p>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Amount (₹)</label>
+                <input type="number" value={adjForm.amount} onChange={(e) => setAdjForm({ ...adjForm, amount: e.target.value })} min="0" step="0.01" />
+              </div>
+              <div className="form-group">
+                <label>Date</label>
+                <input type="date" value={adjForm.date} onChange={(e) => setAdjForm({ ...adjForm, date: e.target.value })} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Notes (optional)</label>
+              <textarea value={adjForm.notes} onChange={(e) => setAdjForm({ ...adjForm, notes: e.target.value })} placeholder="Any additional details" rows={2} />
             </div>
           </div>
         </Modal>
