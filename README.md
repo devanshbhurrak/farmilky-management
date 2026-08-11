@@ -1,6 +1,8 @@
 # Farmilky Management Dashboard
 
-A comprehensive admin dashboard for managing dairy/food delivery operations: products, customers, subscriptions, orders, payments, pages, and global settings.
+The staff/admin portal for the Farmilky milk & dairy delivery platform. Manage orders, subscriptions, customers, products, invoices, areas, delivery agents, manifests, holidays, suppliers, milk collections, complaints, returns, and contact messages.
+
+This is a **frontend-only SPA** (Vite + React) that consumes the shared Farmilky backend API over HTTP-only cookie sessions.
 
 ---
 
@@ -8,12 +10,16 @@ A comprehensive admin dashboard for managing dairy/food delivery operations: pro
 
 | Layer        | Technology                                            |
 | ------------ | ----------------------------------------------------- |
-| Frontend     | React 18 + React Router v6                            |
-| Backend      | Node.js + Express + MySQL2                            |
-| Auth         | JWT + bcryptjs                                        |
-| Styling      | CSS Modules + react-icons                             |
-| State        | React context (AuthContext, ToastContext)              |
-| HTTP Client  | Axios                                                 |
+| Framework    | React 19 (Hooks, lazy-loaded routes)                  |
+| Build Tool   | Vite 8                                                |
+| Routing      | React Router v7                                       |
+| HTTP Client  | Native `fetch` wrapper (`src/api/client.js`)          |
+| State        | React Context (AuthContext, PortalDataContext)        |
+| Notifications| React Hot Toast                                       |
+| Icons        | Lucide React                                          |
+| Styling      | Custom CSS (variables, layout, components, tables, forms, responsive + per-page styles) |
+
+> Requires the **backend** project (Express + MongoDB) for all API calls.
 
 ---
 
@@ -21,25 +27,39 @@ A comprehensive admin dashboard for managing dairy/food delivery operations: pro
 
 ```
 farmilky-management/
-├── public/
-│   └── index.html
+├── public/                    # favicon, sprite icons
 ├── src/
-│   ├── components/          # Shared UI components
-│   ├── context/             # React context providers
-│   ├── pages/               # Route-level page components
-│   ├── services/            # API layer, auth helpers
-│   ├── styles/              # Global CSS + CSS Modules
-│   ├── App.jsx              # Router + layout wrapper
-│   ├── App.css
-│   └── index.js             # ReactDOM entry point
-├── server/
-│   ├── config/              # DB connection
-│   ├── middleware/          # Auth middleware
-│   ├── routes/              # Express route handlers
-│   ├── server.js            # Express entry point
-│   └── farmilky_schema.sql  # Database schema
-├── .env                     # Environment variables
-└── package.json
+│   ├── api/
+│   │   └── client.js          # fetch wrapper (base URL, credentials)
+│   ├── components/
+│   │   ├── customer/          # CustomerForm
+│   │   ├── delivery/          # DeliveryCard, BulkActionsBar, Filters, OutcomeModal...
+│   │   ├── icons/             # NavIcon
+│   │   ├── layout/            # Sidebar, Topbar, BottomNav, MobileDrawer, guards
+│   │   ├── order/             # OrderForm
+│   │   ├── product/           # ProductForm
+│   │   ├── subscription/      # SubscriptionForm
+│   │   └── ui/                # DataTable, Modal, ConfirmDialog, BottomSheet,
+│   │                          #   Pagination, SearchInput, StatusTag, skeletons...
+│   ├── context/
+│   │   ├── AuthContext.jsx        # staff session (admin / delivery partner)
+│   │   └── PortalDataContext.jsx  # shared dashboard/portal data + refresh
+│   ├── hooks/
+│   │   ├── useApiData.js          # cached API data fetching
+│   │   ├── useDebounce.js
+│   │   ├── useFocusTrap.js
+│   │   ├── useMediaQuery.js
+│   │   └── useBodyScrollLock.js
+│   ├── pages/                 # Route-level page components
+│   ├── styles/                # Global CSS + per-page stylesheets
+│   ├── utils/                 # constants, formatting helpers
+│   ├── App.jsx                # Router + layout shell
+│   ├── index.css
+│   └── main.jsx               # ReactDOM entry point + providers
+├── .env                       # VITE_BACKEND_BASEURL
+├── package.json
+├── vercel.json
+└── vite.config.js
 ```
 
 ---
@@ -47,295 +67,159 @@ farmilky-management/
 ## Setup & Installation
 
 ### Prerequisites
-- Node.js >= 16
-- MySQL 8+
+- Node.js 18+
 - npm
+- A running Farmilky backend (see the `backend` project)
 
 ### Steps
 
-1. Clone and install dependencies:
+1. **Install dependencies:**
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-2. Create a `.env` file in the project root with:
+2. **Configure the backend URL:**
 
-```env
-PORT=5000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=yourpassword
-DB_NAME=farmilky
-JWT_SECRET=your_jwt_secret
-```
+   Create a `.env` file in the project root:
 
-3. Set up the database:
+   ```env
+   VITE_BACKEND_BASEURL=http://localhost:4000
+   ```
 
-```bash
-mysql -u root -p < server/farmilky_schema.sql
-```
+3. **Start the dev server:**
 
-4. Update `src/services/api.js` with the correct backend URL (defaults to `http://localhost:5000`).
+   ```bash
+   npm run dev
+   ```
 
-5. Start the backend:
+   The app runs on `http://localhost:5173`.
 
-```bash
-node server/server.js
-```
+Other scripts: `npm run build` (production build), `npm run lint` (ESLint), `npm run preview` (preview the production build).
 
-6. In a separate terminal, start the frontend:
-
-```bash
-npm start
-```
-
-The app runs on `http://localhost:3000`.
-
-### Default Login Credentials
-
-| Role     | Email               | Password  |
-| -------- | ------------------- | --------- |
-| Admin    | admin@farmilky.com  | admin123  |
-| Employee | employee@farmilky.com | employee123 |
+### Login
+Only staff accounts can use the portal. The portal accepts users with role `admin` or `delivery_partner` (legacy `delivery` / `agent` also recognized) from the backend's `/api/user/login`; customer accounts are rejected with "This portal is for staff only."
 
 ---
 
-## Architecture Overview
+## Routes
 
-### Frontend (`src/`)
+| Path                      | Component              | Access           |
+| ------------------------- | ---------------------- | ---------------- |
+| `/login`                  | LoginPage              | Public           |
+| `/`                       | DashboardPage          | Admin            |
+| `/orders`                 | OrdersPage             | Admin            |
+| `/orders/:id`             | OrderDetailPage        | Admin            |
+| `/subscriptions`          | SubscriptionsPage      | Admin            |
+| `/subscriptions/:id`      | SubscriptionDetailPage | Admin            |
+| `/customers`              | CustomersPage          | Admin            |
+| `/customers/:id`          | CustomerDetailPage     | Admin            |
+| `/products`               | ProductsPage           | Admin            |
+| `/invoices`               | BalancesPage           | Admin            |
+| `/areas`                  | AreasPage              | Admin            |
+| `/areas/:id/customers`    | AreaCustomersPage      | Admin            |
+| `/agents`                 | AgentsPage             | Admin            |
+| `/agents/:id`             | AgentDetailPage        | Admin            |
+| `/complaints`             | ComplaintsPage         | Admin            |
+| `/returns`                | ReturnsPage            | Admin            |
+| `/holidays`               | HolidaysPage           | Admin            |
+| `/messages`               | ContactMessagesPage    | Admin            |
+| `/manifests`              | ManifestsPage          | Admin            |
+| `/manifests/:id`          | ManifestDetailPage     | Admin            |
+| `/suppliers`              | SuppliersPage          | Admin            |
+| `/suppliers/:id`          | SupplierDetailPage     | Admin            |
+| `/milk-collections`       | MilkCollectionsPage    | Admin            |
+| `/deliveries`             | DeliveriesPage         | Delivery partner |
+| `/agent`                  | AgentDashboardPage     | Delivery partner |
+| `/agent/manifest/:id`     | ManifestDetailPage     | Delivery partner |
 
-#### Entry Point (`src/index.js`)
-- Renders `<App />` wrapped in `<AuthProvider>` and `<ToastProvider>` (in the correct nesting order: Auth outer, Toast inner).
-
-#### App & Routing (`src/App.jsx`)
-- **Auth guard**: `<ProtectedRoute />` wraps all authenticated pages; redirects to `/login` if no token.
-- **Employee guard**: `<EmployeeRoute />` wraps employee-only pages; redirects to `/` if the user is not an employee.
-- **Layout**: `<Sidebar>` is rendered on all authenticated pages.
-- **Toast container** is rendered globally for notifications.
-- Routes:
-  | Path                        | Component           | Access      |
-  | --------------------------- | ------------------- | ----------- |
-  | `/login`                    | LoginPage           | Public      |
-  | `/`                         | DashboardPage       | Admin/Employee |
-  | `/products`                 | ProductsPage        | Admin/Employee |
-  | `/product-orders`           | ProductOrdersPage   | Admin/Employee |
-  | `/customers`                | CustomersPage       | Admin/Employee |
-  | `/subscriptions`            | SubscriptionsPage   | Admin/Employee |
-  | `/orders`                   | OrdersPage          | Admin/Employee |
-  | `/employees`                | EmployeesPage       | Admin only  |
-  | `/settings`                 | SettingsPage        | Admin only  |
-  | `/pages`                    | PagesPage           | Admin/Employee |
-  | `/pages/:slug`              | PageEditorPage      | Admin/Employee |
-  | `/products/new`             | ProductFormPage     | Admin/Employee (employee-guarded) |
-  | `/products/edit/:id`        | ProductFormPage     | Admin/Employee (employee-guarded) |
-
----
-
-### Components (`src/components/`)
-
-#### `<Sidebar />`
-- Fixed left navigation with links grouped by section.
-- User info (avatar, name, role) at top.
-- Props: `onRefresh` — callback to refresh page data.
-- Highlights active route.
-- "Sign Out" button calls `logout()` from AuthContext.
-
-#### `<ProtectedRoute />`
-- Reads `user` from `AuthContext`.
-- If no user, redirects to `/login` with the intended path saved in state (post-login redirect).
-- If user exists, renders `children`.
-
-#### `<EmployeeRoute />`
-- Reads `user` from `AuthContext`.
-- If no user, redirects to `/login`.
-- If user is not an Employee, redirects to `/`.
-- Otherwise renders `children`.
-
-#### `<Toast />`
-- Displays a single toast notification with type-based styling (success/error/info).
-- Auto-dismisses after 5 seconds.
-- Close button.
-
-#### `<Loader />`
-- Full-screen centered spinner overlay.
-- Used during API calls to block interaction.
-
-#### `<Modal />`
-- Reusable modal overlay with:
-  - `isOpen` / `onClose` props
-  - Optional `title`
-  - Content via `children`
-  - Click-outside-to-close and Escape key support.
+Admin-area routes are wrapped in `<AdminRoute>` (redirects delivery partners to `/deliveries`); the delivery pages are accessible to delivery-partner roles.
 
 ---
 
-### Context (`src/context/`)
+## Components (`src/components/`)
 
-#### AuthContext (`src/context/AuthContext.jsx`)
-- Provides `user`, `loading`, `login(email, password)`, `logout()`.
-- On mount, checks `localStorage` for a stored token, validates it by fetching user profile.
-- `login()` stores token in localStorage and sets user state.
-- `logout()` clears token and user state.
+### Layout
+- **`<Sidebar />`** - collapsible left navigation grouped by section; highlights the active route.
+- **`<Topbar />`** - dashboard header with last-updated timestamp and refresh action.
+- **`<BottomNav />`** / **`<MobileDrawer />`** / **`<MobileHeader />`** - mobile navigation.
+- **`<ProtectedRoute />`** - requires a staff session; redirects to `/login` otherwise.
+- **`<AdminRoute />`** - admin-only; delivery partners are redirected to the deliveries view.
+- **`<UserMenu />`** - account menu and sign-out (`POST /api/user/logout`).
 
-#### ToastContext (`src/context/ToastContext.jsx`)
-- Provides `showToast(message, type)`.
-- Manages an array of toasts with auto-generated IDs.
-- Types: `'success'`, `'error'`, `'info'`.
+### UI kit (`components/ui/`)
+`DataTable`, `Modal`, `BottomSheet`, `RightDrawer`, `ConfirmDialog`, `FilterSheet`, `SearchInput`, `Pagination`, `StatusTag`, `QuickChips`, `MetricChip`, `InfoCard`, `PageHeader`, `Breadcrumbs`, `ActionRow`, `StickyActionBar`, `IconDropdown`, `EmptyState`, `ErrorBoundary`, `PageError`, `LoadingScreen`, `LoadingSkeleton`, `PageSkeleton`.
 
----
+### Domain forms (`components/{customer,order,product,subscription}/`)
+`CustomerForm`, `OrderForm`, `ProductForm`, `SubscriptionForm`.
 
-### API Layer (`src/services/`)
-
-#### `src/services/api.js`
-- Axios instance with `baseURL` from `process.env.REACT_APP_API_URL` (falls back to `http://localhost:5000`).
-- **Request interceptor**: attaches `Authorization: Bearer <token>` from localStorage.
-- **Response interceptor**: on 401, clears token and redirects to `/login`.
-
-#### `src/services/auth.js`
-- `loginUser(email, password)` → POST `/api/auth/login`
-- `getUser()` → GET `/api/auth/me`
+### Delivery (`components/delivery/`)
+`DeliveryCard`, `DeliveryFilters`, `BulkActionsBar`, `OutcomeForm`, `OutcomeModal` - used by delivery partners to record delivery outcomes.
 
 ---
 
-### Pages (`src/pages/`)
+## Context & Hooks (`src/context/`, `src/hooks/`)
 
-All admin/employee pages follow a consistent pattern:
-1. **State** for data, loading, error, search/filter terms.
-2. **`useEffect` + `useCallback`** fetches data via the service layer.
-3. **Loading spinner** while fetching.
-4. **Search + filters** at the top.
-5. **Table/grid** displaying results.
-6. **CRUD actions** (create, edit, delete, toggle status) with confirmation modals.
-7. **Toast notifications** for success/error feedback.
+### AuthContext
+- Restores the session on mount by fetching `/api/user/profile`; logs out if the user is not a staff role.
+- Exposes `user`, `authLoading`, `isAdmin`, `isDeliveryPartner`, `login(email, password)`, `logout()`.
+- Listens for the `auth:unauthorized` window event to clear the session (e.g. on 401).
 
-#### **DashboardPage**
-- Displays summary cards: total products, customers, subscriptions, orders, revenue.
-- Recent activity feed.
-- Quick action buttons.
-- Calls: `api.get('/api/dashboard')`.
+### PortalDataContext
+- Loads shared dashboard data once and refreshes across pages via `refreshData(force)`; tracks `lastUpdatedAt`.
+- Used by DashboardPage, OrdersPage, SubscriptionsPage, and the topbar refresh action.
 
-#### **ProductsPage**
-- Table: image, name, category, price, unit, stock, status, actions.
-- Search by name, filter by category/status.
-- Toggle product active/inactive via `PATCH /api/products/:id/status`.
-- Delete with confirmation modal.
-- EmployeeRoute-guarded actions (new/edit).
-
-#### **ProductFormPage**
-- Used for both create and edit (`/:id?`).
-- Fields: name, description, price, stock, unit, category, image URL, status.
-- "Back to Products" button.
-- Calls: `POST /api/products` or `PUT /api/products/:id`.
-- Wrapped in `<EmployeeRoute>`.
-
-#### **ProductOrdersPage**
-- Placed via the public-facing site; viewed/managed here.
-- Table: order ID, customer, items, total amount, status, date, actions.
-- Status management (pending, confirmed, shipped, delivered, cancelled).
-- Search by order ID or customer name.
-
-#### **CustomersPage**
-- Table: name, email, phone, total orders, status, actions.
-- View customer details in a modal (orders + subscription info).
-- Toggle customer active/inactive.
-
-#### **SubscriptionsPage**
-- Table: customer, plan, amount, start date, next billing, status, actions.
-- Search by customer name or plan.
-- Pause/resume subscriptions.
-- Cancel subscriptions with confirmation.
-
-#### **OrdersPage**
-- Grocery/one-time delivery orders placed through the public site.
-- Table: order ID, customer, items, total, status, date, actions.
-- Status management (confirmed, preparing, out for delivery, delivered, cancelled).
-- Search by order ID or customer name.
-
-#### **EmployeesPage**
-- Admin-only employee management.
-- Table: name, email, role, status, actions.
-- Create new employees via modal form.
-- Edit employee details.
-- Toggle active/inactive.
-
-#### **SettingsPage**
-- Admin-only global application settings.
-- Editable fields (name/value pairs).
-- Save changes button.
-- Default settings seeded on first run.
-
-#### **PagesPage**
-- List of CMS pages (e.g., About Us, FAQ, Contact).
-- Table: title, slug, status, last updated, actions.
-- Toggle publish/draft status.
-
-#### **PageEditorPage**
-- Full-page editor for CMS content.
-- Route param `:slug` identifies the page.
-- Rich text editor for content.
-- Publish/draft toggle.
-- Save button.
+### Hooks
+`useApiData` (cached fetches with `clearApiCache`), `useDebounce`, `useFocusTrap`, `useMediaQuery`, `useBodyScrollLock`.
 
 ---
 
-### Styling (`src/styles/`)
-
-- **`global.css`** — CSS variables, reset, layout, sidebar, form, modal, toast, loader, table, utility classes.
-- **CSS Modules** per page (e.g., `ProductsPage.module.css`, `CustomersPage.module.css`).
-- Consistent design system via CSS custom properties.
+## API Layer (`src/api/client.js`)
+- `apiRequest(path, options)` - `fetch` wrapper using `VITE_BACKEND_BASEURL` (default `http://localhost:4000`) with `credentials: "include"` so the backend cookie is sent.
+- `safeParseJson(response)` - JSON parsing that tolerates empty bodies.
 
 ---
 
-## Backend (`server/`)
+## Pages (`src/pages/`)
 
-### Database (`server/farmilky_schema.sql`)
-- Tables: `users`, `products`, `customers`, `subscriptions`, `orders`, `order_items`, `employees`, `settings`, `pages`.
-- Pre-seeded admin and employee accounts.
-- Proper foreign key relationships.
+Pages follow a consistent pattern: state + `useApiData`/hooks for data, loading skeletons/spinners, search & filters, a table/card grid, and CRUD actions with confirmation dialogs and toast feedback.
 
-### Server Entry (`server/server.js`)
-- Express app with CORS, JSON body parsing.
-- Serves static files from `farmilky-website` in production.
-- Falls back to `index.html` for SPA routing.
-
-### Authentication (`server/middleware/auth.js`)
-- JWT verification middleware.
-- Extracts user from token, attaches to `req.user`.
-- Employee role check middleware.
-
-### Routes (`server/routes/`)
-- `auth.js` — login, profile, employee creation.
-- `products.js` — full CRUD + status toggle.
-- `customers.js` — list, detail, status toggle.
-- `subscriptions.js` — list, pause/resume, cancel.
-- `orders.js` — list, status update, detail.
-- `employees.js` — CRUD, status toggle (admin only).
-- `settings.js` — get/update global settings.
-- `pages.js` — CRUD for CMS pages.
-- `dashboard.js` — aggregated stats.
-- `productOrders.js` — manage product orders from public site.
+- **DashboardPage** - summary cards (revenue, orders, subscriptions, customers, etc.), recent activity, quick actions; live order/subscription status updates.
+- **OrdersPage / OrderDetailPage** - manage customer orders and statuses (confirmed, preparing, out for delivery, delivered, cancelled).
+- **SubscriptionsPage / SubscriptionDetailPage** - subscription list, detail, pause/resume/cancel, delivery history.
+- **CustomersPage / CustomerDetailPage** - customer list, details (subscriptions, passbook), status toggles.
+- **ProductsPage** - product catalog CRUD, stock, status toggles.
+- **BalancesPage** - customer passbook/invoice balances.
+- **AreasPage / AreaCustomersPage** - delivery areas and their assigned customers.
+- **AgentsPage / AgentDetailPage** - delivery agent CRUD, area assignment, performance.
+- **ComplaintsPage** - customer complaints and status updates.
+- **ReturnsPage** - return requests and status updates.
+- **HolidaysPage** - no-delivery days (scheduler is holiday-aware).
+- **ContactMessagesPage** - contact form submissions from the public site.
+- **ManifestsPage / ManifestDetailPage** - daily delivery sheets: generate by date, resequence, edit entries.
+- **SuppliersPage / SupplierDetailPage** - supplier CRUD, passbook, adjustments, payments.
+- **MilkCollectionsPage** - daily milk collection shift, bulk confirmation, missing collections.
+- **DeliveriesPage** - delivery partner's today/history board with bulk actions and outcome recording.
+- **AgentDashboardPage** - delivery partner's daily summary and manifest access.
 
 ---
 
-## Available Scripts
+## Styling (`src/styles/`)
 
-| Script            | Description              |
-| ----------------- | ------------------------ |
-| `npm start`       | Start React dev server   |
-| `npm run build`   | Production build         |
-| `node server/server.js` | Start backend       |
+- `variables.css`, `layout.css`, `components.css`, `tables.css`, `forms.css`, `responsive.css` - shared design system via CSS custom properties.
+- `pages/*.css` - per-module styles (dashboard, deliveries, products, manifests, invoices, areas, support, suppliers, milk-collections, customers, orders, subscriptions).
+- Fully responsive: sidebar collapses to a bottom nav + drawer on mobile.
 
 ---
 
-## Environment Variables
+## Deployment (Vercel)
+1. Push this directory to its own GitHub repository.
+2. Link the repository to your Vercel account.
+3. `vercel.json` rewrites all routes to `index.html` for SPA routing.
+4. Set `VITE_BACKEND_BASEURL` in the Vercel project settings to the deployed backend URL (e.g. `https://farmilky-backend.vercel.app`).
 
-| Variable              | Required | Default               | Description           |
-| --------------------- | -------- | --------------------- | --------------------- |
-| `PORT`                | Yes      | `5000`                | Backend port          |
-| `DB_HOST`             | Yes      | `localhost`           | MySQL host            |
-| `DB_USER`             | Yes      | `root`                | MySQL user            |
-| `DB_PASSWORD`         | Yes      | —                     | MySQL password        |
-| `DB_NAME`             | Yes      | `farmilky`            | MySQL database name   |
-| `JWT_SECRET`          | Yes      | —                     | JWT signing secret    |
-| `REACT_APP_API_URL`   | No       | `http://localhost:5000` | Backend URL (frontend) |
+---
+
+## Related Projects
+- **backend/** - Express + MongoDB REST API powering this portal
+- **frontend/** - customer-facing storefront (same backend)

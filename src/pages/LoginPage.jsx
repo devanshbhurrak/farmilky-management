@@ -7,14 +7,14 @@ import toast from "react-hot-toast";
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ identifier: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     try {
-      const user = await login(form.email, form.password);
+      const user = await login(form.identifier.trim(), form.password);
       toast.success("Signed in to the admin portal.");
       if (user.role === "delivery_partner" || user.role === "delivery" || user.role === "agent") {
         navigate("/deliveries", { replace: true });
@@ -37,16 +37,16 @@ export default function LoginPage() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="login-email">Email Address</label>
+          <label htmlFor="login-identifier">Email or Phone Number</label>
           <div className="input-wrapper">
             <Mail size={18} className="input-icon" aria-hidden />
             <input
-              id="login-email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              placeholder="name@farmilky.com"
-              autoComplete="email"
+              id="login-identifier"
+              type="text"
+              value={form.identifier}
+              onChange={(e) => setForm((f) => ({ ...f, identifier: e.target.value }))}
+              placeholder="name@farmilky.com or 9876543210"
+              autoComplete="username"
               required
             />
           </div>

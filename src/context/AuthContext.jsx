@@ -23,10 +23,10 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (identifier, password) => {
     const response = await apiRequest("/api/user/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.message || "Login failed.");
