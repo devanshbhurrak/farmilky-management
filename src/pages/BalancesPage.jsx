@@ -204,6 +204,20 @@ export default function BalancesPage() {
           title="Collect Payment"
         >
           <div className="form-stack">
+            {payModal?.accountBalance < 0 && (
+              <div className="payment-balance-banner" style={{ background: "var(--success-bg, #f0fdf4)", color: "var(--success-text, #166534)" }}>
+                <span>This customer has a credit of {formatCurrency(Math.abs(payModal.accountBalance))} — no collection needed.</span>
+              </div>
+            )}
+            {payModal?.accountBalance > 0 && (
+              <div className="payment-balance-banner">
+                <div>
+                  <span className="payment-balance-label">Outstanding balance</span>
+                  <span className="payment-balance-amount">{formatCurrency(payModal.accountBalance)}</span>
+                </div>
+                <button type="button" className="payment-fill-btn" onClick={() => setPayForm(f => ({ ...f, amount: payModal.accountBalance }))}>Fill</button>
+              </div>
+            )}
             <div className="form-group">
               <label>Amount Collected (Rs)</label>
               <input type="number" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} />
@@ -240,6 +254,20 @@ export default function BalancesPage() {
           }
         >
            <div className="form-stack">
+            {payModal?.accountBalance < 0 && (
+              <div className="payment-balance-banner" style={{ background: "var(--success-bg, #f0fdf4)", color: "var(--success-text, #166534)" }}>
+                <span>This customer has a credit of {formatCurrency(Math.abs(payModal.accountBalance))} — no collection needed.</span>
+              </div>
+            )}
+            {payModal?.accountBalance > 0 && (
+              <div className="payment-balance-banner">
+                <div>
+                  <span className="payment-balance-label">Outstanding balance</span>
+                  <span className="payment-balance-amount">{formatCurrency(payModal.accountBalance)}</span>
+                </div>
+                <button type="button" className="payment-fill-btn" onClick={() => setPayForm(f => ({ ...f, amount: payModal.accountBalance }))}>Fill</button>
+              </div>
+            )}
             <div className="form-group">
               <label>Amount Collected (Rs)</label>
               <input type="number" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} />

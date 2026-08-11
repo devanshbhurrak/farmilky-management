@@ -124,7 +124,7 @@ export default function DeliveriesPage() {
           ? `/api/order/admin/${item.id}/delivery-outcome`
           : `/api/subscriptions/admin/${item.id}/delivery-outcome`;
         const body = item.type === "order"
-          ? { status: "delivered" }
+          ? { status: "delivered", paymentMode: "pay_at_delivery" }
           : { status: "delivered", actualQuantity: Number(item.scheduledQuantity || item.quantity || 0) };
         const res = await apiRequest(endpoint, { method: "POST", body: JSON.stringify(body) });
         if (res.ok) success++;
