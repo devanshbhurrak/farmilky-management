@@ -8,7 +8,7 @@ import StatusTag from "../components/ui/StatusTag";
 import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
-import Modal from "../components/ui/Modal";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import FilterSheet from "../components/ui/FilterSheet";
 import SearchInput from "../components/ui/SearchInput";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -184,7 +184,7 @@ export default function ComplaintsPage() {
         </div>
       </FilterSheet>
 
-      <Modal
+      <ResponsiveModal
         open={!!selected}
         onClose={() => setSelected(null)}
         title="Complaint Details"
@@ -192,7 +192,7 @@ export default function ComplaintsPage() {
           <>
             <button className="btn btn-secondary btn-sm" onClick={() => setSelected(null)}>Cancel</button>
             <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Update Complaint"}
+              {saving ? "Saving…" : "Update Complaint"}
             </button>
           </>
         }
@@ -235,7 +235,7 @@ export default function ComplaintsPage() {
             </div>
           </div>
         )}
-      </Modal>
+      </ResponsiveModal>
     </div>
   );
 }

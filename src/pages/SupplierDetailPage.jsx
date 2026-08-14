@@ -2,9 +2,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Pencil, ChevronDown, SquarePen, Trash2 } from "lucide-react";
 import { apiRequest } from "../api/client";
-import { formatCurrency } from "../utils/format";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import { formatCurrency, formatDate } from "../utils/format";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
@@ -13,10 +12,6 @@ import PageHeader from "../components/ui/PageHeader";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
-function formatDate(val) {
-  if (!val) return "—";
-  return new Date(val).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-}
 
 const PAYMENT_EMPTY = {
   amount: "", fromDate: "", toDate: "",
@@ -866,7 +861,7 @@ export default function SupplierDetailPage() {
       </section>
 
       {/* ── Record Payment Modal ─────────────────────── */}
-      <Modal
+      <ResponsiveModal
         open={paymentModal}
         onClose={() => setPaymentModal(false)}
         title="Record Payment"
@@ -959,74 +954,26 @@ export default function SupplierDetailPage() {
             />
           </label>
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       {/* ── Edit Supplier Modal / Sheet ─────────────── */}
-      {editForm && (isMobile ? (
-        <BottomSheet isOpen={editOpen} onClose={closeEdit} title="Edit Supplier">
-          <div className="supplier-form">
-            <div className="supplier-form-section">
-              <p className="eyebrow">Basic Information</p>
-              <div className="form-grid">
-                <label className="form-field"><span>Name <em className="required">*</em></span><input type="text" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} /></label>
-                <label className="form-field"><span>Phone <em className="required">*</em></span><input type="tel" value={editForm.phone} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} /></label>
-                <label className="form-field"><span>Email</span><input type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} /></label>
-                <label className="form-field"><span>Location</span><input type="text" value={editForm.location} onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))} /></label>
-                <label className="form-field"><span>Pincode</span><input type="text" value={editForm.pincode} onChange={(e) => setEditForm((f) => ({ ...f, pincode: e.target.value }))} /></label>
-                <label className="form-field"><span>Joining Date</span><input type="date" value={editForm.joiningDate} onChange={(e) => setEditForm((f) => ({ ...f, joiningDate: e.target.value }))} /></label>
-              </div>
+      {editForm && (
+        <ResponsiveModal
+          open={editOpen}
+          onClose={closeEdit}
+          title="Edit Supplier"
+          footer={
+            <div className="modal-actions">
+              <button className="mini-button" onClick={closeEdit} disabled={saving}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? "Saving\u2026" : "Save"}</button>
+              <span className="modal-actions-sep" />
+              <button className={`mini-button ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
+                {supplier.isActive ? "Deactivate" : "Activate"}
+              </button>
+              <button className="mini-button danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
             </div>
-            <div className="supplier-form-section">
-              <p className="eyebrow">Collection Settings</p>
-              <div className="form-grid">
-                <div className="form-field full-span">
-                  <span>Sessions <em className="required">*</em></span>
-                  <div className="supplier-session-toggles">
-                    {["morning", "evening"].map((s) => (
-                      <label key={s} className="supplier-session-option"><input type="checkbox" checked={editForm.collectionSessions.includes(s)} onChange={() => handleSessionToggle(s)} /><span>{s}</span></label>
-                    ))}
-                  </div>
-                </div>
-                <label className="form-field"><span>Morning Qty (L)</span><input type="number" min="0" step="0.1" value={editForm.defaultMorningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultMorningQty: e.target.value }))} placeholder="0" /></label>
-                <label className="form-field"><span>Evening Qty (L)</span><input type="number" min="0" step="0.1" value={editForm.defaultEveningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultEveningQty: e.target.value }))} placeholder="0" /></label>
-                <label className="form-field"><span>Rate / Liter (₹)</span><input type="number" min="0" step="0.01" value={editForm.defaultRatePerLiter} onChange={(e) => setEditForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))} placeholder="0.00" /></label>
-              </div>
-            </div>
-            <div className="supplier-form-section">
-              <p className="eyebrow">Bank Details</p>
-              <div className="form-grid">
-                <label className="form-field"><span>Account Holder</span><input type="text" value={editForm.bankDetails.holderName} onChange={(e) => handleBankChange("holderName", e.target.value)} /></label>
-                <label className="form-field"><span>Account Number</span><input type="text" value={editForm.bankDetails.accountNo} onChange={(e) => handleBankChange("accountNo", e.target.value)} /></label>
-                <label className="form-field"><span>IFSC Code</span><input type="text" value={editForm.bankDetails.ifscCode} onChange={(e) => handleBankChange("ifscCode", e.target.value.toUpperCase())} /></label>
-                <label className="form-field"><span>Bank Name</span><input type="text" value={editForm.bankDetails.bankName} onChange={(e) => handleBankChange("bankName", e.target.value)} /></label>
-              </div>
-            </div>
-            <div className="supplier-form-section">
-              <label className="form-field"><span>Notes</span><textarea value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} rows={2} /></label>
-            </div>
-            <div className="supplier-form-actions">
-              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
-              <div className="supplier-form-actions-row">
-                <button className={`mini-button ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
-                  {supplier.isActive ? "Deactivate" : "Activate"}
-                </button>
-                <button className="mini-button danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
-              </div>
-            </div>
-          </div>
-        </BottomSheet>
-      ) : (
-        <Modal open={editOpen} onClose={closeEdit} title="Edit Supplier" footer={
-          <div className="modal-actions">
-            <button className="mini-button" onClick={closeEdit} disabled={saving}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
-            <span className="modal-actions-sep" />
-            <button className={`mini-button ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
-              {supplier.isActive ? "Deactivate" : "Activate"}
-            </button>
-            <button className="mini-button danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
-          </div>
-        }>
+          }
+        >
           <div className="supplier-form">
             <div className="supplier-form-section">
               <p className="eyebrow">Basic Information</p>
@@ -1068,11 +1015,11 @@ export default function SupplierDetailPage() {
               <label className="form-field"><span>Notes</span><textarea value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} rows={2} /></label>
             </div>
           </div>
-        </Modal>
-      ))}
+        </ResponsiveModal>
+      )}
 
       {/* ── Confirm Collection Modal ────────────────── */}
-      <Modal
+      <ResponsiveModal
         open={!!colConfirmTarget}
         onClose={() => setColConfirmTarget(null)}
         title={colConfirmTarget ? `Confirm — ${formatDate(colConfirmTarget.date)} ${colConfirmTarget.session}` : "Confirm Collection"}
@@ -1122,10 +1069,10 @@ export default function SupplierDetailPage() {
             />
           </label>
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       {/* ── Add Adjustment Modal ─────────────────────────── */}
-      <Modal
+      <ResponsiveModal
         open={adjOpen}
         onClose={() => setAdjOpen(false)}
         title="Add Adjustment"
@@ -1179,10 +1126,10 @@ export default function SupplierDetailPage() {
               onChange={(e) => setAdjForm((f) => ({ ...f, notes: e.target.value }))} />
           </label>
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       {/* ── Edit Collection Modal ───────────────────── */}
-      <Modal
+      <ResponsiveModal
         open={!!colEditTarget}
         onClose={() => setColEditTarget(null)}
         title={colEditTarget ? `Edit — ${formatDate(colEditTarget.date)} ${colEditTarget.session}` : "Edit Collection"}
@@ -1232,7 +1179,7 @@ export default function SupplierDetailPage() {
             />
           </label>
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       {/* ── Confirm Dialogs ─────────────────────────── */}
       {confirmAction?.type === "toggle" && (

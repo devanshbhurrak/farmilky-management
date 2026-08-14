@@ -58,7 +58,7 @@ export default function ManifestsPage() {
             </button>
             <button className="btn btn-primary btn-sm" onClick={handleGenerate} disabled={generating}>
               <Play size={16} />
-              {generating ? "Generating..." : "Generate Sheets"}
+              {generating ? "Generating…" : "Generate Sheets"}
             </button>
           </div>
         }

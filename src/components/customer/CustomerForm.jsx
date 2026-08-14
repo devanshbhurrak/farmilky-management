@@ -24,14 +24,13 @@ export default function CustomerForm({ form, onChange, onSubmit }) {
 
       <div className="form-row">
         <div className="form-group">
-          <label>Email</label>
+          <label>Email <span className="customer-form-optional-hint">(optional)</span></label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => onChange({ email: e.target.value })}
             placeholder="john@example.com"
             autoComplete="email"
-            required
           />
         </div>
         <div className="form-group">

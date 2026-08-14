@@ -379,7 +379,7 @@
 
 @media (max-width: 399px) {
   .info-card-value {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 }
 
@@ -1740,6 +1740,18 @@
   display: flex;
   gap: var(--space-3);
   justify-content: flex-end;
+}
+
+.bottom-sheet-footer {
+  margin-top: var(--space-4);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  gap: var(--space-3);
+}
+
+.bottom-sheet-footer .btn {
+  flex: 1;
+  min-height: var(--touch-min);
 }
 
 .btn-full-width {

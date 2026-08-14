@@ -6,7 +6,7 @@ import { apiRequest } from "../api/client";
 import DataTable from "../components/ui/DataTable";
 import PageHeader from "../components/ui/PageHeader";
 import SearchInput from "../components/ui/SearchInput";
-import Modal from "../components/ui/Modal";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
@@ -325,7 +325,7 @@ export default function AgentsPage() {
         />
       </div>
 
-      <Modal
+      <ResponsiveModal
         open={modalMode !== null}
         onClose={closeModal}
         title={modalMode === "create" ? "New Agent" : "Edit Agent"}
@@ -335,7 +335,7 @@ export default function AgentsPage() {
               Cancel
             </button>
             <button className="mini-button active" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
+              {saving ? "Saving…" : "Save"}
             </button>
           </div>
         }
@@ -417,7 +417,7 @@ export default function AgentsPage() {
             </select>
           </label>
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       {confirmAction?.type === "toggle" && (
         <ConfirmDialog

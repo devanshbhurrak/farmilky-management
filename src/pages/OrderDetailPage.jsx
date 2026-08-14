@@ -7,11 +7,12 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate, formatTime } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
+import PageHeader from "../components/ui/PageHeader";
 import PageSkeleton from "../components/ui/PageSkeleton";
+import PageError from "../components/ui/PageError";
 import EmptyState from "../components/ui/EmptyState";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import OrderForm from "../components/order/OrderForm";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
@@ -137,7 +138,7 @@ export default function OrderDetailPage() {
   }
 
   if (loading) return <PageSkeleton />;
-  if (error)   return <EmptyState text={error} action={{ label: "Retry", onClick: fetchOrder }} />;
+  if (error)   return <PageError message={error} onRetry={fetchOrder} />;
   if (!order)  return <EmptyState text="Order not found." />;
 
   const statusMeta  = STATUS_META[order.orderStatus] ?? STATUS_META.placed;
@@ -236,6 +237,14 @@ export default function OrderDetailPage() {
 
   return (
     <div className="view-stack od-page">
+
+      <PageHeader
+        title={`Order #${order._id?.slice(-6).toUpperCase()}`}
+        breadcrumb={[
+          { label: "Orders", path: "/orders" },
+          { label: `Order #${order._id?.slice(-6).toUpperCase()}` },
+        ]}
+      />
 
       {/* ══════════════════════════════════════════════
           TOP BAR — mobile: ref + badge; desktop: back only
@@ -468,53 +477,33 @@ export default function OrderDetailPage() {
         onFormChange={(patch) => setDeliverModal(prev => prev ? { ...prev, form: { ...prev.form, ...patch } } : prev)}
       />
 
-      {isMobile ? (
-        <BottomSheet isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Order">
-          {form && (
-            <OrderForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              products={products}
-              customers={[order.userId]}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          )}
-          <div className="product-sheet-actions">
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save Changes"}
-            </button>
-          </div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={editModalOpen}
-          onClose={() => setEditModalOpen(false)}
-          title="Edit Order"
-          footer={
-            <div className="product-modal-footer">
-              <div />
-              <div className="product-modal-footer-right">
-                <button className="btn btn-secondary btn-sm" onClick={() => setEditModalOpen(false)}>Cancel</button>
-                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                  {saving ? "Saving…" : "Save Changes"}
-                </button>
-              </div>
+      <ResponsiveModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Order"
+        footer={
+          <div className="product-modal-footer">
+            <div />
+            <div className="product-modal-footer-right">
+              <button className="btn btn-secondary btn-sm" onClick={() => setEditModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving…" : "Save Changes"}
+              </button>
             </div>
-          }
-        >
-          {form && (
-            <OrderForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              products={products}
-              customers={[order.userId]}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          )}
-        </Modal>
-      )}
+          </div>
+        }
+      >
+        {form && (
+          <OrderForm
+            form={form}
+            onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
+            products={products}
+            customers={[order.userId]}
+            onSubmit={handleSave}
+            saving={saving}
+          />
+        )}
+      </ResponsiveModal>
     </div>
   );
 }

@@ -6,8 +6,7 @@ import LoadingScreen from "../components/ui/LoadingScreen";
 import PageError from "../components/ui/PageError";
 import DataTable from "../components/ui/DataTable";
 import FilterSheet from "../components/ui/FilterSheet";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageHeader from "../components/ui/PageHeader";
 import SearchInput from "../components/ui/SearchInput";
@@ -314,58 +313,31 @@ export default function ProductsPage() {
         {filters}
       </FilterSheet>
 
-      {isMobile ? (
-        <BottomSheet
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title={editingProduct ? "Edit Product" : "Add Product"}
-        >
-          {formContent}
-          <div className="product-sheet-actions">
-            <button
-              className="btn btn-primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-            {editingProduct && (
+      <ResponsiveModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingProduct ? "Edit Product" : "Add Product"}
+        footer={
+          <div className="product-modal-footer">
+            {editingProduct ? (
               <button
-                className="btn btn-secondary btn-delete"
+                className="btn btn-secondary btn-sm product-modal-delete"
                 onClick={() => { setModalOpen(false); setDeleteConfirm(editingProduct); }}
               >
                 Delete Product
               </button>
-            )}
-          </div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title={editingProduct ? "Edit Product" : "Add Product"}
-          footer={
-            <div className="product-modal-footer">
-              {editingProduct ? (
-                <button
-                  className="btn btn-secondary btn-sm product-modal-delete"
-                  onClick={() => { setModalOpen(false); setDeleteConfirm(editingProduct); }}
-                >
-                  Delete Product
-                </button>
-              ) : <div />}
-              <div className="product-modal-footer-right">
-                <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
-                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                  {saving ? "Saving..." : "Save Product"}
-                </button>
-              </div>
+            ) : <div />}
+            <div className="product-modal-footer-right">
+              <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving…" : "Save Product"}
+              </button>
             </div>
-          }
-        >
-          {formContent}
-        </Modal>
-      )}
+          </div>
+        }
+      >
+        {formContent}
+      </ResponsiveModal>
 
       <ConfirmDialog
         open={!!deleteConfirm}

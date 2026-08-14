@@ -96,11 +96,19 @@
 .inv-card-action {
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--border-soft);
+  display: flex;
+  gap: var(--space-2);
 }
 
 .inv-card-action .btn {
-  width: 100%;
+  flex: 1;
   justify-content: center;
+}
+
+/* ─── Actions column in table ──────────────────── */
+.inv-actions-cell {
+  display: flex;
+  gap: var(--space-2);
 }
 
 /* ─── Customer link in mobile card ──────────── */

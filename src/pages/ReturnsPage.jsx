@@ -8,7 +8,7 @@ import StatusTag from "../components/ui/StatusTag";
 import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
-import Modal from "../components/ui/Modal";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import FilterSheet from "../components/ui/FilterSheet";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
@@ -51,8 +51,8 @@ export default function ReturnsPage() {
         method: "PUT",
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
       toast.success("Return request updated.");
       setSelected(null);
       refetch();
@@ -167,7 +167,7 @@ export default function ReturnsPage() {
         </div>
       </FilterSheet>
 
-      <Modal
+      <ResponsiveModal
         open={!!selected}
         onClose={() => setSelected(null)}
         title="Review Return Request"
@@ -175,7 +175,7 @@ export default function ReturnsPage() {
           <>
             <button className="btn btn-secondary btn-sm" onClick={() => setSelected(null)}>Cancel</button>
             <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Update Request"}
+              {saving ? "Saving…" : "Update Request"}
             </button>
           </>
         }
@@ -237,7 +237,7 @@ export default function ReturnsPage() {
             </div>
           </div>
         )}
-      </Modal>
+      </ResponsiveModal>
     </div>
   );
 }

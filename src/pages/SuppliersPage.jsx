@@ -273,7 +273,7 @@ export default function SuppliersPage() {
       {/* ── Save Actions ── */}
       <div className="supplier-form-actions">
         <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-          {saving ? "Saving..." : "Save"}
+          {saving ? "Saving…" : "Save"}
         </button>
         {modalMode === "edit" && editingSupplier && (
           <div className="supplier-form-actions-row">
@@ -463,7 +463,7 @@ export default function SuppliersPage() {
               )}
               <button className="mini-button" onClick={closeModal} disabled={saving}>Cancel</button>
               <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
+                {saving ? "Saving…" : "Save"}
               </button>
             </div>
           }

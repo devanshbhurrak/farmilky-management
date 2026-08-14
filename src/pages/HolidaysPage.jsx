@@ -7,18 +7,15 @@ import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import StatusTag from "../components/ui/StatusTag";
 import toast from "react-hot-toast";
-import { useMediaQuery } from "../hooks/useMediaQuery";
 
 const currentYear = new Date().getFullYear();
 const fetchHolidays = createApiFetch("/api/holidays");
 
 export default function HolidaysPage() {
   const [year, setYear] = useState(currentYear);
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data, loading, error, refetch } = useApiData(() => fetchHolidays({ year }), true);
   const holidays = data?.holidays ?? [];
 
@@ -186,67 +183,38 @@ export default function HolidaysPage() {
         />
       </div>
 
-      {isMobile ? (
-        <BottomSheet isOpen={showModal} onClose={() => setShowModal(false)} title="Add Holiday">
-          <div className="support-form-stack">
-            <div className="form-group">
-              <label>Date *</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-              />
-            </div>
-            <div className="form-group">
-              <label>Holiday Name *</label>
-              <input
-                value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. Republic Day"
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-secondary btn-sm" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                {saving ? "Adding..." : "Add Holiday"}
-              </button>
-            </div>
+      <ResponsiveModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title="Add Holiday"
+        footer={
+          <>
+            <button className="btn btn-secondary btn-sm" onClick={() => setShowModal(false)}>Cancel</button>
+            <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+              {saving ? "Adding…" : "Add Holiday"}
+            </button>
+          </>
+        }
+      >
+        <div className="support-form-stack">
+          <div className="form-group">
+            <label>Date *</label>
+            <input
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+            />
           </div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={showModal}
-          onClose={() => setShowModal(false)}
-          title="Add Holiday"
-          footer={
-            <>
-              <button className="btn btn-secondary btn-sm" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                {saving ? "Adding..." : "Add Holiday"}
-              </button>
-            </>
-          }
-        >
-          <div className="support-form-stack">
-            <div className="form-group">
-              <label>Date *</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-              />
-            </div>
-            <div className="form-group">
-              <label>Holiday Name *</label>
-              <input
-                value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. Republic Day"
-              />
-            </div>
+          <div className="form-group">
+            <label>Holiday Name *</label>
+            <input
+              value={form.name}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+              placeholder="e.g. Republic Day"
+            />
           </div>
-        </Modal>
-      )}
+        </div>
+      </ResponsiveModal>
 
       <ConfirmDialog
         open={!!deleteConfirm}

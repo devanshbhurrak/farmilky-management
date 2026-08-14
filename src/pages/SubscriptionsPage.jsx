@@ -8,8 +8,7 @@ import FilterSheet from "../components/ui/FilterSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageHeader from "../components/ui/PageHeader";
 import SearchInput from "../components/ui/SearchInput";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import SubscriptionForm from "../components/subscription/SubscriptionForm";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
@@ -410,43 +409,21 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
         )}
       </ConfirmDialog>
 
-      {isMobile ? (
-        <BottomSheet
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Add Subscription"
-        >
-          {formContent}
-          <div className="product-sheet-actions">
-            <button
-              className="btn btn-primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? "Creating..." : "Create Subscription"}
+      <ResponsiveModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Add Subscription"
+        footer={
+          <div className="product-modal-footer-right">
+            <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+              {saving ? "Creating…" : "Create Subscription"}
             </button>
           </div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Add Subscription"
-          footer={
-            <div className="product-modal-footer">
-              <div />
-              <div className="product-modal-footer-right">
-                <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
-                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                  {saving ? "Creating..." : "Create Subscription"}
-                </button>
-              </div>
-            </div>
-          }
-        >
-          {formContent}
-        </Modal>
-      )}
+        }
+      >
+        {formContent}
+      </ResponsiveModal>
     </div>
   );
 }

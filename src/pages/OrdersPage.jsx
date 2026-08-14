@@ -7,8 +7,7 @@ import DataTable from "../components/ui/DataTable";
 import FilterSheet from "../components/ui/FilterSheet";
 import PageHeader from "../components/ui/PageHeader";
 import SearchInput from "../components/ui/SearchInput";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import OrderForm from "../components/order/OrderForm";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
@@ -264,43 +263,21 @@ export default function OrdersPage({ orders, onRefresh }) {
         {filters}
       </FilterSheet>
 
-      {isMobile ? (
-        <BottomSheet
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Add Order"
-        >
-          {formContent}
-          <div className="product-sheet-actions">
-            <button
-              className="btn btn-primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? "Creating..." : "Create Order"}
+      <ResponsiveModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Add Order"
+        footer={
+          <div className="product-modal-footer-right">
+            <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+              {saving ? "Creating…" : "Create Order"}
             </button>
           </div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Add Order"
-          footer={
-            <div className="product-modal-footer">
-              <div />
-              <div className="product-modal-footer-right">
-                <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
-                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                  {saving ? "Creating..." : "Create Order"}
-                </button>
-              </div>
-            </div>
-          }
-        >
-          {formContent}
-        </Modal>
-      )}
+        }
+      >
+        {formContent}
+      </ResponsiveModal>
     </div>
   );
 }

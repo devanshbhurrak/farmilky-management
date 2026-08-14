@@ -1,5 +1,5 @@
 import {
-  ArrowLeft, Edit2, Play, Pause, XCircle,
+  Edit2, Play, Pause, XCircle,
   Package, Repeat2, IndianRupee, CalendarDays, Truck,
   Phone, Mail, User, CheckCircle2, AlertCircle, Clock,
 } from "lucide-react";
@@ -9,12 +9,12 @@ import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
 import PageSkeleton from "../components/ui/PageSkeleton";
+import PageHeader from "../components/ui/PageHeader";
+import PageError from "../components/ui/PageError";
 import EmptyState from "../components/ui/EmptyState";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import SubscriptionForm from "../components/subscription/SubscriptionForm";
-import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
 const STATUS_META = {
@@ -48,7 +48,6 @@ function StatCard({ icon: Icon, label, value, valueColor, sub: subText }) {
 
 export default function SubscriptionDetailPage() {
   const { id } = useParams();
-  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [sub, setSub]               = useState(null);
   const [loading, setLoading]       = useState(true);
@@ -121,7 +120,7 @@ export default function SubscriptionDetailPage() {
   }
 
   if (loading) return <PageSkeleton />;
-  if (error)   return <EmptyState text={error} action={{ label: "Retry", onClick: fetchSub }} />;
+  if (error)   return <PageError message={error} onRetry={fetchSub} />;
   if (!sub)    return <EmptyState text="Subscription not found." />;
 
   const history             = sub.deliveryHistory || [];
@@ -142,19 +141,14 @@ export default function SubscriptionDetailPage() {
     <div className="view-stack sd-page">
 
       {/* ── Top bar ───────────────────────────────────── */}
-      <div className="sd-topbar">
-        <Link to="/subscriptions" className="sd-back">
-          <ArrowLeft size={14} strokeWidth={2.5} />
-          <span>Subscriptions</span>
-        </Link>
-        <div className="sd-topbar-right">
-          <span className="sd-topbar-ref">#{sub._id?.slice(-6).toUpperCase()}</span>
-          <div className="sd-status-badge" style={{ background: statusMeta.bg, color: statusMeta.color }}>
-            <StatusIcon size={14} strokeWidth={2.5} />
-            <span>{sub.status}</span>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={sub.productId?.name || "Subscription"}
+        subtitle={`#${sub._id?.slice(-6).toUpperCase()} · ${sub.userId?.name || "Unknown"}`}
+        breadcrumb={[
+          { label: "Subscriptions", path: "/subscriptions" },
+          { label: sub.productId?.name || "Subscription" },
+        ]}
+      />
 
       {/* ── Hero card (desktop) ───────────────────────── */}
       <div className="sd-hero">
@@ -461,53 +455,33 @@ export default function SubscriptionDetailPage() {
         confirmText="Cancel Subscription"
       />
 
-      {isMobile ? (
-        <BottomSheet isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Subscription">
-          {form && (
-            <SubscriptionForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              products={products}
-              customers={[sub.userId]}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          )}
-          <div className="product-sheet-actions">
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save Changes"}
-            </button>
-          </div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={editModalOpen}
-          onClose={() => setEditModalOpen(false)}
-          title="Edit Subscription"
-          footer={
-            <div className="product-modal-footer">
-              <div />
-              <div className="product-modal-footer-right">
-                <button className="btn btn-secondary btn-sm" onClick={() => setEditModalOpen(false)}>Cancel</button>
-                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                  {saving ? "Saving…" : "Save Changes"}
-                </button>
-              </div>
+      <ResponsiveModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Subscription"
+        footer={
+          <div className="product-modal-footer">
+            <div />
+            <div className="product-modal-footer-right">
+              <button className="btn btn-secondary btn-sm" onClick={() => setEditModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving\u2026" : "Save Changes"}
+              </button>
             </div>
-          }
-        >
-          {form && (
-            <SubscriptionForm
-              form={form}
-              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-              products={products}
-              customers={[sub.userId]}
-              onSubmit={handleSave}
-              saving={saving}
-            />
-          )}
-        </Modal>
-      )}
+          </div>
+        }
+      >
+        {form && (
+          <SubscriptionForm
+            form={form}
+            onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
+            products={products}
+            customers={[sub.userId]}
+            onSubmit={handleSave}
+            saving={saving}
+          />
+        )}
+      </ResponsiveModal>
     </div>
   );
 }

@@ -346,7 +346,7 @@ export default function ManifestDetailPage() {
             <div className="resequence-actions">
               <button className="btn btn-secondary btn-sm" onClick={() => setReorderMode(false)}>Cancel</button>
               <button className="btn btn-primary btn-sm" onClick={saveResequence} disabled={resequencing}>
-                {resequencing ? "Saving..." : "Save Order"}
+                {resequencing ? "Saving…" : "Save Order"}
               </button>
             </div>
           )}

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { CheckCheck, AlertTriangle, Download, ChevronDown, SquarePen, CalendarDays, Ban, Phone, Search, X } from "lucide-react";
 import { apiRequest } from "../api/client";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, formatDate } from "../utils/format";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import PageHeader from "../components/ui/PageHeader";
@@ -10,7 +10,7 @@ import LoadingScreen from "../components/ui/LoadingScreen";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import QuickChips from "../components/ui/QuickChips";
 import StickyActionBar from "../components/ui/StickyActionBar";
-import Modal from "../components/ui/Modal";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import EmptyState from "../components/ui/EmptyState";
 import toast from "react-hot-toast";
 
@@ -19,16 +19,6 @@ import toast from "react-hot-toast";
 function todayStr() {
   return new Date().toISOString().split("T")[0];
 }
-
-function formatDate(val) {
-  if (!val) return "—";
-  return new Date(val).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 
 // Derive summary stats from collections array
 function buildSummary(collections) {
@@ -1293,7 +1283,7 @@ export default function MilkCollectionsPage() {
       </div>
 
       {/* ── Edit Collection Modal ────────────────────────────────────── */}
-      <Modal
+      <ResponsiveModal
         open={!!colEditTarget}
         onClose={() => setColEditTarget(null)}
         title={colEditTarget ? `Edit — ${formatDate(colEditTarget.date)} ${colEditTarget.session} · ${colEditTarget.supplierId?.name || ""}` : "Edit Collection"}
@@ -1343,7 +1333,7 @@ export default function MilkCollectionsPage() {
             />
           </label>
         </div>
-      </Modal>
+      </ResponsiveModal>
 
       {/* ── Bulk confirm dialog ──────────────────────────────────────── */}
       <ConfirmDialog
@@ -1357,7 +1347,7 @@ export default function MilkCollectionsPage() {
       />
 
       {/* ── Missing entries modal ────────────────────────────────────── */}
-      <Modal
+      <ResponsiveModal
         open={showMissingModal}
         onClose={() => setShowMissingModal(false)}
         title={`Missing Entries (${missing.length})`}
@@ -1392,7 +1382,7 @@ export default function MilkCollectionsPage() {
             </div>
           ))}
         </div>
-      </Modal>
+      </ResponsiveModal>
     </div>
   );
 }

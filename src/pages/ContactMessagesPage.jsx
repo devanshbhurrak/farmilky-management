@@ -8,7 +8,7 @@ import StatusTag from "../components/ui/StatusTag";
 import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
-import Modal from "../components/ui/Modal";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import FilterSheet from "../components/ui/FilterSheet";
 import SearchInput from "../components/ui/SearchInput";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -162,7 +162,7 @@ export default function ContactMessagesPage() {
         </div>
       </FilterSheet>
 
-      <Modal
+      <ResponsiveModal
         open={!!selected}
         onClose={() => setSelected(null)}
         title="Contact Message"
@@ -172,7 +172,7 @@ export default function ContactMessagesPage() {
               Cancel
             </button>
             <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Update Status"}
+              {saving ? "Saving…" : "Update Status"}
             </button>
           </>
         }
@@ -200,7 +200,7 @@ export default function ContactMessagesPage() {
             </div>
           </div>
         )}
-      </Modal>
+      </ResponsiveModal>
     </div>
   );
 }

@@ -74,7 +74,7 @@ export default function DataTable({
   if (loading) return <LoadingSkeleton rows={5} columns={columns.length} />;
 
   if (!data || data.length === 0) {
-    return <EmptyState text={emptyText} action={emptyAction || noMatchAction} />;
+    return <EmptyState text={emptyText} action={emptyAction} />;
   }
 
   const getCellValue = (row, col) =>

@@ -1,5 +1,6 @@
 import { Filter, CheckSquare, MapPin, ListOrdered } from "lucide-react";
 import PageHeader from "../components/ui/PageHeader";
+import Pagination from "../components/ui/Pagination";
 import SearchInput from "../components/ui/SearchInput";
 import IconDropdown from "../components/ui/IconDropdown";
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -37,7 +38,7 @@ export default function DeliveriesPage() {
   const fetchFn = useCallback(() => fetchBoard(queryParams), [queryParams]);
   const { data, loading, refetch } = useApiData(fetchFn, false);
 
-  useEffect(() => { refetch(); }, [refetch]);
+  useEffect(() => { refetch(); }, [refetch, queryParams]);
 
   useEffect(() => {
     apiRequest("/api/areas")
@@ -284,13 +285,7 @@ export default function DeliveriesPage() {
             ))
           )}
         </div>
-        {totalPages > 1 && (
-          <div className="pagination-row" style={{ display: "flex", gap: "8px", justifyContent: "center", padding: "16px 0" }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
-            <span style={{ alignSelf: "center", fontSize: "var(--font-size-sm)" }}>{page} / {totalPages}</span>
-            <button className="btn btn-secondary btn-sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
-          </div>
-        )}
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </section>
 
       <FilterSheet isOpen={isFilterSheetOpen} onClose={() => setIsFilterSheetOpen(false)}>
@@ -316,7 +311,7 @@ export default function DeliveriesPage() {
         outcomeModal={outcomeModal}
         onClose={() => setOutcomeModal(null)}
         onConfirm={handleOutcomeConfirm}
-        onFormChange={(updates) => setOutcomeModal(prev => ({ ...prev, form: { ...prev.form, ...updates } }))}
+        onFormChange={(updates) => setOutcomeModal(prev => prev ? ({ ...prev, form: { ...prev.form, ...updates } }) : prev)}
       />
 
       <BulkActionsBar 

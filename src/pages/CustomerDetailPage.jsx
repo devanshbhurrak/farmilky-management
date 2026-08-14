@@ -7,12 +7,11 @@ import StatusTag from "../components/ui/StatusTag";
 import PageSkeleton from "../components/ui/PageSkeleton";
 import EmptyState from "../components/ui/EmptyState";
 import DataTable from "../components/ui/DataTable";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import SubscriptionForm from "../components/subscription/SubscriptionForm";
 import OrderForm from "../components/order/OrderForm";
 import CustomerForm from "../components/customer/CustomerForm";
-import { useMediaQuery } from "../hooks/useMediaQuery";
+import PageError from "../components/ui/PageError";
 import toast from "react-hot-toast";
 
 function getInitials(name = "") {
@@ -24,7 +23,6 @@ function getInitials(name = "") {
 export default function CustomerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -97,7 +95,7 @@ export default function CustomerDetailPage() {
   }, [modalType]);
 
   if (loading) return <PageSkeleton />;
-  if (error) return <EmptyState text={error} action={{ label: "Retry", onClick: fetchCustomer }} />;
+  if (error) return <PageError message={error} onRetry={fetchCustomer} />;
   if (!customer) return <EmptyState text="Customer not found." />;
 
   const user = customer.user || customer;
@@ -652,38 +650,27 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      {/* Modal / BottomSheet */}
-      {isMobile ? (
-        <BottomSheet isOpen={!!modalType} onClose={() => setModalType(null)} title={modalTitle}>
-          {modalContent}
-          <div className="product-sheet-actions">
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-              {saveLabel}
-            </button>
-          </div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={!!modalType}
-          onClose={() => setModalType(null)}
-          title={modalTitle}
-          footer={
-            <div className="product-modal-footer">
-              <div />
-              <div className="product-modal-footer-right">
-                <button className="btn btn-secondary btn-sm" onClick={() => setModalType(null)}>
-                  Cancel
-                </button>
-                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                  {saveLabel}
-                </button>
-              </div>
+      {/* Modal */}
+      <ResponsiveModal
+        open={!!modalType}
+        onClose={() => setModalType(null)}
+        title={modalTitle}
+        footer={
+          <div className="product-modal-footer">
+            <div />
+            <div className="product-modal-footer-right">
+              <button className="btn btn-secondary btn-sm" onClick={() => setModalType(null)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                {saveLabel}
+              </button>
             </div>
-          }
-        >
-          {modalContent}
-        </Modal>
-      )}
+          </div>
+        }
+      >
+        {modalContent}
+      </ResponsiveModal>
     </div>
   );
 }

@@ -7,11 +7,9 @@ import PageSkeleton from "../components/ui/PageSkeleton";
 import DataTable from "../components/ui/DataTable";
 import PageHeader from "../components/ui/PageHeader";
 import SearchInput from "../components/ui/SearchInput";
-import Modal from "../components/ui/Modal";
-import BottomSheet from "../components/ui/BottomSheet";
+import ResponsiveModal from "../components/ui/ResponsiveModal";
 import CustomerForm from "../components/customer/CustomerForm";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
-import { useMediaQuery } from "../hooks/useMediaQuery";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
 
@@ -25,7 +23,6 @@ function getInitials(name = "") {
 
 export default function CustomersPage() {
   const navigate = useNavigate();
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data, loading, error, refetch } = useApiData(fetchCustomers);
   const [search, setSearch] = useState("");
 
@@ -212,37 +209,21 @@ export default function CustomersPage() {
         />
       </div>
 
-      {isMobile ? (
-        <BottomSheet isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Add Customer">
-          {formContent}
-          <div className="product-sheet-actions">
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+      <ResponsiveModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Add Customer"
+        footer={
+          <div className="product-modal-footer-right">
+            <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
               {saving ? "Creating…" : "Create Customer"}
             </button>
           </div>
-        </BottomSheet>
-      ) : (
-        <Modal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Add Customer"
-          footer={
-            <div className="product-modal-footer">
-              <div />
-              <div className="product-modal-footer-right">
-                <button className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>
-                  Cancel
-                </button>
-                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                  {saving ? "Creating…" : "Create Customer"}
-                </button>
-              </div>
-            </div>
-          }
-        >
-          {formContent}
-        </Modal>
-      )}
+        }
+      >
+        {formContent}
+      </ResponsiveModal>
     </div>
   );
 }
