@@ -353,6 +353,28 @@
   color: var(--text-muted);
 }
 
+/* Clickable delivery assignment chip in hero meta */
+.customer-hero-delivery-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px var(--space-3);
+  background: var(--surface-muted);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color var(--duration-base), color var(--duration-base);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.customer-hero-delivery-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
 /* Address chips */
 .customer-hero-address {
   padding-top: var(--space-2);
@@ -377,21 +399,26 @@
   color: var(--text-secondary);
 }
 
-/* Action buttons — full-width equal on mobile */
+/* Action buttons — 2×2 grid on mobile so nothing overflows */
 .customer-hero-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-2);
   padding-top: var(--space-1);
   border-top: 1px solid var(--border-soft);
 }
 
 .customer-hero-actions .btn {
-  flex: 1;
   justify-content: center;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (min-width: 768px) {
   .customer-hero-actions {
+    display: flex;
     border-top: none;
     padding-top: 0;
     justify-content: flex-end;

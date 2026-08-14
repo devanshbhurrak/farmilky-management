@@ -12,7 +12,7 @@ const CLOSE_THRESHOLD = 90;
  * @param {string} title - Optional title for the sheet
  * @param {React.ReactNode} children - Content of the sheet
  */
-export default function BottomSheet({ isOpen, onClose, title, children }) {
+export default function BottomSheet({ isOpen, onClose, title, children, footer }) {
   useBodyScrollLock(isOpen);
   const sheetRef = useFocusTrap({ active: isOpen, onClose });
 
@@ -77,6 +77,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
           </div>
         </div>
         <div className="bottom-sheet-body">{children}</div>
+        {footer && <div className="bottom-sheet-footer">{footer}</div>}
       </div>
     </div>
   );

@@ -36,7 +36,6 @@ export default function CustomerDetailPage() {
   const [form, setForm] = useState(null);
   const [areas, setAreas] = useState([]);
   const [deliveryConfig, setDeliveryConfig] = useState({ assignedArea: "", deliverySequence: "" });
-  const [savingConfig, setSavingConfig] = useState(false);
 
   const fetchCustomer = useCallback(async () => {
     setLoading(true);
@@ -101,25 +100,20 @@ export default function CustomerDetailPage() {
   const user = customer.user || customer;
   const orders = customer.recentOrders || [];
   const subscriptions = customer.subscriptions || [];
+  const totalDeliveries = subscriptions.reduce((s, sub) => s + (sub.deliveryHistory?.length || 0), 0);
+  const areaName = areas.find((a) => a._id === deliveryConfig.assignedArea)?.name || null;
 
-  async function saveDeliveryConfig() {
-    setSavingConfig(true);
-    try {
-      const res = await apiRequest(`/api/user/admin/${id}/delivery-config`, {
-        method: "PUT",
-        body: JSON.stringify({
-          assignedArea: deliveryConfig.assignedArea || null,
-          deliverySequence: deliveryConfig.deliverySequence !== "" ? Number(deliveryConfig.deliverySequence) : null,
-        }),
-      });
-      const data = await safeParseJson(res);
-      if (!res.ok) throw new Error(data?.message || "Failed to save delivery config.");
-      toast.success("Delivery configuration saved.");
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setSavingConfig(false);
-    }
+  async function saveDeliveryConfigFor(userId, dc) {
+    const res = await apiRequest(`/api/user/admin/${userId}/delivery-config`, {
+      method: "PUT",
+      body: JSON.stringify({
+        assignedArea: dc?.assignedArea || null,
+        deliverySequence: dc?.deliverySequence !== "" && dc?.deliverySequence != null ? Number(dc.deliverySequence) : null,
+      }),
+    });
+    const data = await safeParseJson(res);
+    if (!res.ok) throw new Error(data?.message || "Failed to save delivery config.");
+    return data;
   }
 
   function openEditCustomer() {
@@ -127,6 +121,7 @@ export default function CustomerDetailPage() {
       ...user,
       address: user.addresses?.[0] || { street: "", city: "", state: "", pincode: "" },
       password: "",
+      deliveryConfig: { ...deliveryConfig },
     });
     setModalType("customer");
   }
@@ -186,6 +181,14 @@ export default function CustomerDetailPage() {
       const payload = await safeParseJson(res);
       if (!res.ok) throw new Error(payload?.message || `Failed to save ${modalType}`);
 
+      if (modalType === "customer" && form?.deliveryConfig) {
+        try {
+          await saveDeliveryConfigFor(id, form.deliveryConfig);
+        } catch (err) {
+          toast.error(`Customer saved, but delivery config failed: ${err.message}`);
+        }
+      }
+
       toast.success(`${modalType.charAt(0).toUpperCase() + modalType.slice(1)} saved!`);
       setModalType(null);
       fetchCustomer();
@@ -213,6 +216,8 @@ export default function CustomerDetailPage() {
           onChange={(updates) => setForm((f) => ({ ...f, ...updates }))}
           onSubmit={handleSave}
           saving={saving}
+          areas={areas}
+          deliveryConfig={form?.deliveryConfig}
         />
       );
     if (modalType === "subscription")
@@ -426,8 +431,6 @@ export default function CustomerDetailPage() {
     </div>
   );
 
-  const totalDeliveries = subscriptions.reduce((s, sub) => s + (sub.deliveryHistory?.length || 0), 0);
-
   return (
     <div className="customer-detail-page view-stack">
       {/* Breadcrumb */}
@@ -474,6 +477,19 @@ export default function CustomerDetailPage() {
             <Calendar size={11} />
             Since {formatDate(user.createdAt)}
           </span>
+          <button
+            type="button"
+            className="customer-hero-delivery-chip"
+            onClick={openEditCustomer}
+            title="Change delivery configuration"
+          >
+            <Truck size={11} />
+            {areaName
+              ? `${areaName}${deliveryConfig.deliverySequence !== "" && deliveryConfig.deliverySequence != null ? ` · Seq ${deliveryConfig.deliverySequence}` : ""}`
+              : deliveryConfig.assignedArea
+              ? "Delivery configured"
+              : "Delivery not configured"}
+          </button>
         </div>
 
         {/* Addresses */}
@@ -529,48 +545,6 @@ export default function CustomerDetailPage() {
             <span className="customer-metric-label">Orders</span>
           </div>
           <span className="customer-metric-value">{orders.length}</span>
-        </div>
-      </div>
-
-      {/* Delivery Configuration */}
-      <div className="surface customer-delivery-config">
-        <div className="cdc-header">
-          <Truck size={16} />
-          <span className="cdc-title">Delivery Configuration</span>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Assigned Area</label>
-            <select
-              value={deliveryConfig.assignedArea}
-              onChange={(e) => setDeliveryConfig((p) => ({ ...p, assignedArea: e.target.value }))}
-            >
-              <option value="">— Unassigned —</option>
-              {areas.map((a) => (
-                <option key={a._id} value={a._id}>{a.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Delivery Sequence</label>
-            <input
-              type="number"
-              min="1"
-              value={deliveryConfig.deliverySequence}
-              onChange={(e) => setDeliveryConfig((p) => ({ ...p, deliverySequence: e.target.value }))}
-              placeholder="e.g. 5"
-            />
-          </div>
-        </div>
-        <div className="cdc-actions">
-          <button className="btn btn-primary btn-sm" onClick={saveDeliveryConfig} disabled={savingConfig}>
-            {savingConfig ? "Saving…" : "Save Config"}
-          </button>
-          {deliveryConfig.assignedArea && (
-            <Link to={`/areas/${deliveryConfig.assignedArea}/customers`} className="btn btn-secondary btn-sm">
-              Manage Area Sequence
-            </Link>
-          )}
         </div>
       </div>
 

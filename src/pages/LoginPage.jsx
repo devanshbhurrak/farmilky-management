@@ -1,4 +1,4 @@
-import { Loader2, Lock, Mail } from "lucide-react";
+import { Loader2, Lock, Mail, Droplets, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +8,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ identifier: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
@@ -30,9 +31,12 @@ export default function LoginPage() {
 
   return (
     <div className="login-shell">
-      <form className="login-card" onSubmit={handleSubmit}>
+      <form className="login-card" onSubmit={handleSubmit} noValidate>
         <div className="login-header">
-          <span className="brand-mark">Farmilky</span>
+          <span className="login-logo" aria-hidden>
+            <Droplets size={28} strokeWidth={2.2} />
+          </span>
+          <h1 className="brand-mark login-brand">Farmilky</h1>
           <p className="eyebrow">Operations Portal</p>
         </div>
 
@@ -47,6 +51,8 @@ export default function LoginPage() {
               onChange={(e) => setForm((f) => ({ ...f, identifier: e.target.value }))}
               placeholder="name@farmilky.com or 9876543210"
               autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
               required
             />
           </div>
@@ -58,13 +64,22 @@ export default function LoginPage() {
             <Lock size={18} className="input-icon" aria-hidden />
             <input
               id="login-password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={form.password}
               onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
               placeholder="••••••••"
               autoComplete="current-password"
               required
             />
+            <button
+              type="button"
+              className="login-toggle-password"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+            </button>
           </div>
         </div>
 
@@ -79,4 +94,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

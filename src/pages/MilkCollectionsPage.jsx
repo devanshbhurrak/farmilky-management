@@ -7,9 +7,7 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import PageHeader from "../components/ui/PageHeader";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
 import QuickChips from "../components/ui/QuickChips";
-import StickyActionBar from "../components/ui/StickyActionBar";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
 import EmptyState from "../components/ui/EmptyState";
 import toast from "react-hot-toast";
@@ -46,10 +44,6 @@ function loadDraft(date) {
   } catch {
     return null;
   }
-}
-
-function clearDraft(date) {
-  try { sessionStorage.removeItem(`mc-drafts-${date}`); } catch { /* ignored */ }
 }
 
 // Build CSV from history array
@@ -107,8 +101,6 @@ export default function MilkCollectionsPage() {
   // Per-row edit state: { [id]: { actualQty, ratePerLiter, fatContent, snf } }
   const [edits, setEdits] = useState({});
   const [confirmingId, setConfirmingId] = useState(null);
-  const [bulkConfirming, setBulkConfirming] = useState(false);
-  const [showBulkDialog, setShowBulkDialog] = useState(false);
 
   // Track initial edit values for dirty detection
   const initialEditsRef = useRef({});
@@ -172,7 +164,7 @@ export default function MilkCollectionsPage() {
   const summary = useMemo(() => buildSummary(filtered), [filtered]);
   const progressPct = summary.total > 0 ? Math.round((summary.confirmed / summary.total) * 100) : 0;
 
-  // Total pending across ALL sessions/search — bulk confirm always confirms the full day
+  // Pending count across the full day (all sessions/search) — used for the day-complete banner
   const totalPendingCount = useMemo(
     () => collections.filter((c) => c.status === "pending").length,
     [collections]
@@ -368,29 +360,6 @@ export default function MilkCollectionsPage() {
     }
   }, [edits]);
 
-  // ─── Bulk confirm ──────────────────────────────────────────────────────────
-
-  const handleBulkConfirm = useCallback(async () => {
-    setBulkConfirming(true);
-    setShowBulkDialog(false);
-    try {
-      const res = await apiRequest("/api/milk-collections/bulk-confirm", {
-        method: "POST",
-        body: JSON.stringify({ date: selectedDate }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      toast.success(data.message);
-      clearDraft(selectedDate);
-      // Refetch to get accurate confirmed data
-      fetchDaily(selectedDate);
-    } catch (err) {
-      toast.error(err.message || "Failed to bulk confirm.");
-    } finally {
-      setBulkConfirming(false);
-    }
-  }, [selectedDate, fetchDaily]);
-
   // ─── Keyboard navigation on inputs ────────────────────────────────────────
 
   const handleInputKeyDown = useCallback((e, collection) => {
@@ -502,17 +471,6 @@ export default function MilkCollectionsPage() {
     return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
   }, [missing]);
 
-  // ─── Bulk confirm summary for dialog — computed from ALL collections, not filtered ──
-
-  const bulkPreviewLiters = useMemo(
-    () => collections.filter((c) => c.status === "pending").reduce((s, c) => s + (c.expectedQty || 0), 0),
-    [collections]
-  );
-  const bulkPreviewAmount = useMemo(
-    () => collections.filter((c) => c.status === "pending").reduce((s, c) => s + (c.expectedQty || 0) * (c.ratePerLiter || 0), 0),
-    [collections]
-  );
-
   // ─── Loading ───────────────────────────────────────────────────────────────
 
   if (loading) return <LoadingScreen />;
@@ -615,20 +573,6 @@ export default function MilkCollectionsPage() {
                   title="Jump to today"
                 >
                   Today
-                </button>
-              )}
-
-              <div className="mc-toolbar-divider" />
-
-              {/* Confirm All — desktop only */}
-              {totalPendingCount > 0 && !isMobile && (
-                <button
-                  className="btn btn-primary mc-confirm-all-btn"
-                  onClick={() => setShowBulkDialog(true)}
-                  disabled={bulkConfirming}
-                >
-                  <CheckCheck size={14} />
-                  {bulkConfirming ? "Confirming…" : `Confirm All (${totalPendingCount})`}
                 </button>
               )}
             </div>
@@ -1027,20 +971,6 @@ export default function MilkCollectionsPage() {
                 })}
               </div>
             )}
-
-            {/* ── Mobile sticky confirm-all ────────────────────────────── */}
-            <StickyActionBar visible={isMobile && totalPendingCount > 0}>
-              <div className="mc-sticky-confirm">
-                <button
-                  className="btn btn-primary mc-sticky-confirm-btn"
-                  onClick={() => setShowBulkDialog(true)}
-                  disabled={bulkConfirming}
-                >
-                  <CheckCheck size={16} />
-                  {bulkConfirming ? "Confirming…" : `Confirm All (${totalPendingCount})`}
-                </button>
-              </div>
-            </StickyActionBar>
           </div>
         )}
 
@@ -1334,17 +1264,6 @@ export default function MilkCollectionsPage() {
           </label>
         </div>
       </ResponsiveModal>
-
-      {/* ── Bulk confirm dialog ──────────────────────────────────────── */}
-      <ConfirmDialog
-        open={showBulkDialog}
-        onClose={() => setShowBulkDialog(false)}
-        onConfirm={handleBulkConfirm}
-        loading={bulkConfirming}
-        title="Confirm All Pending Entries"
-        message={`Confirm all ${totalPendingCount} pending entries for ${formatDate(selectedDate)} using expected quantities (all sessions)?\n\nEstimated: ${Number(bulkPreviewLiters).toFixed(1)} L · ${formatCurrency(bulkPreviewAmount)}\n\nYou can correct individual entries afterwards if needed.`}
-        confirmText="Confirm All"
-      />
 
       {/* ── Missing entries modal ────────────────────────────────────── */}
       <ResponsiveModal

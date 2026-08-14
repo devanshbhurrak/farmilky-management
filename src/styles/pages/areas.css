@@ -479,30 +479,3 @@
   z-index: 50;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.12);
 }
-
-/* ═══════════════════════════════════════════════
-   CUSTOMER DELIVERY CONFIG SECTION
-   ═══════════════════════════════════════════════ */
-
-.customer-delivery-config {
-  padding: var(--space-4) var(--space-5);
-}
-
-.cdc-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-4);
-}
-
-.cdc-title { color: var(--text-primary); }
-
-.cdc-actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  margin-top: var(--space-2);
-}

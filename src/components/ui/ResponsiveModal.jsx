@@ -7,9 +7,8 @@ export default function ResponsiveModal({ open, onClose, title, children, footer
 
   if (isMobile) {
     return (
-      <BottomSheet isOpen={open} onClose={onClose} title={title}>
+      <BottomSheet isOpen={open} onClose={onClose} title={title} footer={footer}>
         {children}
-        {footer && <div className="bottom-sheet-footer">{footer}</div>}
       </BottomSheet>
     );
   }

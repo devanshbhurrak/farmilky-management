@@ -97,7 +97,7 @@
 }
 
 /* ─── Toolbar ────────────────────────────────────── */
-/* [🔍 search ——] [📅 date] [Today?] | [chips] [Confirm All] */
+/* [🔍 search ——] [📅 date] [Today?] */
 
 .mc-toolbar {
   display: flex;
@@ -105,13 +105,6 @@
   gap: var(--space-2);
   flex-wrap: wrap;
   min-width: 0;
-}
-
-.mc-toolbar-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--border-soft);
-  flex-shrink: 0;
 }
 
 /* Inline search */
@@ -272,19 +265,6 @@
   color: var(--text-primary);
   font-weight: var(--font-weight-semibold);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-}
-
-.mc-confirm-all-btn {
-  flex-shrink: 0;
-  min-height: var(--touch-min);
-  font-size: 13px;
-  padding: 0 var(--space-4);
-  white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.2);
-}
-
-.mc-confirm-all-btn:hover {
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 /* ─── Alerts ─────────────────────────────────────── */
@@ -1077,23 +1057,6 @@
   letter-spacing: -0.02em;
 }
 
-/* ─── Sticky confirm-all bar (mobile) ────────────── */
-
-.mc-sticky-confirm {
-  display: flex;
-  width: 100%;
-}
-
-.mc-sticky-confirm-btn {
-  flex: 1;
-  justify-content: center;
-  min-height: 46px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  border-radius: var(--radius-md);
-  letter-spacing: 0.01em;
-}
-
 /* ═══════════════════════════════════════════════════
    HISTORY MOBILE CARDS
    ═══════════════════════════════════════════════════ */
@@ -1798,12 +1761,6 @@
     min-height: var(--touch-min);
     font-size: 13px;
   }
-
-  /* Divider hidden on mobile */
-  .mc-toolbar-divider { display: none; }
-
-  /* Hide desktop confirm-all; lives in sticky bar */
-  .mc-confirm-all-btn { display: none; }
 
   /* Alerts */
   .mc-backdate-banner {

@@ -35,3 +35,16 @@ export function todayLocal() {
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+// Converts any date value to a local-timezone YYYY-MM-DD string safe for <input type="date">.
+// Uses local getFullYear/getMonth/getDate to avoid UTC-offset shifts (e.g. IST midnight stored
+// as previous-day UTC would render wrong with toISOString()).
+export function toLocalDateStr(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "";
+  const year  = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day   = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}

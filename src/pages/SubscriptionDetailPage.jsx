@@ -2,11 +2,12 @@ import {
   Edit2, Play, Pause, XCircle,
   Package, Repeat2, IndianRupee, CalendarDays, Truck,
   Phone, Mail, User, CheckCircle2, AlertCircle, Clock,
+  PlusCircle, Pencil,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { apiRequest, safeParseJson } from "../api/client";
-import { formatCurrency, formatDate } from "../utils/format";
+import { formatCurrency, formatDate, todayLocal, toLocalDateStr } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
 import PageSkeleton from "../components/ui/PageSkeleton";
 import PageHeader from "../components/ui/PageHeader";
@@ -15,6 +16,7 @@ import EmptyState from "../components/ui/EmptyState";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
 import SubscriptionForm from "../components/subscription/SubscriptionForm";
+import DeliveryHistoryForm from "../components/subscription/DeliveryHistoryForm";
 import toast from "react-hot-toast";
 
 const STATUS_META = {
@@ -57,6 +59,10 @@ export default function SubscriptionDetailPage() {
   const [saving, setSaving]         = useState(false);
   const [products, setProducts]     = useState([]);
   const [form, setForm]             = useState(null);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historyForm, setHistoryForm]           = useState(null);
+  const [historySaving, setHistorySaving]       = useState(false);
+  const [editingEntry, setEditingEntry]         = useState(null);
 
   const fetchSub = useCallback(async () => {
     setLoading(true); setError(null);
@@ -87,7 +93,8 @@ export default function SubscriptionDetailPage() {
       if (!res.ok) { const p = await safeParseJson(res); throw new Error(p?.message || "Update failed"); }
       toast.success(`Subscription ${status}.`);
       await fetchSub();
-    } catch (err) { toast.error(err.message); }
+      return true;
+    } catch (err) { toast.error(err.message); return false; }
   }
 
   async function handleSave(e) {
@@ -110,6 +117,7 @@ export default function SubscriptionDetailPage() {
     setForm({
       userId: sub.userId?._id,
       productId: sub.productId?._id,
+      variantId: sub.variantId || null,
       quantityPerDay: sub.quantityPerDay,
       pricePerUnit: sub.pricePerUnit ?? sub.productId?.price ?? null,
       deliverySchedule: sub.deliverySchedule,
@@ -117,6 +125,58 @@ export default function SubscriptionDetailPage() {
       startDate: sub.startDate ? new Date(sub.startDate).toISOString().split("T")[0] : "",
     });
     setEditModalOpen(true);
+  }
+
+  function openAddHistory() {
+    setEditingEntry(null);
+    setHistoryForm({
+      date: todayLocal(),
+      status: "delivered",
+      actualQuantity: sub?.quantityPerDay ?? "",
+      reason: "",
+      notes: "",
+    });
+    setHistoryModalOpen(true);
+  }
+
+  function openEditHistory(entry) {
+    const rawDate = entry.deliveryDate || entry.date;
+    setEditingEntry(entry);
+    setHistoryForm({
+      date: toLocalDateStr(rawDate),
+      status: entry.status || "delivered",
+      actualQuantity: entry.actualQuantity ?? entry.quantityDelivered ?? "",
+      reason: entry.reason || "",
+      notes: entry.notes || "",
+    });
+    setHistoryModalOpen(true);
+  }
+
+  async function handleHistorySave(e) {
+    if (e) e.preventDefault();
+    setHistorySaving(true);
+    try {
+      const body = {
+        deliveryDate: historyForm.date,
+        status: historyForm.status,
+        ...(historyForm.actualQuantity ? { actualQuantity: historyForm.actualQuantity } : {}),
+        ...(historyForm.reason ? { reason: historyForm.reason } : {}),
+        ...(historyForm.notes ? { notes: historyForm.notes } : {}),
+      };
+      const res = await apiRequest(`/api/subscriptions/admin/${id}/delivery-outcome`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      const payload = await safeParseJson(res);
+      if (!res.ok) throw new Error(payload?.message || "Failed to save");
+      toast.success(editingEntry ? "Delivery record updated." : "Delivery record added.");
+      setHistoryModalOpen(false);
+      await fetchSub();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setHistorySaving(false);
+    }
   }
 
   if (loading) return <PageSkeleton />;
@@ -130,7 +190,6 @@ export default function SubscriptionDetailPage() {
   const totalDelivered      = history.filter(d => (d.status || "delivered") === "delivered").length;
   const statusMeta          = STATUS_META[sub.status] ?? STATUS_META.active;
   const StatusIcon          = statusMeta.icon;
-  const canAct              = sub.status !== "cancelled";
   const scheduleLabel       = SCHEDULE_LABEL[sub.deliverySchedule] || sub.deliverySchedule;
 
   const getDate   = (d) => d.deliveryDate || d.date;
@@ -166,6 +225,15 @@ export default function SubscriptionDetailPage() {
                 <StatusIcon size={14} strokeWidth={2.5} />
                 <span>{sub.status}</span>
               </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={openEdit}
+                title="Edit subscription"
+                aria-label="Edit subscription"
+              >
+                <Edit2 size={16} />
+              </button>
             </div>
             <p className="sd-hero-meta">
               {sub.userId?.name || "Unknown"}
@@ -194,52 +262,36 @@ export default function SubscriptionDetailPage() {
 
       {/* ── Mobile summary card ───────────────────────── */}
       <div className="sd-summary-card">
-        <div className="sd-summary-product">
-          <div className="sd-summary-product-icon">
-            {sub.productId?.image
-              ? <img src={sub.productId.image} alt={sub.productId.name} className="sd-summary-img" />
-              : <Package size={18} strokeWidth={1.5} />
-            }
+          <div className="sd-summary-product">
+            <div className="sd-summary-product-icon">
+              {sub.productId?.image
+                ? <img src={sub.productId.image} alt={sub.productId.name} className="sd-summary-img" />
+                : <Package size={18} strokeWidth={1.5} />
+              }
+            </div>
+            <div className="sd-summary-info">
+              <p className="sd-summary-name">{sub.productId?.name || "Unknown Product"}</p>
+              <p className="sd-summary-since">
+                <User size={10} /> {sub.userId?.name || "Unknown"}
+                &nbsp;&middot;&nbsp;Since {formatDate(sub.startDate)}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={openEdit}
+              title="Edit subscription"
+              aria-label="Edit subscription"
+            >
+              <Edit2 size={16} />
+            </button>
           </div>
-          <div className="sd-summary-info">
-            <p className="sd-summary-name">{sub.productId?.name || "Unknown Product"}</p>
-            <p className="sd-summary-since">
-              <User size={10} /> {sub.userId?.name || "Unknown"}
-              &nbsp;&middot;&nbsp;Since {formatDate(sub.startDate)}
-            </p>
-          </div>
-        </div>
         <div className="sd-summary-chips">
           <span className="sd-chip"><Repeat2 size={11} /> {scheduleLabel}</span>
           <span className="sd-chip"><Package size={11} /> {sub.quantityPerDay} {unit}/day</span>
           <span className="sd-chip sd-chip--money"><IndianRupee size={11} /> {formatCurrency(sub.totalPricePerDay)}/day</span>
         </div>
       </div>
-
-      {/* ── Action strip (desktop) ────────────────────── */}
-      {canAct && (
-        <div className="sd-action-strip">
-          <span className="sd-action-strip-label">Actions</span>
-          <div className="sd-action-strip-buttons">
-            <button className="btn btn-secondary btn-sm" onClick={openEdit}>
-              <Edit2 size={14} /> Edit
-            </button>
-            {sub.status !== "active" && (
-              <button className="btn btn-primary btn-sm" onClick={() => handleStatusUpdate("active")}>
-                <Play size={14} /> Activate
-              </button>
-            )}
-            {sub.status === "active" && (
-              <button className="btn btn-secondary btn-sm" onClick={() => handleStatusUpdate("paused")}>
-                <Pause size={14} /> Pause
-              </button>
-            )}
-            <button className="btn btn-danger btn-sm" onClick={() => setCancelConfirm(true)}>
-              <XCircle size={14} /> Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── Stats row ─────────────────────────────────── */}
       <div className="sd-stats-row">
@@ -351,7 +403,14 @@ export default function SubscriptionDetailPage() {
           <div className="sd-card">
             <div className="sd-card-header">
               <span className="sd-card-title"><Truck size={14} className="sd-card-title-icon" /> Delivery History</span>
-              <span className="sd-card-badge">{history.length} records</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span className="sd-card-badge">{history.length} records</span>
+                {sub.status !== "cancelled" && (
+                  <button className="btn btn-secondary btn-sm" onClick={openAddHistory}>
+                    <PlusCircle size={13} style={{ marginRight: 4 }} /> Add Record
+                  </button>
+                )}
+              </div>
             </div>
 
             {history.length === 0 ? (
@@ -372,6 +431,7 @@ export default function SubscriptionDetailPage() {
                         <th>Rate</th>
                         <th>Amount</th>
                         <th>Note</th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -385,6 +445,11 @@ export default function SubscriptionDetailPage() {
                             <td className="sd-td-num">{d.pricePerUnit != null ? formatCurrency(d.pricePerUnit) : "—"}</td>
                             <td className="sd-td-amount">{formatCurrency(d.totalAmount)}</td>
                             <td className="sd-td-reason">{d.reason || "—"}</td>
+                            <td>
+                              <button className="btn btn-ghost btn-xs" title="Edit" onClick={() => openEditHistory(d)}>
+                                <Pencil size={12} />
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -403,7 +468,12 @@ export default function SubscriptionDetailPage() {
                         <div className="sd-history-body">
                           <div className="sd-history-top">
                             <span className="sd-history-date">{formatDate(getDate(d))}</span>
-                            <span className="sd-history-amount">{formatCurrency(d.totalAmount)}</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span className="sd-history-amount">{formatCurrency(d.totalAmount)}</span>
+                              <button className="btn btn-ghost btn-xs" onClick={() => openEditHistory(d)}>
+                                <Pencil size={12} />
+                              </button>
+                            </div>
                           </div>
                           <div className="sd-history-meta">
                             <span className="sd-history-qty">{getActual(d)} {unit}</span>
@@ -422,34 +492,14 @@ export default function SubscriptionDetailPage() {
 
       </div>
 
-      {/* ── Mobile action card ────────────────────────── */}
-      {canAct && (
-        <div className="sd-actions-card">
-          <div className="sd-actions-row">
-            {sub.status !== "active" ? (
-              <button className="sd-action-btn sd-action-btn--primary" onClick={() => handleStatusUpdate("active")}>
-                <Play size={14} /> Activate
-              </button>
-            ) : (
-              <button className="sd-action-btn sd-action-btn--secondary" onClick={() => handleStatusUpdate("paused")}>
-                <Pause size={14} /> Pause
-              </button>
-            )}
-            <button className="sd-action-btn sd-action-btn--secondary" onClick={openEdit}>
-              <Edit2 size={14} /> Edit Plan
-            </button>
-          </div>
-          <button className="sd-action-btn sd-action-btn--danger" onClick={() => setCancelConfirm(true)}>
-            <XCircle size={11} /> Cancel Subscription
-          </button>
-        </div>
-      )}
-
       {/* ── Dialogs ───────────────────────────────────── */}
       <ConfirmDialog
         open={cancelConfirm}
         onClose={() => setCancelConfirm(false)}
-        onConfirm={async () => { await handleStatusUpdate("cancelled"); setCancelConfirm(false); }}
+        onConfirm={async () => {
+          const ok = await handleStatusUpdate("cancelled");
+          if (ok) { setCancelConfirm(false); setEditModalOpen(false); }
+        }}
         title="Cancel Subscription"
         message={`Cancel subscription for ${sub.userId?.name || "this customer"}? This cannot be undone.`}
         confirmText="Cancel Subscription"
@@ -472,13 +522,79 @@ export default function SubscriptionDetailPage() {
         }
       >
         {form && (
-          <SubscriptionForm
-            form={form}
-            onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
-            products={products}
-            customers={[sub.userId]}
-            onSubmit={handleSave}
-            saving={saving}
+          <div className="form-stack">
+            {sub.status !== "cancelled" && (
+              <>
+                <div className="customer-form-section-head">
+                  <div className="customer-form-section-icon" aria-hidden="true">
+                    <Repeat2 size={14} />
+                  </div>
+                  <span className="customer-form-section-title">Subscription Status</span>
+                </div>
+                <div className="sd-status-actions">
+                  {sub.status !== "active" && (
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={async () => { if (await handleStatusUpdate("active")) setEditModalOpen(false); }}
+                    >
+                      <Play size={14} /> Activate
+                    </button>
+                  )}
+                  {sub.status === "active" && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={async () => { if (await handleStatusUpdate("paused")) setEditModalOpen(false); }}
+                    >
+                      <Pause size={14} /> Pause
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => setCancelConfirm(true)}
+                  >
+                    <XCircle size={14} /> Cancel Subscription
+                  </button>
+                </div>
+              </>
+            )}
+            <SubscriptionForm
+              form={form}
+              onChange={(updates) => setForm(f => ({ ...f, ...updates }))}
+              products={products}
+              customers={[sub.userId]}
+              onSubmit={handleSave}
+              saving={saving}
+            />
+          </div>
+        )}
+      </ResponsiveModal>
+
+      <ResponsiveModal
+        open={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        title={editingEntry ? "Edit Delivery Record" : "Add Delivery Record"}
+        footer={
+          <div className="product-modal-footer">
+            <div />
+            <div className="product-modal-footer-right">
+              <button className="btn btn-secondary btn-sm" onClick={() => setHistoryModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleHistorySave} disabled={historySaving}>
+                {historySaving ? "Saving\u2026" : editingEntry ? "Update Record" : "Add Record"}
+              </button>
+            </div>
+          </div>
+        }
+      >
+        {historyForm && (
+          <DeliveryHistoryForm
+            form={historyForm}
+            onChange={(updates) => setHistoryForm(f => ({ ...f, ...updates }))}
+            subscription={sub}
+            onSubmit={handleHistorySave}
+            saving={historySaving}
           />
         )}
       </ResponsiveModal>

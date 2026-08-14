@@ -1,6 +1,6 @@
-import { User, Lock, MapPin } from "lucide-react";
+import { User, Lock, MapPin, Truck } from "lucide-react";
 
-export default function CustomerForm({ form, onChange, onSubmit }) {
+export default function CustomerForm({ form, onChange, onSubmit, areas = [], deliveryConfig }) {
   return (
     <form id="customer-form" onSubmit={onSubmit} className="form-stack">
       {/* Identity section */}
@@ -67,6 +67,44 @@ export default function CustomerForm({ form, onChange, onSubmit }) {
           </label>
         </div>
       </div>
+
+      {/* Delivery section — edit context */}
+      {deliveryConfig && (
+        <>
+          <div className="customer-form-section-head">
+            <div className="customer-form-section-icon" aria-hidden="true">
+              <Truck size={14} />
+            </div>
+            <span className="customer-form-section-title">Delivery Configuration</span>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Assigned Area</label>
+              <select
+                value={deliveryConfig.assignedArea || ""}
+                onChange={(e) => onChange({ deliveryConfig: { ...deliveryConfig, assignedArea: e.target.value } })}
+              >
+                <option value="">— Unassigned —</option>
+                {areas.map((a) => (
+                  <option key={a._id} value={a._id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Delivery Sequence</label>
+              <input
+                type="number"
+                min="1"
+                value={deliveryConfig.deliverySequence ?? ""}
+                onChange={(e) => onChange({ deliveryConfig: { ...deliveryConfig, deliverySequence: e.target.value } })}
+                placeholder="e.g. 5"
+              />
+            </div>
+          </div>
+          <p className="form-hint">Sequence orders this customer within the assigned area's delivery route.</p>
+        </>
+      )}
 
       {/* Security section */}
       <div className="customer-form-section-head">

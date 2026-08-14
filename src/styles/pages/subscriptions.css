@@ -280,34 +280,26 @@
 
 
 /* ─────────────────────────────────────────────────────────────
-   ACTION STRIP — desktop only
+   EDIT MODAL — status action buttons
    ───────────────────────────────────────────────────────────── */
-.sd-action-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  padding: var(--space-3) var(--space-4);
-  box-shadow: var(--shadow-sm);
-}
-
-.sd-action-strip-label {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.sd-action-strip-buttons {
-  display: flex;
-  align-items: center;
+.sd-status-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-2);
-  flex-wrap: wrap;
+}
+
+.sd-status-actions .btn {
+  justify-content: center;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 360px) {
+  .sd-status-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 
@@ -673,73 +665,17 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────
-   MOBILE ACTIONS CARD
-   ───────────────────────────────────────────────────────────── */
-.sd-actions-card {
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-  padding: var(--space-3) var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.sd-actions-row {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.sd-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  flex: 1;
-  padding: 0.45rem 0.75rem;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  border: none;
-  cursor: pointer;
-  transition: filter var(--duration-base), opacity var(--duration-base);
-  font-family: inherit;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.sd-action-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.sd-action-btn:not(:disabled):hover  { filter: brightness(0.94); }
-.sd-action-btn:not(:disabled):active { filter: brightness(0.88); }
-
-.sd-action-btn--primary   { background: var(--color-primary); color: #fff; }
-.sd-action-btn--secondary { background: var(--surface); color: var(--text-secondary); border: 1.5px solid var(--border-strong); }
-.sd-action-btn--danger    {
-  background: transparent;
-  color: var(--danger);
-  border: 1px solid var(--danger);
-  font-size: 0.7rem;
-  padding: 0.35rem 0.75rem;
-  flex: none;
-  width: 100%;
-}
-
-
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
   .sd-hero          { display: none; }
-  .sd-action-strip  { display: none; }
   .sd-table-wrap    { display: none; }
   .sd-topbar-right  { display: flex; }
 }
 
 @media (min-width: 768px) {
   .sd-summary-card  { display: none; }
-  .sd-actions-card  { display: none; }
   .sd-topbar-right  { display: none; }
   .sd-history-list  { display: none; }
 }
