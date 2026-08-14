@@ -10,22 +10,22 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
   const [subscriptions, setSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setLocalMode(outcomeModal ? outcomeModal.mode : null); }, [outcomeModal]);
+  // Sync mode whenever a new modal opens (or modal closes)
+  useEffect(() => {
+    setLocalMode(outcomeModal ? outcomeModal.mode : null);
+  }, [outcomeModal]);
 
+  // Fetch subscriptions only for order items in delivered mode (for payment linking)
   useEffect(() => {
     if (
       outcomeModal?.item?.type === "order" &&
       localMode === "delivered" &&
       outcomeModal?.item?.userId
     ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSubscriptionsLoading(true);
       apiRequest(`/api/subscriptions/admin/user/${outcomeModal.item.userId}/active`)
-        .then(async (res) => {
-          const data = await res.json();
-          setSubscriptions(data.subscriptions || []);
-        })
+        .then((res) => res.json())
+        .then((d) => setSubscriptions(d.subscriptions || []))
         .catch(() => setSubscriptions([]))
         .finally(() => setSubscriptionsLoading(false));
     } else {
@@ -36,86 +36,92 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
   if (!outcomeModal || !localMode) return null;
 
   const { item, form } = outcomeModal;
-  const scheduled = item?.scheduledQuantity || item?.quantity || 0;
+  const scheduled = item?.scheduledQuantity ?? item?.quantity ?? 0;
   const unit = item?.unit || "units";
 
   function handleConfirm() {
     let status, actualQuantity;
 
     if (localMode === "delivered" || localMode === "change") {
-      // Orders have fixed items — always "delivered"; quantity variance only applies to subscriptions
       if (item?.type === "order") {
+        // Orders: quantity is fixed; only status + payment matter
         status = "delivered";
         actualQuantity = scheduled;
       } else {
-        const formQty = form?.actualQuantity !== undefined ? Number(form.actualQuantity) : scheduled;
+        // Subscriptions: quantity can vary
+        const formQty = Number(form?.actualQuantity ?? scheduled);
         if (isNaN(formQty) || formQty < 0) {
-          toast.error("Invalid quantity.");
+          toast.error("Enter a valid quantity.");
           return;
         }
         if (formQty === 0) {
-          toast.error("Quantity must be at least 1. Use Skip or Failed for a zero delivery.");
+          toast.error("Quantity must be at least 1. Use Skip for a zero delivery.");
           return;
         }
-        status = formQty === scheduled ? "delivered" : (formQty > scheduled ? "extra" : "partial");
+        status = formQty === scheduled ? "delivered"
+               : formQty > scheduled  ? "extra"
+               : "partial";
         actualQuantity = formQty;
       }
-    }
-    else if (localMode === "skip") {
+    } else if (localMode === "skip") {
       status = "skipped";
       actualQuantity = 0;
-    }
-    else {
+    } else {
+      // failed
       status = "failed";
       actualQuantity = 0;
     }
 
     if ((localMode === "skip" || localMode === "failed") && !form?.reason?.trim()) {
-      toast.error("Reason required.");
+      toast.error("Please select a reason.");
       return;
     }
 
     if (
       (localMode === "delivered" || localMode === "change") &&
       item?.type === "order" &&
-      form?.paymentMode === "subscription_ledger"
+      form?.paymentMode === "subscription_ledger" &&
+      subscriptions.length >= 2 &&
+      !form?.selectedSubscriptionId
     ) {
-      if (subscriptions.length >= 2 && !form?.selectedSubscriptionId) {
-        toast.error("Please select a subscription to link the payment to.");
-        return;
-      }
+      toast.error("Select a subscription to link this payment to.");
+      return;
     }
 
     onConfirm({
       status,
       actualQuantity,
-      reason: form.reason,
-      notes: form.notes,
-      paymentMode: form.paymentMode || "pay_at_delivery",
-      subscriptionId: form.selectedSubscriptionId || undefined,
+      reason: form?.reason || null,
+      notes: form?.notes || null,
+      paymentMode: form?.paymentMode || "pay_at_delivery",
+      subscriptionId: form?.selectedSubscriptionId || undefined,
     });
   }
 
-  const title =
-    localMode === "delivered" ? "Confirm Delivery" :
-    localMode === "skip" ? "Skip Delivery" :
-    localMode === "failed" ? "Report Failed" : "Outcome";
+  // Item summary shown at the top of the modal
+  const itemSummary = (
+    <div className="om-item-summary">
+      <span className="om-product-name">{item.productLabel}</span>
+      <span className="om-product-qty">{scheduled} {unit}</span>
+    </div>
+  );
 
+  // Mode selector tabs
   const modeOptions = [
     { value: "delivered", label: "Delivered" },
     ...(item?.type === "subscription" ? [{ value: "skip", label: "Skip" }] : []),
-    { value: "failed", label: "Failed" }
+    { value: "failed", label: "Failed" },
   ];
 
   const modeSelector = (
     <div className="outcome-mode-selector">
-      <span className="eyebrow">Delivery Outcome</span>
-      <div>
+      <span className="eyebrow">Outcome</span>
+      <div className="om-mode-chips">
         {modeOptions.map((opt) => (
           <button
             key={opt.value}
             type="button"
-            className={`chip ${localMode === opt.value ? "active" : ""}`}
+            className={`chip om-mode-chip om-mode-chip--${opt.value} ${localMode === opt.value ? "active" : ""}`}
             onClick={() => setLocalMode(opt.value)}
           >
             {opt.label}
@@ -125,8 +131,20 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
     </div>
   );
 
+  const confirmLabel =
+    localMode === "delivered" ? "Confirm Delivery" :
+    localMode === "skip"      ? "Confirm Skip"     :
+    localMode === "failed"    ? "Record Failure"   : "Confirm";
+
+  const title =
+    localMode === "delivered" ? `Deliver — ${item.productLabel}` :
+    localMode === "skip"      ? `Skip — ${item.productLabel}`    :
+    localMode === "failed"    ? `Failed — ${item.productLabel}`  :
+    item.productLabel;
+
   const formEl = (
-    <>
+    <div className="om-body">
+      {itemSummary}
       {modeSelector}
       <OutcomeForm
         mode={localMode}
@@ -138,29 +156,29 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
         subscriptions={subscriptions}
         subscriptionsLoading={subscriptionsLoading}
       />
-    </>
+    </div>
+  );
+
+  const confirmBtn = (
+    <button
+      className={`btn outcome-confirm-btn om-confirm-btn--${localMode}`}
+      onClick={handleConfirm}
+    >
+      {confirmLabel}
+    </button>
   );
 
   if (isMobile) {
     return (
       <BottomSheet isOpen={!!outcomeModal} onClose={onClose} title={title}>
         {formEl}
-        <button className="btn btn-primary outcome-confirm-btn" onClick={handleConfirm}>
-          Confirm
-        </button>
+        {confirmBtn}
       </BottomSheet>
     );
   }
 
   return (
-    <Modal
-      open={!!outcomeModal}
-      onClose={onClose}
-      title={title}
-      footer={
-        <button className="btn btn-primary" onClick={handleConfirm}>Confirm</button>
-      }
-    >
+    <Modal open={!!outcomeModal} onClose={onClose} title={title} footer={confirmBtn}>
       {formEl}
     </Modal>
   );

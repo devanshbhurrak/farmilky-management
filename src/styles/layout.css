@@ -7,6 +7,12 @@
   background: var(--color-background);
 }
 
+@supports (height: 100dvh) {
+  .admin-shell {
+    height: 100dvh;
+  }
+}
+
 @media (max-width: 767px) {
   .admin-shell {
     overflow-y: auto;

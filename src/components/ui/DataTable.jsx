@@ -20,6 +20,7 @@ export default function DataTable({
   renderCard,
   emptyAction,
   noMatchAction,
+  scrollable = false,
 }) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [sortKey, setSortKey] = useState(defaultSortKey || columns[0]?.key);
@@ -193,6 +194,21 @@ export default function DataTable({
       </table>
     </div>
   );
+
+  if (scrollable) {
+    return (
+      <div className="datatable-scrollable">
+        <div className="datatable-scroll-body">
+          {isMobile ? renderMobileView() : renderDesktopView()}
+        </div>
+        {totalPages > 1 && (
+          <div className="datatable-scroll-footer">
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>

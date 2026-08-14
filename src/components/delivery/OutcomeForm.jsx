@@ -1,26 +1,29 @@
 import { useState } from "react";
 import QuickChips from "../ui/QuickChips";
 
-export default function OutcomeForm({ mode, scheduled, unit, form, onChange, item, subscriptions = [], subscriptionsLoading = false }) {
+const SKIP_REASONS = [
+  { value: "Customer not home", label: "Not Home" },
+  { value: "Requested skip",    label: "Requested" },
+  { value: "No response",       label: "No Response" },
+  { value: "other",             label: "Other" },
+];
+
+const FAILED_REASONS = [
+  { value: "Address not found", label: "No Address" },
+  { value: "Customer refused",  label: "Refused" },
+  { value: "Product damaged",   label: "Damaged" },
+  { value: "other",             label: "Other" },
+];
+
+export default function OutcomeForm({
+  mode, scheduled, unit, form, onChange,
+  item, subscriptions = [], subscriptionsLoading = false,
+}) {
   const [showOther, setShowOther] = useState(false);
 
-  const skipReasons = [
-    { value: "Customer not home", label: "Not Home" },
-    { value: "Requested skip", label: "Requested" },
-    { value: "No response", label: "No Response" },
-    { value: "other", label: "Other" }
-  ];
+  const reasons = mode === "skip" ? SKIP_REASONS : FAILED_REASONS;
 
-  const failedReasons = [
-    { value: "Address not found", label: "No Address" },
-    { value: "Customer refused", label: "Refused" },
-    { value: "Product damaged", label: "Damaged" },
-    { value: "other", label: "Other" }
-  ];
-
-  const currentReasons = mode === "skip" ? skipReasons : failedReasons;
-
-  const handleReasonSelect = (val) => {
+  function handleReasonSelect(val) {
     if (val === "other") {
       setShowOther(true);
       onChange({ reason: "" });
@@ -28,69 +31,78 @@ export default function OutcomeForm({ mode, scheduled, unit, form, onChange, ite
       setShowOther(false);
       onChange({ reason: val });
     }
-  };
+  }
+
+  // qty is always pre-filled from parent; use it directly
+  const currentQty = Number(form.actualQuantity ?? scheduled);
+  const qtyDiff = currentQty - scheduled;
 
   return (
     <div className="outcome-form-container">
-      {(mode === "change" || mode === "delivered") && (
+
+      {/* ── Quantity (subscriptions only) ── */}
+      {(mode === "delivered" || mode === "change") && item?.type === "subscription" && (
         <div className="form-group">
-          <label>Quantity ({unit || "units"})</label>
-          <input
-            type="number"
-            min="0"
-            step="0.1"
-            value={form.actualQuantity !== undefined ? form.actualQuantity : scheduled}
-            onChange={(e) => onChange({ actualQuantity: e.target.value })}
-            placeholder={`Enter quantity in ${unit || "units"}`}
-            required
-            autoFocus
-          />
-          {Number(form.actualQuantity !== undefined ? form.actualQuantity : scheduled) !== scheduled && (
-            <div className="qty-helper-text">
-              {Number(form.actualQuantity !== undefined ? form.actualQuantity : scheduled) > scheduled
-                ? "Extra - billing will reflect the higher quantity."
-                : "Partial - billing will reflect the lower quantity."}
-            </div>
+          <label>Quantity delivered ({unit})</label>
+          <div className="om-qty-row">
+            <input
+              type="number"
+              min="0.1"
+              step="0.1"
+              className="om-qty-input"
+              value={form.actualQuantity ?? scheduled}
+              onChange={(e) => onChange({ actualQuantity: e.target.value })}
+              autoFocus
+            />
+            <span className="om-qty-unit">{unit}</span>
+          </div>
+          {qtyDiff !== 0 && (
+            <p className={`qty-helper-text ${qtyDiff > 0 ? "qty-helper--extra" : "qty-helper--partial"}`}>
+              {qtyDiff > 0
+                ? `+${qtyDiff} extra — billing reflects higher quantity`
+                : `${qtyDiff} short — billing reflects lower quantity`}
+            </p>
           )}
         </div>
       )}
 
+      {/* ── Reason (skip / failed) ── */}
       {(mode === "skip" || mode === "failed") && (
         <div className="form-group">
-          <label>Select Reason</label>
-          <QuickChips 
-            options={currentReasons} 
-            selected={showOther ? "other" : form.reason} 
-            onSelect={handleReasonSelect} 
+          <label>Reason</label>
+          <QuickChips
+            options={reasons}
+            selected={showOther ? "other" : form.reason}
+            onSelect={handleReasonSelect}
           />
-          
-          {(showOther || (form.reason && !currentReasons.some(r => r.value === form.reason))) && (
+          {(showOther || (form.reason && !reasons.some((r) => r.value === form.reason))) && (
             <textarea
+              className="reason-textarea"
               value={form.reason || ""}
               onChange={(e) => onChange({ reason: e.target.value })}
-              placeholder={mode === "skip" ? "Why skip?" : "Why failed?"}
-              rows={3}
-              className="reason-textarea"
-              required
+              placeholder={mode === "skip" ? "Describe why…" : "Describe what happened…"}
+              rows={2}
               autoFocus
             />
           )}
         </div>
       )}
 
+      {/* ── Notes (always optional) ── */}
       <div className="form-group">
-        <label>Additional Notes (optional)</label>
+        <label>Notes <span className="form-label-hint">(optional)</span></label>
         <textarea
           value={form.notes || ""}
           onChange={(e) => onChange({ notes: e.target.value })}
-          placeholder="Tap to add notes..."
+          placeholder="Any additional notes for this delivery…"
           rows={2}
         />
       </div>
 
+      {/* ── Payment method (orders in delivered mode only) ── */}
       {(mode === "delivered" || mode === "change") && item?.type === "order" && (
         <div className="form-group">
-          <label>Payment Method</label>
+          <label>Payment</label>
           <div className="outcome-payment-row">
             <button
               type="button"
@@ -103,15 +115,15 @@ export default function OutcomeForm({ mode, scheduled, unit, form, onChange, ite
               type="button"
               className={`chip ${form.paymentMode === "subscription_ledger" ? "active" : ""}`}
               disabled={subscriptionsLoading || subscriptions.length === 0}
-              onClick={() => {
+              onClick={() =>
                 onChange({
                   paymentMode: "subscription_ledger",
                   selectedSubscriptionId: subscriptions.length === 1 ? String(subscriptions[0]._id) : null,
-                });
-              }}
+                })
+              }
               title={!subscriptionsLoading && subscriptions.length === 0 ? "No active subscriptions" : ""}
             >
-              Add to Subscription Ledger{subscriptionsLoading ? " …" : ""}
+              Subscription Ledger{subscriptionsLoading ? " …" : ""}
             </button>
           </div>
 
@@ -121,21 +133,20 @@ export default function OutcomeForm({ mode, scheduled, unit, form, onChange, ite
                 <p className="outcome-msg outcome-msg--muted">Loading subscriptions…</p>
               )}
               {!subscriptionsLoading && subscriptions.length === 0 && (
-                <p className="outcome-msg outcome-msg--danger">No active subscriptions found.</p>
+                <p className="outcome-msg outcome-msg--danger">No active subscriptions for this customer.</p>
               )}
               {!subscriptionsLoading && subscriptions.length === 1 && (
                 <p className="outcome-msg outcome-msg--muted">
-                  Will be added to: <strong>{subscriptions[0].productName}</strong> ({subscriptions[0].deliverySchedule}) — Pending: ₹{subscriptions[0].pendingAmount}
+                  Ledger: <strong>{subscriptions[0].productName}</strong> ({subscriptions[0].deliverySchedule}) — Pending: ₹{subscriptions[0].pendingAmount}
                 </p>
               )}
               {!subscriptionsLoading && subscriptions.length >= 2 && (
                 <select
                   value={form.selectedSubscriptionId || ""}
                   onChange={(e) => onChange({ selectedSubscriptionId: e.target.value || null })}
-                  required
                   className="outcome-sub-select"
                 >
-                  <option value="">— Select a subscription —</option>
+                  <option value="">— Select subscription —</option>
                   {subscriptions.map((sub) => (
                     <option key={String(sub._id)} value={String(sub._id)}>
                       {sub.productName} ({sub.deliverySchedule}) — Pending: ₹{sub.pendingAmount}

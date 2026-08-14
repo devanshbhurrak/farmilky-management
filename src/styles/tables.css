@@ -4,6 +4,62 @@
   position: relative;
 }
 
+/* ─── Scrollable DataTable (ledger mode) ─────── */
+.datatable-scrollable {
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+  min-height: 0;
+}
+
+.datatable-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* Custom thin scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.datatable-scroll-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.datatable-scroll-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.datatable-scroll-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.datatable-scroll-body .table-shell {
+  /* Prevent double scrollbar — horizontal scroll still works */
+  overflow-x: auto;
+}
+
+/* Sticky thead inside scroll body */
+.datatable-scroll-body thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  box-shadow: 0 1px 0 var(--border-soft);
+}
+
+.datatable-scroll-footer {
+  border-top: 1px solid var(--border-soft);
+  background: var(--surface);
+  padding: var(--space-2) var(--space-3);
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .datatable-scrollable { height: 420px; }
+}
+
 /* Subtle right-edge fade to hint at horizontal scrollability on smaller viewports */
 @media (max-width: 900px) {
   .table-shell::after {

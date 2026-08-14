@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck, ArrowLeftRight } from "lucide-react";
+import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck, ArrowLeftRight, QrCode, MessageCircle } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
@@ -31,6 +32,7 @@ export default function CustomerDetailPage() {
   const [passbookLoading, setPassbookLoading] = useState(false);
 
   const [modalType, setModalType] = useState(null);
+  const [showQr, setShowQr] = useState(false);
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(null);
@@ -93,6 +95,26 @@ export default function CustomerDetailPage() {
     }
   }, [modalType]);
 
+  // When passbook finishes loading while payment modal is open, auto-update amount
+  useEffect(() => {
+    if (modalType !== "payment" || passbookLoading || !form?.date) return;
+    // Recompute period total with fresh passbook data
+    const entries = passbook.entries || [];
+    const lastPayment = entries.find(e => e.type === "credit" && e.category === "Payment");
+    const fromDate = lastPayment ? (lastPayment.date || "").slice(0, 10) : null;
+    const toDate = form.date;
+    let total = 0;
+    for (const e of entries) {
+      const d = (e.date || "").slice(0, 10);
+      if (!d || d > toDate) continue;
+      if (fromDate && d <= fromDate) continue;
+      if (e.type === "debit") total += e.amount;
+    }
+    if (total > 0) {
+      setForm(prev => prev ? { ...prev, amount: total } : prev);
+    }
+  }, [passbookLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (loading) return <PageSkeleton />;
   if (error) return <PageError message={error} onRetry={fetchCustomer} />;
   if (!customer) return <EmptyState text="Customer not found." />;
@@ -100,7 +122,29 @@ export default function CustomerDetailPage() {
   const user = customer.user || customer;
   const orders = customer.recentOrders || [];
   const subscriptions = customer.subscriptions || [];
-  const totalDeliveries = subscriptions.reduce((s, sub) => s + (sub.deliveryHistory?.length || 0), 0);
+
+
+  // Total quantities delivered per product (all time, from delivery history)
+  const productTotals = (() => {
+    const map = {};
+    const COUNTED = new Set(["delivered", "extra", "partial"]);
+    for (const sub of subscriptions) {
+      const pid  = sub.productId?._id ? String(sub.productId._id) : String(sub.productId || "");
+      if (!pid) continue;
+      const name = sub.productId?.name || "Product";
+      const unit = sub.variantUnit || sub.productId?.unit || "unit";
+      const qpd  = Number(sub.quantityPerDay) || 1;
+      for (const dh of sub.deliveryHistory || []) {
+        if (!COUNTED.has(dh.status || "delivered")) continue;
+        const q = Number(dh.actualQuantity || dh.scheduledQuantity || qpd);
+        if (!map[pid]) map[pid] = { name, unit, qty: 0 };
+        map[pid].qty += isNaN(q) ? qpd : q;
+      }
+      // If no delivery history entries passed filter, still show the product with 0
+      if (!map[pid]) map[pid] = { name, unit, qty: 0 };
+    }
+    return Object.values(map);
+  })();
   const areaName = areas.find((a) => a._id === deliveryConfig.assignedArea)?.name || null;
 
   async function saveDeliveryConfigFor(userId, dc) {
@@ -134,11 +178,105 @@ export default function CustomerDetailPage() {
     setModalType("subscription");
   }
 
+  // Returns { fromDateStr, totalAmount, products: [{name, unit, qty, amount}] }
+  // fromDateStr = date of last payment (exclusive lower bound), null = beginning of time
+  function computePeriodSummary(toDateStr) {
+    const entries = passbook.entries || [];
+
+    // Most recent payment credit (entries are sorted descending by date)
+    const lastPayment = entries.find(
+      (e) => e.type === "credit" && e.category === "Payment"
+    );
+    const fromDateStr = lastPayment ? (lastPayment.date || "").slice(0, 10) : null;
+
+    function inRange(raw) {
+      const d = String(raw || "").slice(0, 10);
+      if (!d || d > toDateStr) return false;
+      if (fromDateStr && d <= fromDateStr) return false;
+      return true;
+    }
+
+    // ── Step 1: aggregate passbook debit entries (authoritative for amount) ──
+    let totalAmount = 0;
+    const subDebits = {}; // sub._id string → { count, amount }
+    for (const e of entries) {
+      if (!inRange(e.date) || e.type !== "debit") continue;
+      totalAmount += e.amount;
+      if (e.category === "Subscription" && e.referenceId) {
+        const sid = String(e.referenceId);
+        if (!subDebits[sid]) subDebits[sid] = { count: 0, amount: 0 };
+        subDebits[sid].count  += 1;
+        subDebits[sid].amount += e.amount;
+      }
+    }
+
+    // ── Step 2: per-product quantity ──
+    const productMap = {};
+    const COUNTED = new Set(["delivered", "extra", "partial"]);
+
+    for (const sub of subscriptions) {
+      const sid       = String(sub._id);
+      const pid       = sub.productId?._id ? String(sub.productId._id) : String(sub.productId || "");
+      if (!pid) continue;
+
+      const name      = sub.productId?.name || "Product";
+      const unit      = sub.variantUnit || sub.productId?.unit || "unit";
+      const qtyPerDay = Number(sub.quantityPerDay) || 1;
+      const pricePerUnit = sub.pricePerUnit || (sub.totalPricePerDay / qtyPerDay) || 0;
+
+      // Source A: delivery history (most accurate)
+      let qtyA = 0;
+      let countA = 0;
+      for (const dh of sub.deliveryHistory || []) {
+        if (!inRange(dh.deliveryDate || dh.date)) continue;
+        if (!COUNTED.has(dh.status || "delivered")) continue;
+        countA++;
+        const q = Number(dh.actualQuantity) || Number(dh.scheduledQuantity) || qtyPerDay;
+        qtyA += isNaN(q) ? qtyPerDay : q;
+      }
+
+      // Source B: passbook entry count × qtyPerDay (fallback when history is missing/old)
+      const debitInfo = subDebits[sid];
+      const countB    = debitInfo?.count || 0;
+      const qtyB      = countB * qtyPerDay;
+      const amountB   = debitInfo?.amount || 0;
+
+      // Pick best qty: prefer delivery history; fall back to passbook count × qtyPerDay
+      // If history has deliveries but qty came out 0 (missing fields), use countA × qtyPerDay
+      const qty    = qtyA > 0 ? qtyA : (countA > 0 ? countA * qtyPerDay : qtyB);
+      const amount = amountB > 0 ? amountB : (qty * pricePerUnit);
+
+      if (qty <= 0 && amount <= 0) continue;
+
+      if (!productMap[pid]) productMap[pid] = { name, unit, qty: 0, amount: 0 };
+      productMap[pid].qty    += qty;
+      productMap[pid].amount += amount;
+    }
+
+    // Debug — remove after confirming quantities show correctly
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[PaymentSummary]", { toDateStr, fromDateStr, totalAmount, subDebits, products: Object.values(productMap), subscriptionCount: subscriptions.length, passbookEntries: entries.length });
+    }
+
+    return {
+      fromDateStr,
+      totalAmount: Math.max(0, totalAmount),
+      products: Object.values(productMap),
+    };
+  }
+
   function openAddPayment() {
+    const today = new Date().toISOString().split("T")[0];
+    // Always refresh passbook so period summary is accurate
+    fetchPassbook();
     setForm({
-      userId: id, amount: "", transactionId: "", notes: "",
-      date: new Date().toISOString().split("T")[0],
+      userId: id,
+      amount: user.accountBalance || "",
+      transactionId: "",
+      notes: "",
+      date: today,
     });
+    setShowQr(false);
     setModalType("payment");
   }
 
@@ -161,6 +299,14 @@ export default function CustomerDetailPage() {
       }
     }
 
+    if (modalType === "payment") {
+      const parsedAmt = parseFloat(form?.amount);
+      if (isNaN(parsedAmt) || parsedAmt <= 0) {
+        toast.error("Enter a valid amount.");
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       let endpoint, method;
@@ -175,6 +321,8 @@ export default function CustomerDetailPage() {
           ? { ...form, addresses: form.address.street ? [form.address] : [] }
           : modalType === "adjustment"
           ? { userId: form.userId, type: form.adjType, amount: parseFloat(form.amount), notes: form.notes, date: form.date }
+          : modalType === "payment"
+          ? { ...form, amount: parseFloat(form.amount) }
           : form;
 
       const res = await apiRequest(endpoint, { method, body: JSON.stringify(body) });
@@ -242,24 +390,55 @@ export default function CustomerDetailPage() {
           saving={saving}
         />
       );
-    if (modalType === "payment")
+    if (modalType === "payment") {
+      const upiId   = import.meta.env.VITE_UPI_ID  || "";
+      const upiName = import.meta.env.VITE_UPI_NAME || "Farmilky";
+      const amt     = parseFloat(form?.amount) || 0;
+      const upiUri  = upiId && amt > 0
+        ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${amt.toFixed(2)}&cu=INR&tn=${encodeURIComponent("Farmilky Payment")}`
+        : null;
+      const waText  = `Hi ${user.name || ""},\nYour outstanding balance is ₹${amt.toFixed(2)}. Please pay at the earliest.${upiId ? `\nPay to UPI: ${upiId}` : ""}`;
+      const waUrl   = `https://wa.me/${(user.phone || "").replace(/\D/g, "")}?text=${encodeURIComponent(waText)}`;
+
+      // Period summary for the selected date
+      const selectedDate = form?.date || "";
+      const summary = selectedDate ? computePeriodSummary(selectedDate) : null;
+      const hasDeliveryData = summary && summary.products.length > 0;
+
       return (
         <div className="payment-form">
-          {user.accountBalance > 0 && (
-            <div className="payment-balance-banner">
-              <div>
-                <span className="payment-balance-label">Outstanding balance</span>
-                <span className="payment-balance-amount">{formatCurrency(user.accountBalance)}</span>
-              </div>
-              <button
-                type="button"
-                className="payment-fill-btn"
-                onClick={() => setForm({ ...form, amount: user.accountBalance })}
-              >
-                Fill
-              </button>
+
+          {/* Period breakdown */}
+          <div className="payment-period-card">
+            <div className="payment-period-header">
+              <span className="payment-period-label">
+                {passbookLoading
+                  ? "Loading period…"
+                  : summary?.fromDateStr
+                  ? `Since last payment · ${formatDate(summary.fromDateStr)}`
+                  : "All time (no prior payments)"}
+              </span>
+              <span className="payment-period-to">till {selectedDate ? formatDate(selectedDate) : "—"}</span>
             </div>
-          )}
+
+            {hasDeliveryData ? (
+              <div className="payment-period-rows">
+                {summary.products.map((p, i) => (
+                  <div key={i} className="payment-period-row">
+                    <span className="payment-period-pname">{p.name}</span>
+                    <span className="payment-period-pqty">{p.qty} {p.unit}</span>
+                    <span className="payment-period-pamt">{p.amount > 0 ? formatCurrency(p.amount) : "—"}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="payment-period-empty">
+                {passbookLoading ? "Calculating…" : "No deliveries in this period."}
+              </p>
+            )}
+          </div>
+
+          {/* Amount input */}
           <div className="payment-amount-wrap">
             <span className="payment-currency">₹</span>
             <input
@@ -273,19 +452,56 @@ export default function CustomerDetailPage() {
               autoFocus
             />
           </div>
-          {form?.amount > 0 && (
-            <div className="payment-amount-preview">
-              <span className="payment-amount-preview-label">Collecting</span>
-              <span className="payment-amount-preview-value">{formatCurrency(form.amount)}</span>
+
+          {/* QR toggle */}
+          {amt > 0 && (
+            <button
+              type="button"
+              className={`payment-qr-toggle${showQr ? " active" : ""}`}
+              onClick={() => setShowQr((v) => !v)}
+            >
+              <QrCode size={15} />
+              {showQr ? "Hide QR" : "Show UPI QR"}
+            </button>
+          )}
+
+          {/* QR panel */}
+          {showQr && (
+            <div className="payment-qr-panel">
+              {upiUri ? (
+                <>
+                  <QRCodeSVG value={upiUri} size={200} includeMargin />
+                  <div className="payment-qr-meta">
+                    <span className="payment-qr-name">{upiName}</span>
+                    <span className="payment-qr-upi">{upiId}</span>
+                    <span className="payment-qr-amount">{formatCurrency(amt)}</span>
+                  </div>
+                  {user.phone && (
+                    <a href={waUrl} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp btn-sm">
+                      <MessageCircle size={14} /> Share on WhatsApp
+                    </a>
+                  )}
+                </>
+              ) : (
+                <p className="payment-qr-unconfigured">
+                  Set <code>VITE_UPI_ID</code> in your <code>.env</code> to enable UPI QR.
+                </p>
+              )}
             </div>
           )}
+
           <div className="form-row">
             <div className="form-group">
               <label>Date</label>
               <input
                 type="date"
                 value={form?.date || ""}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  const s = computePeriodSummary(newDate);
+                  setShowQr(false);
+                  setForm({ ...form, date: newDate, amount: s.totalAmount > 0 ? s.totalAmount : 0 });
+                }}
               />
             </div>
             <div className="form-group">
@@ -309,6 +525,7 @@ export default function CustomerDetailPage() {
           </div>
         </div>
       );
+    }
     if (modalType === "adjustment")
       return (
         <div className="payment-form">
@@ -523,30 +740,19 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      {/* Metric strip */}
-      <div className="customer-metrics">
-        <div className={`customer-metric-card ${user.accountBalance > 0 ? "metric-danger" : "metric-success"}`}>
-          <div className="customer-metric-header">
-            <span className="customer-metric-icon" aria-hidden="true"><IndianRupee size={11} /></span>
-            <span className="customer-metric-label">Balance Due</span>
-          </div>
-          <span className="customer-metric-value">{formatCurrency(user.accountBalance)}</span>
+      {/* Product totals strip */}
+      {productTotals.length > 0 && (
+        <div className="customer-metrics">
+          {productTotals.map((p) => (
+            <div key={p.name} className="customer-metric-card metric-info">
+              <div className="customer-metric-header">
+                <span className="customer-metric-label">{p.name}</span>
+              </div>
+              <span className="customer-metric-value">{p.qty} <small>{p.unit}</small></span>
+            </div>
+          ))}
         </div>
-        <div className="customer-metric-card metric-info">
-          <div className="customer-metric-header">
-            <span className="customer-metric-icon" aria-hidden="true"><Repeat2 size={11} /></span>
-            <span className="customer-metric-label">Deliveries</span>
-          </div>
-          <span className="customer-metric-value">{totalDeliveries}</span>
-        </div>
-        <div className="customer-metric-card metric-neutral">
-          <div className="customer-metric-header">
-            <span className="customer-metric-icon" aria-hidden="true"><ShoppingBag size={11} /></span>
-            <span className="customer-metric-label">Orders</span>
-          </div>
-          <span className="customer-metric-value">{orders.length}</span>
-        </div>
-      </div>
+      )}
 
       {/* Tabs */}
       <div className="customer-tabs-panel">
@@ -597,8 +803,9 @@ export default function CustomerDetailPage() {
                 </div>
               )}
               emptyText="No transactions yet."
-              pageSize={20}
+              pageSize={15}
               loading={passbookLoading}
+              scrollable
             />
           )}
           {tab === "orders" && (

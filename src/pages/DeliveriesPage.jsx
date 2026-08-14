@@ -8,9 +8,10 @@ import { formatDate, todayLocal } from "../utils/format";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import FilterSheet from "../components/ui/FilterSheet";
-import DeliveryCard from "../components/delivery/DeliveryCard";
 import OutcomeModal from "../components/delivery/OutcomeModal";
 import BulkActionsBar from "../components/delivery/BulkActionsBar";
+import CustomerDeliveryGroup from "../components/delivery/CustomerDeliveryGroup";
+import CustomerConfirmDrawer from "../components/delivery/CustomerConfirmDrawer";
 import DeliveryFilters from "../components/delivery/DeliveryFilters";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest, safeParseJson } from "../api/client";
@@ -28,6 +29,7 @@ export default function DeliveriesPage() {
   const [areaFilter, setAreaFilter] = useState("all");
   const [sortMode, setSortMode] = useState("sequence");
   const [outcomeModal, setOutcomeModal] = useState(null);
+  const [customerDrawer, setCustomerDrawer] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -83,14 +85,104 @@ export default function DeliveriesPage() {
     return items;
   }, [deliveries, searchValue, areaFilter, sortMode]);
 
-  const totalPages = Math.ceil(filteredDeliveries.length / PAGE_SIZE);
-  const pagedDeliveries = useMemo(
-    () => filteredDeliveries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filteredDeliveries, page]
+  const customerGroups = useMemo(() => {
+    const map = new Map();
+    for (const item of filteredDeliveries) {
+      const key = item.userId || item.customerName;
+      if (!map.has(key)) {
+        map.set(key, {
+          userId: item.userId,
+          customerName: item.customerName,
+          phone: item.phone,
+          email: item.email,
+          areaId: item.areaId,
+          areaName: item.areaName,
+          address: item.address,
+          lat: item.lat,
+          lng: item.lng,
+          items: [],
+        });
+      }
+      map.get(key).items.push(item);
+    }
+    return Array.from(map.values());
+  }, [filteredDeliveries]);
+
+  const totalPages = Math.ceil(customerGroups.length / PAGE_SIZE);
+  const pagedGroups = useMemo(
+    () => customerGroups.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [customerGroups, page]
   );
 
   function openOutcomeModal(item, mode) {
-    setOutcomeModal({ item, mode, form: {} });
+    const prefilledQty = item.scheduledQuantity ?? item.quantity ?? 0;
+    setOutcomeModal({
+      item,
+      mode,
+      form: {
+        actualQuantity: prefilledQty,
+      },
+    });
+  }
+
+  function openCustomerDrawer(group) {
+    setCustomerDrawer({ group });
+  }
+
+  async function handleCustomerDrawerConfirm({ extraItems, paymentMode, subscriptionId }) {
+    if (extraItems.length === 0) { setCustomerDrawer(null); return; }
+    const { group } = customerDrawer;
+    if (!group.userId) { toast.error("Cannot add extras: customer account not found."); return; }
+    try {
+      const body = {
+        customerId: group.userId,
+        items: extraItems.map(({ productId, name, quantity, price, unit, variantId }) => ({
+          productId,
+          name,
+          quantity: Number(quantity),
+          price: Number(price),
+          unit,
+          ...(variantId ? { variantId } : {}),
+        })),
+        paymentMode,
+        ...(subscriptionId ? { subscriptionId } : {}),
+      };
+      const res = await apiRequest("/api/order/admin/instant-delivery", { method: "POST", body: JSON.stringify(body) });
+      if (!res.ok) { const p = await safeParseJson(res); throw new Error(p?.message || "Failed to record extra products."); }
+      setCustomerDrawer(null);
+      toast.success("Extra products recorded.");
+      await refetch();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }
+
+  async function handleConfirmAll(group) {
+    const pending = group.items.filter((i) => i.canRecordOutcome);
+    if (pending.length === 0) { toast.error("No pending items in this group."); return; }
+    let success = 0;
+    for (const item of pending) {
+      try {
+        const endpoint = item.type === "order"
+          ? `/api/order/admin/${item.id}/delivery-outcome`
+          : `/api/subscriptions/admin/${item.id}/delivery-outcome`;
+        const body = item.type === "order"
+          ? { status: "delivered", paymentMode: "pay_at_delivery" }
+          : { status: "delivered", actualQuantity: Number(item.scheduledQuantity || item.quantity || 0) };
+        const res = await apiRequest(endpoint, { method: "POST", body: JSON.stringify(body) });
+        if (res.ok) success++;
+      } catch (err) {
+        console.error("Confirm all error for item", item.id, err);
+      }
+    }
+    if (success === 0) {
+      toast.error("Failed to mark any items as delivered.");
+    } else if (success < pending.length) {
+      toast.success(`${success} of ${pending.length} marked delivered. Some failed.`);
+    } else {
+      toast.success(`All ${success} items marked delivered.`);
+    }
+    await refetch();
   }
 
   async function handleOutcomeConfirm({ status, actualQuantity, reason, notes, paymentMode, subscriptionId }) {
@@ -133,7 +225,13 @@ export default function DeliveriesPage() {
         console.error("Bulk delivery error for item", item.id, err);
       }
     }
-    toast.success(`${success} of ${pending.length} marked delivered.`);
+    if (success === 0) {
+      toast.error("Failed to mark any items as delivered.");
+    } else if (success < pending.length) {
+      toast.success(`${success} of ${pending.length} marked delivered. Some failed.`);
+    } else {
+      toast.success(`All ${success} items marked delivered.`);
+    }
     setSelectedIds(new Set());
     await refetch();
   }
@@ -237,7 +335,7 @@ export default function DeliveriesPage() {
       <section className="delivery-list-section">
         <div className="list-header">
           <div className="list-header-left">
-            <h3>Queue <span className="queue-count">({filteredDeliveries.length})</span></h3>
+            <h3>Queue <span className="queue-count">({customerGroups.length} customers · {filteredDeliveries.length} items)</span></h3>
             <div className="delivery-inline-stats">
               <span className="dis-pending">{summary.remainingDeliveries || 0} pending</span>
               <span className="dis-sep">·</span>
@@ -267,20 +365,21 @@ export default function DeliveriesPage() {
         </div>
 
         <div className="delivery-card-list">
-          {filteredDeliveries.length === 0 ? (
+          {customerGroups.length === 0 ? (
             <EmptyState
               text="No deliveries found."
               action={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
             />
           ) : (
-            pagedDeliveries.map((item, index) => (
-              <DeliveryCard
-                key={`${item.type}-${item.id}`}
-                item={item}
-                index={(page - 1) * PAGE_SIZE + index}
-                isSelected={selectedIds.has(item.id)}
+            pagedGroups.map((group) => (
+              <CustomerDeliveryGroup
+                key={group.userId || group.customerName}
+                group={group}
+                selectedIds={selectedIds}
                 onSelect={toggleSelect}
                 onAction={openOutcomeModal}
+                onConfirmAll={handleConfirmAll}
+                onOpenCustomerDrawer={openCustomerDrawer}
               />
             ))
           )}
@@ -313,6 +412,15 @@ export default function DeliveriesPage() {
         onConfirm={handleOutcomeConfirm}
         onFormChange={(updates) => setOutcomeModal(prev => prev ? ({ ...prev, form: { ...prev.form, ...updates } }) : prev)}
       />
+
+      {customerDrawer && (
+        <CustomerConfirmDrawer
+          isMobile={isMobile}
+          group={customerDrawer.group}
+          onClose={() => setCustomerDrawer(null)}
+          onConfirm={handleCustomerDrawerConfirm}
+        />
+      )}
 
       <BulkActionsBar 
         selectedCount={selectedIds.size} 

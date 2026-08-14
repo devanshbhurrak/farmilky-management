@@ -516,6 +516,13 @@
 .metric-danger  .customer-metric-value { color: var(--danger-text); }
 .metric-success .customer-metric-value { color: var(--color-primary); }
 
+.customer-metric-value small {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--text-secondary);
+  margin-left: 2px;
+}
+
 /* ─── Tabs panel ─────────────────────────────── */
 .customer-tabs-panel {
   background: var(--surface);
@@ -601,7 +608,12 @@
   color: var(--color-primary);
 }
 
-.customer-tab-body { padding: 0; }
+.customer-tab-body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 
 /* ─── Ledger entries ─────────────────────────── */
 .ledger-entry-card {
@@ -721,6 +733,77 @@
   gap: var(--space-4);
 }
 
+/* Period breakdown card */
+.payment-period-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.payment-period-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-2);
+  gap: var(--space-2);
+}
+
+.payment-period-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.payment-period-to {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary, var(--text-secondary));
+  white-space: nowrap;
+}
+
+.payment-period-loading,
+.payment-period-empty {
+  padding: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.payment-period-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-period-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+}
+
+.payment-period-pname {
+  flex: 1;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.payment-period-pqty {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.payment-period-pamt {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: right;
+}
+
 /* Outstanding balance banner */
 .payment-balance-banner {
   display: flex;
@@ -765,6 +848,92 @@
 }
 
 .payment-fill-btn:hover { opacity: 0.85; }
+
+/* QR toggle button */
+.payment-qr-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  align-self: flex-start;
+}
+
+.payment-qr-toggle:hover,
+.payment-qr-toggle.active {
+  background: var(--primary-soft, #eff6ff);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* QR panel */
+.payment-qr-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.payment-qr-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.payment-qr-name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.payment-qr-upi {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.payment-qr-amount {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: var(--space-1);
+}
+
+/* WhatsApp button */
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: #25d366;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.btn-whatsapp:hover { background: #1ebe5d; }
+
+.payment-qr-unconfigured {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-align: center;
+}
 
 /* Big centered amount input */
 .payment-amount-wrap {
