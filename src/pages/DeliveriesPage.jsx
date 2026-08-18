@@ -16,12 +16,14 @@ import DeliveryFilters from "../components/delivery/DeliveryFilters";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
 const fetchBoard = createApiFetch("/api/subscriptions/admin/delivery-board");
 
 export default function DeliveriesPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { isAdmin } = useAuth();
   const [date, setDate] = useState(todayLocal);
   const [searchValue, setSearchValue] = useState("");
   const [typeTab, setTypeTab] = useState("all");
@@ -34,6 +36,7 @@ export default function DeliveriesPage() {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [areas, setAreas] = useState([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
   const PAGE_SIZE = 50;
 
   const queryParams = useMemo(() => ({ date, type: typeTab !== "all" ? typeTab : undefined, status: statusFilter !== "all" ? statusFilter : undefined }), [date, typeTab, statusFilter]);
@@ -158,8 +161,10 @@ export default function DeliveriesPage() {
   }
 
   async function handleConfirmAll(group) {
+    if (bulkLoading) return;
     const pending = group.items.filter((i) => i.canRecordOutcome);
     if (pending.length === 0) { toast.error("No pending items in this group."); return; }
+    setBulkLoading(true);
     let success = 0;
     for (const item of pending) {
       try {
@@ -182,6 +187,7 @@ export default function DeliveriesPage() {
     } else {
       toast.success(`All ${success} items marked delivered.`);
     }
+    setBulkLoading(false);
     await refetch();
   }
 
@@ -205,11 +211,13 @@ export default function DeliveriesPage() {
   }
 
   async function handleBulkDeliver() {
+    if (bulkLoading) return;
     const pending = filteredDeliveries.filter((d) => selectedIds.has(d.id) && d.canRecordOutcome !== false);
     if (pending.length === 0) {
       toast.error("No selected items can be marked delivered.");
       return;
     }
+    setBulkLoading(true);
     let success = 0;
     for (const item of pending) {
       try {
@@ -232,6 +240,7 @@ export default function DeliveriesPage() {
     } else {
       toast.success(`All ${success} items marked delivered.`);
     }
+    setBulkLoading(false);
     setSelectedIds(new Set());
     await refetch();
   }
@@ -253,11 +262,12 @@ export default function DeliveriesPage() {
     }
   }
 
-  const hasFilters = typeTab !== "all" || statusFilter !== "all" || !!searchValue.trim();
+  const hasFilters = typeTab !== "all" || statusFilter !== "all" || !!searchValue.trim() || areaFilter !== "all";
   const clearFilters = () => {
     setSearchValue("");
     setTypeTab("all");
     setStatusFilter("all");
+    setAreaFilter("all");
     setPage(1);
   };
 
@@ -355,9 +365,9 @@ export default function DeliveriesPage() {
                   Select All
                 </label>
                 {selectedIds.size > 0 && (
-                  <button className="btn btn-primary btn-sm" onClick={handleBulkDeliver}>
+                  <button className="btn btn-primary btn-sm" onClick={handleBulkDeliver} disabled={bulkLoading}>
                     <CheckSquare size={16} />
-                    <span>Deliver ({selectedIds.size})</span>
+                    <span>{bulkLoading ? "Delivering…" : `Deliver (${selectedIds.size})`}</span>
                   </button>
                 )}
              </div>
@@ -379,7 +389,7 @@ export default function DeliveriesPage() {
                 onSelect={toggleSelect}
                 onAction={openOutcomeModal}
                 onConfirmAll={handleConfirmAll}
-                onOpenCustomerDrawer={openCustomerDrawer}
+                onOpenCustomerDrawer={isAdmin ? openCustomerDrawer : null}
               />
             ))
           )}
@@ -413,7 +423,7 @@ export default function DeliveriesPage() {
         onFormChange={(updates) => setOutcomeModal(prev => prev ? ({ ...prev, form: { ...prev.form, ...updates } }) : prev)}
       />
 
-      {customerDrawer && (
+      {isAdmin && customerDrawer && (
         <CustomerConfirmDrawer
           isMobile={isMobile}
           group={customerDrawer.group}
@@ -422,10 +432,11 @@ export default function DeliveriesPage() {
         />
       )}
 
-      <BulkActionsBar 
-        selectedCount={selectedIds.size} 
+      <BulkActionsBar
+        selectedCount={selectedIds.size}
         onBulkDeliver={handleBulkDeliver}
         visible={selectedIds.size > 0}
+        loading={bulkLoading}
       />
     </div>
   );

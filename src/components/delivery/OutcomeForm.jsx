@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import QuickChips from "../ui/QuickChips";
 
 const SKIP_REASONS = [
@@ -20,6 +20,8 @@ export default function OutcomeForm({
   item, subscriptions = [], subscriptionsLoading = false,
 }) {
   const [showOther, setShowOther] = useState(false);
+
+  useEffect(() => { setShowOther(false); }, [mode]);
 
   const reasons = mode === "skip" ? SKIP_REASONS : FAILED_REASONS;
 

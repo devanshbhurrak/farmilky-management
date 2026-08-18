@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { apiRequest, safeParseJson } from "../api/client";
+import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { formatDate } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
 import PageHeader from "../components/ui/PageHeader";
@@ -11,8 +12,12 @@ import ConfirmDialog from "../components/ui/ConfirmDialog";
 import PageError from "../components/ui/PageError";
 import toast from "react-hot-toast";
 
+const fetchAreas = createApiFetch("/api/areas");
+
 export default function AgentDetailPage() {
   const { id } = useParams();
+  const { data: areaData } = useApiData(fetchAreas);
+  const areas = areaData?.areas ?? [];
   const [agent, setAgent] = useState(null);
   const [performance, setPerformance] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
@@ -30,7 +35,7 @@ export default function AgentDetailPage() {
     setError(null);
     try {
       const [agentRes, perfRes] = await Promise.all([
-        apiRequest(`/api/user/admin/${id}`),
+        apiRequest(`/api/agents/${id}`),
         apiRequest(`/api/agents/${id}/performance`),
       ]);
       if (!agentRes.ok) {
@@ -66,6 +71,7 @@ export default function AgentDetailPage() {
         : new Date().toISOString().split("T")[0],
       vehicleType: agent.agentInfo?.vehicleType || "",
       maxCapacity: agent.agentInfo?.maxCapacity?.toString() || "",
+      assignedArea: agent.agentInfo?.assignedArea?._id || agent.agentInfo?.assignedArea || "",
     });
     setEditOpen(true);
   }
@@ -86,6 +92,7 @@ export default function AgentDetailPage() {
           joiningDate: form.joiningDate ? new Date(form.joiningDate).toISOString() : null,
           vehicleType: form.vehicleType,
           maxCapacity: form.maxCapacity ? parseInt(form.maxCapacity, 10) : 0,
+          assignedArea: form.assignedArea || null,
         },
       };
       const res = await apiRequest(`/api/agents/${id}`, {
@@ -320,6 +327,15 @@ export default function AgentDetailPage() {
             <label className="form-field">
               <span>Max Capacity</span>
               <input type="number" value={form.maxCapacity} onChange={(e) => setForm((f) => ({ ...f, maxCapacity: e.target.value }))} placeholder="Max items per trip" />
+            </label>
+            <label className="form-field">
+              <span>Assigned Area</span>
+              <select value={form.assignedArea} onChange={(e) => setForm((f) => ({ ...f, assignedArea: e.target.value }))}>
+                <option value="">-- No Area --</option>
+                {areas.map((a) => (
+                  <option key={a._id} value={a._id}>{a.name}</option>
+                ))}
+              </select>
             </label>
           </div>
         )}

@@ -2,7 +2,7 @@ const DEFAULT_STATUSES = new Set([
   "active", "inactive", "delivered", "confirmed", "paid", "unpaid",
   "paused", "pending", "placed", "partial", "cancelled", "failed",
   "open", "in_progress", "resolved", "completed", "approved",
-  "closed", "rejected", "subscription", "order", "offline",
+  "closed", "rejected", "subscription", "order", "offline", "skipped",
 ]);
 
 export default function StatusTag({ value, label }) {

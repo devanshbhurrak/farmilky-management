@@ -15,7 +15,7 @@ export default function AdminRoute() {
 
   if (!isAdmin) {
     return isDeliveryPartner
-      ? <Navigate to="/deliveries" replace />
+      ? <Navigate to="/agent" replace />
       : <Navigate to="/login" replace />;
   }
 

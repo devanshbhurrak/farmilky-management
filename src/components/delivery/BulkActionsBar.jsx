@@ -1,6 +1,6 @@
 import { CheckSquare } from "lucide-react";
 
-export default function BulkActionsBar({ selectedCount, onBulkDeliver, visible }) {
+export default function BulkActionsBar({ selectedCount, onBulkDeliver, visible, loading = false }) {
   if (!visible || selectedCount === 0) return null;
 
   return (
@@ -10,9 +10,9 @@ export default function BulkActionsBar({ selectedCount, onBulkDeliver, visible }
           <strong>{selectedCount}</strong>
           <span>stops selected</span>
         </div>
-        <button className="bulk-deliver-btn" onClick={onBulkDeliver}>
+        <button className="bulk-deliver-btn" onClick={onBulkDeliver} disabled={loading}>
           <CheckSquare size={20} />
-          <span>Deliver All</span>
+          <span>{loading ? "Delivering…" : "Deliver All"}</span>
         </button>
       </div>
     </div>

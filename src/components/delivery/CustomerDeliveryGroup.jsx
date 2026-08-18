@@ -111,13 +111,15 @@ export default function CustomerDeliveryGroup({ group, selectedIds, onSelect, on
             Confirm All ({pendingItems.length})
           </button>
         )}
-        <button
-          className="btn btn-ghost btn-sm cdg-btn"
-          onClick={() => onOpenCustomerDrawer(group)}
-        >
-          <Plus size={14} />
-          Add Extra
-        </button>
+        {onOpenCustomerDrawer && (
+          <button
+            className="btn btn-ghost btn-sm cdg-btn"
+            onClick={() => onOpenCustomerDrawer(group)}
+          >
+            <Plus size={14} />
+            Add Extra
+          </button>
+        )}
       </div>
     </div>
   );

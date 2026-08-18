@@ -1,13 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
-  ChevronRight, ArrowUp, ArrowDown, Navigation, UserPlus, Save, MapPin, X,
+  ChevronRight, ArrowUp, ArrowDown, Navigation, UserPlus, Save, MapPin, X, ChevronDown, Search,
 } from "lucide-react";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import PageError from "../components/ui/PageError";
-import SearchInput from "../components/ui/SearchInput";
 import toast from "react-hot-toast";
 
 function haversine(lat1, lng1, lat2, lng2) {
@@ -127,10 +126,13 @@ export default function AreaCustomersPage() {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
-  // Customer search for adding
+  // Customer search dropdown
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const dropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   // Drag state (desktop)
   const dragIndex = useRef(null);
@@ -189,6 +191,43 @@ export default function AreaCustomersPage() {
     return () => clearTimeout(t);
   }, [searchQuery, customers]);
 
+  // Close dropdown on outside click or Escape key
+  useEffect(() => {
+    function handleOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+        setSearchQuery("");
+        setSearchResults([]);
+      }
+    }
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        setDropdownOpen(false);
+        setSearchQuery("");
+        setSearchResults([]);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [dropdownOpen]);
+
+  function toggleDropdown() {
+    if (dropdownOpen) {
+      setDropdownOpen(false);
+      setSearchQuery("");
+      setSearchResults([]);
+    } else {
+      setDropdownOpen(true);
+      setTimeout(() => searchInputRef.current?.focus(), 0);
+    }
+  }
+
   function moveUp(index) {
     if (index === 0) return;
     setCustomers((prev) => {
@@ -227,6 +266,7 @@ export default function AreaCustomersPage() {
     removedIdsRef.current.delete(user._id);
     setSearchQuery("");
     setSearchResults([]);
+    setDropdownOpen(false);
     setDirty(true);
   }
 
@@ -324,27 +364,58 @@ export default function AreaCustomersPage() {
         </div>
       </div>
 
-      {/* Add customer search */}
+      {/* Add customer dropdown */}
       <div className="surface acp-search-surface">
         <div className="acp-search-label">
           <UserPlus size={14} /> Add customer to this area
         </div>
-        <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Search by name or phone…"
-        />
-        {searchLoading && <div className="acp-search-hint">Searching…</div>}
-        {searchResults.length > 0 && (
-          <div className="acp-search-results">
-            {searchResults.map((u) => (
-              <button key={u._id} className="acp-search-result-item" onClick={() => addCustomer(u)}>
-                <span className="acp-search-result-name">{u.name}</span>
-                <span className="acp-search-result-meta">{u.phone}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="acp-dropdown" ref={dropdownRef}>
+          <button
+            type="button"
+            className="acp-dropdown-trigger"
+            onClick={toggleDropdown}
+            aria-haspopup="listbox"
+            aria-expanded={dropdownOpen}
+          >
+            <span className="acp-dropdown-placeholder">Select a customer…</span>
+            <ChevronDown size={14} className={`acp-dropdown-chevron${dropdownOpen ? " open" : ""}`} />
+          </button>
+          {dropdownOpen && (
+            <div className="acp-dropdown-panel" role="listbox">
+              <div className="acp-dropdown-search">
+                <Search size={13} className="acp-dropdown-search-icon" />
+                <input
+                  ref={searchInputRef}
+                  className="acp-dropdown-search-input"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name or phone…"
+                />
+              </div>
+              <div className="acp-dropdown-list">
+                {searchLoading && <div className="acp-dropdown-hint">Searching…</div>}
+                {!searchLoading && searchQuery && searchResults.length === 0 && (
+                  <div className="acp-dropdown-hint">No customers found.</div>
+                )}
+                {!searchLoading && !searchQuery && (
+                  <div className="acp-dropdown-hint">Start typing to search…</div>
+                )}
+                {searchResults.map((u) => (
+                  <button
+                    key={u._id}
+                    className="acp-search-result-item"
+                    role="option"
+                    onClick={() => addCustomer(u)}
+                  >
+                    <span className="acp-search-result-name">{u.name}</span>
+                    <span className="acp-search-result-meta">{u.phone}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Customer list */}

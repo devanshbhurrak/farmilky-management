@@ -1,15 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { Truck, CheckCircle, XCircle, Clock, ArrowRight } from "lucide-react";
+import { Truck, CheckCircle, XCircle, Clock, ArrowRight, RefreshCw } from "lucide-react";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import EmptyState from "../components/ui/EmptyState";
+import PageError from "../components/ui/PageError";
 import { formatDate } from "../utils/format";
 
 const fetchMyManifest = createApiFetch("/api/manifests/my/today");
 
 export default function AgentDashboardPage() {
   const navigate = useNavigate();
-  const { data, loading, error } = useApiData(fetchMyManifest);
+  const { data, loading, error, refetch } = useApiData(fetchMyManifest);
   const manifest = data?.manifest;
 
   if (loading) return <LoadingScreen />;
@@ -23,14 +24,21 @@ export default function AgentDashboardPage() {
 
   return (
     <div className="view-stack" style={{ maxWidth: 600, margin: "0 auto" }}>
-      <div style={{ marginBottom: "var(--space-6)" }}>
-        <h1 className="page-header-title">{greeting}!</h1>
-        <p className="page-header-subtitle">{formatDate(new Date())}</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-6)" }}>
+        <div>
+          <h1 className="page-header-title">{greeting}!</h1>
+          <p className="page-header-subtitle">{formatDate(new Date())}</p>
+        </div>
+        <button className="btn btn-secondary btn-sm" onClick={refetch} title="Refresh">
+          <RefreshCw size={16} />
+        </button>
       </div>
 
-      {error || !manifest ? (
-        <EmptyState 
-          text="No deliveries assigned for today." 
+      {error ? (
+        <PageError message={error} onRetry={refetch} />
+      ) : !manifest ? (
+        <EmptyState
+          text="No deliveries assigned for today."
           icon={Truck}
         />
       ) : (

@@ -45,6 +45,7 @@ export default function ManifestDetailPage() {
   const [reorderMode, setReorderMode] = useState(false);
   const [localOrder, setLocalOrder] = useState([]);
   const [resequencing, setResequencing] = useState(false);
+  const [updatingEntries, setUpdatingEntries] = useState(new Set());
 
   const { pendingEntries, completedEntries } = useMemo(() => {
     if (!manifest?.entries) return { pendingEntries: [], completedEntries: [] };
@@ -54,10 +55,12 @@ export default function ManifestDetailPage() {
   }, [manifest?.entries]);
 
   const updateEntry = async (entryId, status) => {
+    if (updatingEntries.has(entryId)) return;
     if (status === "failed" && !reason[entryId]?.trim()) {
       toast.error("Please enter a failure reason.");
       return;
     }
+    setUpdatingEntries((prev) => new Set(prev).add(entryId));
     try {
       const res = await apiRequest(`/api/manifests/${id}/entries/${entryId}`, {
         method: "PUT",
@@ -73,6 +76,8 @@ export default function ManifestDetailPage() {
       refetch();
     } catch (err) {
       toast.error(err.message || "Failed to update.");
+    } finally {
+      setUpdatingEntries((prev) => { const next = new Set(prev); next.delete(entryId); return next; });
     }
   };
 
@@ -147,7 +152,7 @@ export default function ManifestDetailPage() {
       <section className="panel manifest-progress-panel">
         <div className="manifest-progress-head">
           <p className="eyebrow">Route Progress</p>
-          <StatusTag value={manifest.status === "completed" ? "delivered" : "active"} />
+          <StatusTag value={manifest.status === "completed" ? "delivered" : manifest.status === "paused" ? "paused" : "active"} />
         </div>
 
         <div className="manifest-stats-grid">
@@ -182,6 +187,7 @@ export default function ManifestDetailPage() {
   function renderEntryCard(entry, isNextStop = false, orderIndex = null) {
     const IconComp = STATUS_ICON[entry.status];
     const isExpanded = actionState[entry._id] || isNextStop;
+    const isUpdating = updatingEntries.has(entry._id);
 
     return (
       <div
@@ -289,11 +295,13 @@ export default function ManifestDetailPage() {
               <button
                 className="btn btn-primary btn-sm"
                 onClick={() => updateEntry(entry._id, "delivered")}
+                disabled={isUpdating}
               >
-                Mark Delivered
+                {isUpdating ? "Saving…" : "Mark Delivered"}
               </button>
               <button
                 className="btn btn-secondary btn-sm danger"
+                disabled={isUpdating}
                 onClick={() => {
                   if (!reason[entry._id]?.trim()) {
                     toast.error("Please enter a failure reason.");
@@ -307,6 +315,7 @@ export default function ManifestDetailPage() {
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => updateEntry(entry._id, "skipped")}
+                disabled={isUpdating}
               >
                 Skip
               </button>

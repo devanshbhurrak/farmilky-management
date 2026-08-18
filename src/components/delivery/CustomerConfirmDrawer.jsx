@@ -22,19 +22,24 @@ export default function CustomerConfirmDrawer({ isMobile, group, onClose, onConf
     setPaymentMode("pay_at_delivery");
     setSelectedSubscriptionId(null);
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     setSubscriptionsLoading(true);
-    apiRequest(`/api/subscriptions/admin/user/${group.userId}/active`)
+    apiRequest(`/api/subscriptions/admin/user/${group.userId}/active`, { signal })
       .then((r) => r.json())
       .then((d) => setSubscriptions(d.subscriptions || []))
-      .catch(() => setSubscriptions([]))
+      .catch((err) => { if (err.name !== "AbortError") setSubscriptions([]); })
       .finally(() => setSubscriptionsLoading(false));
 
     setProductsLoading(true);
-    apiRequest("/api/products")
+    apiRequest("/api/products", { signal })
       .then((r) => r.json())
       .then((d) => setAllProducts(d.products || []))
-      .catch(() => setAllProducts([]))
+      .catch((err) => { if (err.name !== "AbortError") setAllProducts([]); })
       .finally(() => setProductsLoading(false));
+
+    return () => controller.abort();
   }, [group?.userId]);
 
   const existingProductIds = useMemo(

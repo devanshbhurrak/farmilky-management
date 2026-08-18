@@ -722,6 +722,14 @@
   background: var(--danger);
 }
 
+.status-skipped {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+.status-skipped::before {
+  background: var(--warning);
+}
+
 .status-inactive, .status-closed, .status-rejected, .status-offline {
   background: var(--surface-muted);
   color: var(--text-muted);

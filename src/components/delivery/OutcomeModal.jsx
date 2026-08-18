@@ -22,12 +22,14 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
       localMode === "delivered" &&
       outcomeModal?.item?.userId
     ) {
+      const controller = new AbortController();
       setSubscriptionsLoading(true);
-      apiRequest(`/api/subscriptions/admin/user/${outcomeModal.item.userId}/active`)
+      apiRequest(`/api/subscriptions/admin/user/${outcomeModal.item.userId}/active`, { signal: controller.signal })
         .then((res) => res.json())
         .then((d) => setSubscriptions(d.subscriptions || []))
-        .catch(() => setSubscriptions([]))
+        .catch((err) => { if (err.name !== "AbortError") setSubscriptions([]); })
         .finally(() => setSubscriptionsLoading(false));
+      return () => controller.abort();
     } else {
       setSubscriptions([]);
     }

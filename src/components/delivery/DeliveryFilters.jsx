@@ -1,4 +1,4 @@
-import { Search, Calendar, MapPin, ListOrdered } from "lucide-react";
+import { Search, Calendar, MapPin, ListOrdered, Filter } from "lucide-react";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import IconDropdown from "../ui/IconDropdown";
 
@@ -15,6 +15,12 @@ const STATUS_OPTIONS = [
   { value: "extra",     label: "Extra" },
   { value: "skipped",   label: "Skipped" },
   { value: "failed",    label: "Failed" },
+];
+
+const TYPE_OPTIONS = [
+  { value: "all",          label: "All" },
+  { value: "subscription", label: "Subscriptions" },
+  { value: "order",        label: "Orders" },
 ];
 
 export default function DeliveryFilters({
@@ -99,13 +105,13 @@ export default function DeliveryFilters({
         <div className="form-group">
           <label>Type</label>
           <div className="filter-pill-group">
-            {["all", "subscription", "order"].map((t) => (
+            {TYPE_OPTIONS.map((t) => (
               <button
-                key={t}
-                className={typeTab === t ? "filter-pill active" : "filter-pill"}
-                onClick={() => onTypeChange(t)}
+                key={t.value}
+                className={typeTab === t.value ? "filter-pill active" : "filter-pill"}
+                onClick={() => onTypeChange(t.value)}
               >
-                {t === "all" ? "All" : t.charAt(0).toUpperCase() + t.slice(1)}
+                {t.label}
               </button>
             ))}
           </div>
@@ -137,7 +143,20 @@ export default function DeliveryFilters({
         />
       </div>
 
-      {/* Row 2: Area + Sort quick dropdowns */}
+      {/* Row 2: Type tabs */}
+      <div className="df-row df-row--tabs">
+        {TYPE_OPTIONS.map((t) => (
+          <button
+            key={t.value}
+            className={`filter-tab ${typeTab === t.value ? "active" : ""}`}
+            onClick={() => onTypeChange(t.value)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Row 3: Area + Sort + Status quick dropdowns */}
       <div className="df-row df-row--quick">
         {areas?.length > 0 && (
           <IconDropdown
@@ -148,6 +167,13 @@ export default function DeliveryFilters({
             ariaLabel="Filter by area"
           />
         )}
+        <IconDropdown
+          icon={<Filter size={13} className="df-icon-select-icon" aria-hidden />}
+          value={statusFilter}
+          onChange={onStatusChange}
+          options={STATUS_OPTIONS}
+          ariaLabel="Filter by status"
+        />
         <IconDropdown
           icon={<ListOrdered size={13} className="df-icon-select-icon" aria-hidden />}
           value={sortMode}

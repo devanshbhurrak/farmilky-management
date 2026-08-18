@@ -13,19 +13,23 @@ export function formatCurrency(value) {
 
 export function formatTime(value) {
   if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "";
   return new Intl.DateTimeFormat("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }).format(d);
 }
 
 export function formatDate(value) {
   if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "";
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(d);
 }
 
 export function todayLocal() {

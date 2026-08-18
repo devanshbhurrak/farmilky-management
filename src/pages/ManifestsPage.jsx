@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList, RefreshCw, Play } from "lucide-react";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
@@ -19,6 +19,13 @@ export default function ManifestsPage() {
   const { data, loading, error, refetch } = useApiData(() => fetchManifests({ date }), true);
   const manifests = data?.manifests ?? [];
   const [generating, setGenerating] = useState(false);
+
+  // Re-fetch whenever the selected date changes (skip the initial mount — useApiData already fetches)
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    refetch();
+  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -72,7 +79,7 @@ export default function ManifestsPage() {
               type="date"
               className="manifest-date-input"
               value={date}
-              onChange={(e) => { setDate(e.target.value); refetch(); }}
+              onChange={(e) => setDate(e.target.value)}
             />
           </div>
         </div>
