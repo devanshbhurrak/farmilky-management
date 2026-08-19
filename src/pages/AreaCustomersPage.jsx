@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
-  ChevronRight, ArrowUp, ArrowDown, Navigation, UserPlus, Save, MapPin, X, ChevronDown, Search,
+  ChevronRight, ArrowUp, ArrowDown, Navigation, Save, MapPin, X, ChevronDown, Search,
 } from "lucide-react";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -169,27 +169,31 @@ export default function AreaCustomersPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Search for unassigned customers to add
+  // Load customers into the dropdown: all on open, filtered while typing
   useEffect(() => {
-    if (!searchQuery.trim()) { setSearchResults([]); return; }
+    if (!dropdownOpen) return;
+    const q = searchQuery.trim();
     const t = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const res = await apiRequest(`/api/user/admin/all?role=customer&search=${encodeURIComponent(searchQuery)}&limit=10`);
+        const res = await apiRequest(
+          `/api/user/admin/all?role=customer&skipEnrichment=true${q ? `&search=${encodeURIComponent(q)}` : ""}`
+        );
         const data = await safeParseJson(res);
+        if (!res.ok) throw new Error(data?.message || "Failed to load customers.");
         const all = data?.users || [];
         // Exclude already-listed customers
         const existingIds = new Set(customers.map((c) => c._id));
         setSearchResults(all.filter((u) => !existingIds.has(u._id)));
       } catch {
-        toast.error("Search failed. Please try again.");
+        toast.error("Failed to load customers.");
         setSearchResults([]);
       } finally {
         setSearchLoading(false);
       }
-    }, 300);
+    }, q ? 300 : 0);
     return () => clearTimeout(t);
-  }, [searchQuery, customers]);
+  }, [dropdownOpen, searchQuery, customers]);
 
   // Close dropdown on outside click or Escape key
   useEffect(() => {
@@ -217,15 +221,10 @@ export default function AreaCustomersPage() {
     };
   }, [dropdownOpen]);
 
-  function toggleDropdown() {
-    if (dropdownOpen) {
-      setDropdownOpen(false);
-      setSearchQuery("");
-      setSearchResults([]);
-    } else {
-      setDropdownOpen(true);
-      setTimeout(() => searchInputRef.current?.focus(), 0);
-    }
+  function openDropdown() {
+    if (dropdownOpen) return;
+    setDropdownOpen(true);
+    setTimeout(() => searchInputRef.current?.focus(), 0);
   }
 
   function moveUp(index) {
@@ -366,40 +365,36 @@ export default function AreaCustomersPage() {
 
       {/* Add customer dropdown */}
       <div className="surface acp-search-surface">
-        <div className="acp-search-label">
-          <UserPlus size={14} /> Add customer to this area
-        </div>
         <div className="acp-dropdown" ref={dropdownRef}>
-          <button
-            type="button"
+          <div
             className="acp-dropdown-trigger"
-            onClick={toggleDropdown}
+            onMouseDown={openDropdown}
+            role="combobox"
             aria-haspopup="listbox"
             aria-expanded={dropdownOpen}
           >
-            <span className="acp-dropdown-placeholder">Select a customer…</span>
+            <Search size={13} className="acp-dropdown-search-icon" />
+            <input
+              ref={searchInputRef}
+              className="acp-dropdown-search-input"
+              type="text"
+              value={searchQuery}
+              onFocus={openDropdown}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                openDropdown();
+              }}
+              placeholder="Search customers by name or phone…"
+              aria-label="Search customers"
+            />
             <ChevronDown size={14} className={`acp-dropdown-chevron${dropdownOpen ? " open" : ""}`} />
-          </button>
+          </div>
           {dropdownOpen && (
             <div className="acp-dropdown-panel" role="listbox">
-              <div className="acp-dropdown-search">
-                <Search size={13} className="acp-dropdown-search-icon" />
-                <input
-                  ref={searchInputRef}
-                  className="acp-dropdown-search-input"
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name or phone…"
-                />
-              </div>
               <div className="acp-dropdown-list">
-                {searchLoading && <div className="acp-dropdown-hint">Searching…</div>}
-                {!searchLoading && searchQuery && searchResults.length === 0 && (
+                {searchLoading && <div className="acp-dropdown-hint">Loading customers…</div>}
+                {!searchLoading && searchResults.length === 0 && (
                   <div className="acp-dropdown-hint">No customers found.</div>
-                )}
-                {!searchLoading && !searchQuery && (
-                  <div className="acp-dropdown-hint">Start typing to search…</div>
                 )}
                 {searchResults.map((u) => (
                   <button
