@@ -33,7 +33,7 @@ farmilky-management/
 │   │   └── client.js          # fetch wrapper (base URL, credentials)
 │   ├── components/
 │   │   ├── customer/          # CustomerForm
-│   │   ├── delivery/          # DeliveryCard, BulkActionsBar, Filters, OutcomeModal...
+│   │   ├── delivery/          # DeliveryCard, BulkActionsBar, Filters, OutcomeModal..
 │   │   ├── icons/             # NavIcon
 │   │   ├── layout/            # Sidebar, Topbar, BottomNav, MobileDrawer, guards
 │   │   ├── order/             # OrderForm
