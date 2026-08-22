@@ -16,6 +16,7 @@ import {
   Mail,
   Users2,
   Milk,
+  ShieldCheck,
 } from "lucide-react";
 
 const NAV_ICONS = {
@@ -35,6 +36,7 @@ const NAV_ICONS = {
   messages: Mail,
   suppliers: Users2,
   collections: Milk,
+  permissions: ShieldCheck,
 };
 
 export default function NavIcon({ name, size = 20, strokeWidth = 1.75 }) {

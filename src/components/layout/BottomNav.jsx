@@ -1,37 +1,33 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Truck, Droplets, MoreHorizontal, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Truck, Droplets, MoreHorizontal } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { deliveryNavItems } from "../../utils/constants";
+import NavIcon from "../icons/NavIcon";
 
 export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission } = useAuth();
 
-  const linkClass = ({ isActive }) =>
-    `nav-item ${isActive ? "active" : ""}`;
-
-  const renderLink = ({ isActive }, label) => (
-    <span aria-current={isActive ? "page" : undefined}>{label}</span>
-  );
+  const linkClass = ({ isActive }) => `nav-item ${isActive ? "active" : ""}`;
 
   if (!isAdmin) {
+    // Show up to 4 permission-filtered agent nav items in the bottom bar
+    const agentItems = deliveryNavItems.filter(
+      (item) => !item.permission || hasPermission(item.permission)
+    );
+
     return (
       <nav className="bottom-nav hide-desktop" aria-label="Primary">
         <div className="bottom-nav-inner delivery-nav-inner">
-          <NavLink to="/agent" className={linkClass}>
-            {({ isActive }) => (
-              <>
-                <ClipboardList size={24} aria-hidden />
-                {renderLink({ isActive }, "Today")}
-              </>
-            )}
-          </NavLink>
-          <NavLink to="/deliveries" className={linkClass}>
-            {({ isActive }) => (
-              <>
-                <Truck size={24} aria-hidden />
-                {renderLink({ isActive }, "Deliveries")}
-              </>
-            )}
-          </NavLink>
+          {agentItems.map((item) => (
+            <NavLink key={item.id} to={item.path} className={linkClass}>
+              {({ isActive }) => (
+                <>
+                  <NavIcon name={item.icon} size={24} />
+                  <span aria-current={isActive ? "page" : undefined}>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
         </div>
       </nav>
     );
@@ -44,7 +40,7 @@ export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
           {({ isActive }) => (
             <>
               <LayoutDashboard size={24} aria-hidden />
-              {renderLink({ isActive }, "Home")}
+              <span aria-current={isActive ? "page" : undefined}>Home</span>
             </>
           )}
         </NavLink>
@@ -52,7 +48,7 @@ export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
           {({ isActive }) => (
             <>
               <Truck size={24} aria-hidden />
-              {renderLink({ isActive }, "Deliveries")}
+              <span aria-current={isActive ? "page" : undefined}>Deliveries</span>
             </>
           )}
         </NavLink>
@@ -60,7 +56,7 @@ export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
           {({ isActive }) => (
             <>
               <Droplets size={24} aria-hidden />
-              {renderLink({ isActive }, "Collections")}
+              <span aria-current={isActive ? "page" : undefined}>Collections</span>
             </>
           )}
         </NavLink>

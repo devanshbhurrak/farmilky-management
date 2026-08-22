@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { X } from "lucide-react";
+import { X, LogOut } from "lucide-react";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { useAuth } from "../../context/AuthContext";
@@ -7,13 +7,20 @@ import { navItems, deliveryNavItems } from "../../utils/constants";
 import NavIcon from "../icons/NavIcon";
 
 export default function MobileDrawer({ isOpen, onClose }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission, logout } = useAuth();
   useBodyScrollLock(isOpen);
   const drawerRef = useFocusTrap({ active: isOpen, onClose });
 
-  const items = isAdmin ? navItems : deliveryNavItems;
+  const items = isAdmin
+    ? navItems
+    : deliveryNavItems.filter((item) => !item.permission || hasPermission(item.permission));
 
   if (!isOpen) return null;
+
+  function handleLogout() {
+    logout();
+    onClose();
+  }
 
   return (
     <div
@@ -54,6 +61,22 @@ export default function MobileDrawer({ isOpen, onClose }) {
               ))}
             </div>
           </nav>
+
+          {/* Sign out button for delivery agents */}
+          {!isAdmin && (
+            <div className="drawer-footer">
+              <button
+                type="button"
+                className="drawer-link drawer-logout-btn"
+                onClick={handleLogout}
+              >
+                <span className="drawer-link-icon" aria-hidden="true">
+                  <LogOut size={18} />
+                </span>
+                <span className="drawer-link-label">Sign Out</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

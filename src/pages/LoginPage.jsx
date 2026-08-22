@@ -16,10 +16,11 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const user = await login(form.identifier.trim(), form.password);
-      toast.success("Signed in to the admin portal.");
       if (user.role === "delivery_partner" || user.role === "delivery" || user.role === "agent") {
-        navigate("/deliveries", { replace: true });
+        toast.success("Signed in.");
+        navigate("/agent", { replace: true });
       } else {
+        toast.success("Signed in to the admin portal.");
         navigate("/", { replace: true });
       }
     } catch (err) {

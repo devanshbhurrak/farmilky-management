@@ -1,0 +1,316 @@
+/* ─── Permissions Page ──────────────────────────────────────────────────────── */
+
+.perm-page {
+  max-width: 1200px;
+}
+
+.perm-info-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-primary-subtle, #eef5ee);
+  border: 1px solid var(--color-primary-border, #c5d9c5);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  color: var(--color-primary-text, #386641);
+}
+
+.perm-roles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--space-6);
+}
+
+/* ─── Role Card ─────────────────────────────────────────────────────────────── */
+
+.perm-role-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, var(--radius));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.perm-role-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-alt, var(--surface));
+}
+
+.perm-role-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.perm-role-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.perm-role-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-primary-subtle, #eef5ee);
+  color: var(--color-primary, #386641);
+}
+
+.perm-role-meta {
+  margin: var(--space-1) 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ─── Groups ────────────────────────────────────────────────────────────────── */
+
+.perm-groups {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.perm-group {
+  border-bottom: 1px solid var(--border);
+}
+
+.perm-group:last-child {
+  border-bottom: none;
+}
+
+.perm-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-5);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: background 0.15s;
+}
+
+.perm-group-header:hover {
+  background: var(--surface-alt, #fafafa);
+}
+
+.perm-group-name {
+  flex: 1;
+}
+
+.perm-group-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 30px;
+  text-align: right;
+}
+
+.perm-group-bulk {
+  display: flex;
+  gap: 4px;
+  margin-right: var(--space-1);
+}
+
+.perm-bulk-btn {
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 0.12s, color 0.12s;
+}
+
+.perm-bulk-btn:hover {
+  background: var(--color-primary, #386641);
+  color: #fff;
+  border-color: var(--color-primary, #386641);
+}
+
+.perm-bulk-btn--off:hover {
+  background: var(--danger, #dc2626);
+  color: #fff;
+  border-color: var(--danger, #dc2626);
+}
+
+.perm-group-items {
+  padding: var(--space-1) 0 var(--space-2);
+}
+
+.perm-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-5);
+  gap: var(--space-3);
+  transition: background 0.12s;
+}
+
+.perm-item:hover {
+  background: var(--surface-alt, #fafafa);
+}
+
+.perm-item-label {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.perm-item-text {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.perm-item-key {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+/* ─── Toggle Switch ─────────────────────────────────────────────────────────── */
+
+.perm-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.perm-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.perm-toggle-track {
+  display: flex;
+  align-items: center;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--border, #d1d5db);
+  transition: background 0.2s;
+  padding: 2px;
+}
+
+.perm-toggle-input:checked + .perm-toggle-track {
+  background: var(--color-primary, #386641);
+}
+
+.perm-toggle-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.perm-toggle-input:checked + .perm-toggle-track .perm-toggle-thumb {
+  transform: translateX(16px);
+}
+
+.perm-toggle-input:focus-visible + .perm-toggle-track {
+  outline: 2px solid var(--color-primary, #386641);
+  outline-offset: 2px;
+}
+
+/* ─── Card Actions ──────────────────────────────────────────────────────────── */
+
+.perm-role-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border);
+  background: var(--surface-alt, var(--surface));
+}
+
+.perm-role-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+}
+
+.perm-role-actions .mini-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ─── Sidebar logout ────────────────────────────────────────────────────────── */
+
+.sidebar-footer {
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.sidebar-logout {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--danger, #dc2626);
+  text-align: left;
+}
+
+.sidebar-logout:hover {
+  background: var(--danger-subtle, #fef2f2);
+  color: var(--danger, #dc2626);
+}
+
+/* ─── Drawer logout ─────────────────────────────────────────────────────────── */
+
+.drawer-footer {
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-2);
+}
+
+.drawer-logout-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--danger, #dc2626);
+  text-align: left;
+}
+
+.drawer-logout-btn:hover {
+  background: var(--danger-subtle, #fef2f2);
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .perm-roles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .perm-role-actions {
+    flex-wrap: wrap;
+  }
+}

@@ -10,17 +10,44 @@ function isPortalUser(user) {
   return user && PORTAL_ROLES.includes(user.role);
 }
 
+async function fetchPermissions() {
+  try {
+    const res = await apiRequest("/api/permissions/my");
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.permissions ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [permissions, setPermissions] = useState([]);
 
   const isAdmin = user?.role === "admin";
   const isDeliveryPartner = user?.role === "delivery_partner" || user?.role === "delivery" || user?.role === "agent";
+
+  /**
+   * Returns true if the current user has the given permission.
+   * Admin always returns true. Permission key "*" means all-access (admin sentinel).
+   */
+  const hasPermission = useCallback(
+    (permission) => {
+      if (!permission) return true;
+      if (isAdmin) return true;
+      if (permissions.includes("*")) return true;
+      return permissions.includes(permission);
+    },
+    [isAdmin, permissions]
+  );
 
   const logout = useCallback(async () => {
     await apiRequest("/api/user/logout", { method: "POST" });
     clearApiCache();
     setUser(null);
+    setPermissions([]);
   }, []);
 
   const login = useCallback(async (identifier, password) => {
@@ -39,6 +66,8 @@ export function AuthProvider({ children }) {
       throw new Error("Access denied. This portal is for staff only.");
     }
     setUser(loggedInUser);
+    const perms = await fetchPermissions();
+    setPermissions(perms);
     return loggedInUser;
   }, []);
 
@@ -49,6 +78,7 @@ export function AuthProvider({ children }) {
         const profileResponse = await apiRequest("/api/user/profile");
         if (!profileResponse.ok) {
           setUser(null);
+          setPermissions([]);
           return;
         }
         const profileData = await profileResponse.json();
@@ -57,11 +87,15 @@ export function AuthProvider({ children }) {
           await apiRequest("/api/user/logout", { method: "POST" });
           clearApiCache();
           setUser(null);
+          setPermissions([]);
           return;
         }
         setUser(sessionUser);
+        const perms = await fetchPermissions();
+        setPermissions(perms);
       } catch {
         setUser(null);
+        setPermissions([]);
       } finally {
         setAuthLoading(false);
       }
@@ -69,13 +103,14 @@ export function AuthProvider({ children }) {
 
     function onUnauthorized() {
       setUser(null);
+      setPermissions([]);
     }
     window.addEventListener("auth:unauthorized", onUnauthorized);
     return () => window.removeEventListener("auth:unauthorized", onUnauthorized);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, authLoading, isAdmin, isDeliveryPartner, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, authLoading, isAdmin, isDeliveryPartner, permissions, hasPermission, login, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
