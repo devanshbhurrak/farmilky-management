@@ -1,12 +1,15 @@
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { navItems, deliveryNavItems } from "../../utils/constants";
 import NavIcon from "../icons/NavIcon";
 
 export default function Sidebar({ collapsed, onToggle }) {
-  const { isAdmin } = useAuth();
-  const items = isAdmin ? navItems : deliveryNavItems;
+  const { isAdmin, hasPermission, logout } = useAuth();
+
+  const items = isAdmin
+    ? navItems
+    : deliveryNavItems.filter((item) => !item.permission || hasPermission(item.permission));
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -37,6 +40,23 @@ export default function Sidebar({ collapsed, onToggle }) {
           </NavLink>
         ))}
       </nav>
+
+      {/* Logout for delivery agents on desktop sidebar */}
+      {!isAdmin && (
+        <div className="sidebar-footer">
+          <button
+            type="button"
+            className="sidebar-link sidebar-logout"
+            onClick={logout}
+            title={collapsed ? "Sign Out" : undefined}
+          >
+            <span className="sidebar-icon">
+              <LogOut size={20} />
+            </span>
+            <span className="sidebar-label">Sign Out</span>
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

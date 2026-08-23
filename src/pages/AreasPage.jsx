@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 const fetchAreas = createApiFetch("/api/areas");
 const fetchAgents = createApiFetch("/api/areas/agents");
 
-const EMPTY_FORM = { name: "", pincodes: "", localities: "", assignedAgent: "" };
+const EMPTY_FORM = { name: "", pincodes: "", localities: "", assignedAgent: "", sequence: "" };
 
 export default function AreasPage() {
   const { data: areaData, loading, error, refetch } = useApiData(fetchAreas);
@@ -55,6 +55,7 @@ export default function AreasPage() {
       pincodes: area.pincodes.join(", "),
       localities: area.localities.join(", "),
       assignedAgent: area.assignedAgent?._id || "",
+      sequence: area.sequence ?? "",
     });
     setShowModal(true);
   };
@@ -70,6 +71,7 @@ export default function AreasPage() {
         pincodes: form.pincodes.split(",").map((s) => s.trim()).filter(Boolean),
         localities: form.localities.split(",").map((s) => s.trim()).filter(Boolean),
         assignedAgent: form.assignedAgent || null,
+        sequence: form.sequence !== "" ? Number(form.sequence) : 0,
       };
       const url = editing ? `/api/areas/${editing._id}` : "/api/areas";
       const method = editing ? "PUT" : "POST";
@@ -138,7 +140,10 @@ export default function AreasPage() {
               <div key={area._id} className="area-card">
                 <div className="area-card-head">
                   <div className="area-card-title-block">
-                    <h3 className="area-card-name">{area.name}</h3>
+                    <h3 className="area-card-name">
+                      <span className="area-card-seq">#{area.sequence ?? 0}</span>
+                      {area.name}
+                    </h3>
                     <StatusTag value={area.isActive ? "active" : "cancelled"} />
                   </div>
                   <div className="area-card-actions">
@@ -191,6 +196,10 @@ export default function AreasPage() {
         }
       >
         <div className="area-form-stack">
+          <div className="form-group">
+            <label>Sequence</label>
+            <input name="sequence" type="number" min="0" value={form.sequence} onChange={handleChange} placeholder="0" />
+          </div>
           <div className="form-group">
             <label>Area Name *</label>
             <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Koramangala" />

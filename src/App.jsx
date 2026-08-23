@@ -11,6 +11,7 @@ import BottomNav from "./components/layout/BottomNav";
 import MobileDrawer from "./components/layout/MobileDrawer";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminRoute from "./components/layout/AdminRoute";
+import PermissionRoute from "./components/layout/PermissionRoute";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import PageSkeleton from "./components/ui/PageSkeleton";
 
@@ -40,6 +41,7 @@ const ContactMessagesPage = lazy(() => import("./pages/ContactMessagesPage"));
 const SuppliersPage = lazy(() => import("./pages/SuppliersPage"));
 const SupplierDetailPage = lazy(() => import("./pages/SupplierDetailPage"));
 const MilkCollectionsPage = lazy(() => import("./pages/MilkCollectionsPage"));
+const PermissionsPage = lazy(() => import("./pages/PermissionsPage"));
 
 import "./styles/layout.css";
 import "./styles/components.css";
@@ -57,6 +59,7 @@ import "./styles/pages/milk-collections.css";
 import "./styles/pages/customers.css";
 import "./styles/pages/orders.css";
 import "./styles/pages/subscriptions.css";
+import "./styles/pages/permissions.css";
 
 function App() {
   const location = useLocation();
@@ -201,10 +204,20 @@ function App() {
                           <Route path="suppliers" element={<SuppliersPage />} />
                           <Route path="suppliers/:id" element={<SupplierDetailPage />} />
                           <Route path="milk-collections" element={<MilkCollectionsPage />} />
+                          <Route path="permissions" element={<PermissionsPage />} />
                         </Route>
-                        <Route path="deliveries" element={<DeliveriesPage />} />
-                        <Route path="agent" element={<AgentDashboardPage />} />
-                        <Route path="agent/manifest/:id" element={<ManifestDetailPage />} />
+
+                        {/* Delivery board — permission-gated */}
+                        <Route element={<PermissionRoute permission="delivery_board.view" />}>
+                          <Route path="deliveries" element={<DeliveriesPage />} />
+                        </Route>
+
+                        {/* Agent home — permission-gated */}
+                        <Route element={<PermissionRoute permission="manifest.view_today" />}>
+                          <Route path="agent" element={<AgentDashboardPage />} />
+                          <Route path="agent/manifest/:id" element={<ManifestDetailPage />} />
+                        </Route>
+
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
                     </main>
