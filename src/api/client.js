@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_BACKEND_BASEURL || "http://localhost:4000";
+// Empty string = same-origin requests (production proxies /api via vercel.json rewrite).
+const API_BASE =
+  import.meta.env.VITE_BACKEND_BASEURL ?? (import.meta.env.DEV ? "http://localhost:4000" : "");
 
 export async function apiRequest(path, options = {}) {
   const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
