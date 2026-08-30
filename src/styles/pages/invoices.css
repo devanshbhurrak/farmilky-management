@@ -2,100 +2,139 @@
    INVOICES — Page Styles
    ═══════════════════════════════════════════════ */
 
+/* ─── Invoice-specific status tags ──────────────
+   (supplements the global status-tag rules)      */
+
+.status-draft {
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+}
+.status-draft::before { background: #94a3b8; }
+
+.status-sent {
+  background: var(--info-bg);
+  color: var(--info-text);
+}
+.status-sent::before { background: var(--info); }
+
+.status-partially_paid {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+.status-partially_paid::before { background: var(--warning); }
+
+.status-overdue {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+.status-overdue::before { background: var(--danger); }
+
+.status-void {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+.status-void::before { background: #cbd5e1; }
+
 /* ─── Page-level gap override ───────────────── */
 .invoices-page.view-stack {
-  gap: var(--space-5); /* 1.25rem on mobile */
+  gap: var(--space-4);
 }
 
-/* ─── Desktop summary strip ──────────────────── */
+/* ─── Summary stats grid ─────────────────────── */
 .inv-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-4);
+  gap: 0;
+  padding: 0;
 }
 
 .inv-summary-stat {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-right: 1px solid var(--border-soft);
+}
+
+.inv-summary-stat:last-child {
+  border-right: none;
+}
+
+.inv-summary-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-soft);
+}
+
+.inv-summary-icon--success {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: transparent;
+}
+
+.inv-summary-icon--danger {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: transparent;
 }
 
 .inv-summary-label {
+  display: block;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  margin-bottom: 2px;
 }
 
 .inv-summary-value {
+  display: block;
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .inv-summary-value.collected   { color: var(--color-primary); }
 .inv-summary-value.outstanding { color: var(--danger); }
 
-/* ─── Mobile financial summary strip ────────── */
-.inv-mobile-strip {
+/* ─── Filter bar ─────────────────────────────── */
+.inv-filter-bar {
   display: flex;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.inv-mobile-strip::-webkit-scrollbar { display: none; }
-
-.inv-strip-stat {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   align-items: center;
-  gap: 2px;
-  background: var(--surface-muted);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-4);
-  min-width: 80px;
-  text-align: center;
 }
 
-.inv-strip-stat > span {
-  font-size: 0.68rem;
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
+.inv-refresh-btn {
+  flex-shrink: 0;
+  width: 36px;
+  padding: 0;
+  justify-content: center;
 }
 
-.inv-strip-stat > strong {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-extrabold);
-  color: var(--text-primary);
-}
-
-.inv-strip-stat > strong.success { color: var(--success-text); }
-.inv-strip-stat > strong.danger  { color: var(--danger-text); }
-
-/* ─── Overdue label ──────────────────────────── */
-/* Shown next to the status tag for unpaid-and-past-due rows */
-.inv-overdue-label {
-  display: inline-block;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--danger-text);
-  margin-left: var(--space-1);
-  vertical-align: middle;
+/* ─── Actions column in table ──────────────── */
+.inv-actions-cell {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 
 /* ─── Mobile card action row ─────────────────── */
 .inv-card-action {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   border-top: 1px solid var(--border-soft);
+  background: var(--surface-muted);
   display: flex;
   gap: var(--space-2);
 }
@@ -103,56 +142,14 @@
 .inv-card-action .btn {
   flex: 1;
   justify-content: center;
+  min-height: var(--touch-min);
+  font-size: var(--font-size-xs);
 }
 
-/* ─── Actions column in table ──────────────────── */
-.inv-actions-cell {
-  display: flex;
-  gap: var(--space-2);
-}
-
-/* ─── Customer link in mobile card ──────────── */
-a.inv-customer-link {
-  text-decoration: none;
-  color: inherit;
-}
-
-/* ─── Pay modal — invoice summary block ─────── */
-.inv-pay-summary {
-  margin-bottom: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface-muted);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-soft);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-}
-
-.inv-pay-summary p { margin: 0; }
-
-.inv-pay-summary strong {
-  color: var(--text-primary);
-  font-weight: var(--font-weight-bold);
-}
-
-.inv-pay-remaining {
-  color: var(--danger-text) !important;
-}
-
-/* ─── History Ledger Modal ───────────────────── */
-.history-ledger {
-  display: flex;
-  flex-direction: column;
-}
-
+/* ─── History Ledger ─────────────────────────── */
 .ledger-table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
 }
 
 /* Cancel global mobile block-display for the ledger table */
@@ -195,6 +192,7 @@ a.inv-customer-link {
   text-transform: uppercase;
   font-size: 10px;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .ledger-table td {
@@ -215,8 +213,27 @@ a.inv-customer-link {
   color: var(--text-muted);
 }
 
-/* ─── Form validation text ───────────────────── */
-/* (used across pages — defined here since it was missing) */
+/* ─── CR / DR entry badge ────────────────────── */
+.inv-entry-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.inv-entry-cr {
+  color: var(--success-text);
+  background: var(--success-bg);
+}
+
+.inv-entry-dr {
+  color: var(--danger-text);
+  background: var(--danger-bg);
+}
+
+/* ─── Form help / validation text ───────────── */
 .form-help {
   display: block;
   font-size: var(--font-size-xs);
@@ -229,48 +246,531 @@ a.inv-customer-link {
 }
 
 /* ═══════════════════════════════════════════════
-   DESKTOP COMPACT OVERRIDES  (≥ 768px)
+   INVOICE DETAIL PAGE
+   ═══════════════════════════════════════════════ */
+
+.inv-detail-wrap {
+  max-width: 900px;
+}
+
+/* ─── Header ─────────────────────────────────── */
+.inv-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.inv-detail-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.inv-detail-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.inv-detail-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.inv-early-badge {
+  font-size: var(--font-size-xs);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-weight: var(--font-weight-bold);
+  border: 1px solid var(--warning);
+}
+
+.inv-detail-period {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+/* ─── Action groups ──────────────────────────── */
+.inv-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.inv-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-muted);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-soft);
+}
+
+.inv-btn-success {
+  color: var(--success-text);
+  border-color: var(--success) !important;
+}
+
+.inv-btn-success:hover:not(:disabled) {
+  background: var(--success-bg) !important;
+}
+
+.inv-btn-danger {
+  color: var(--danger-text);
+  border-color: var(--danger) !important;
+}
+
+.inv-btn-danger:hover:not(:disabled) {
+  background: var(--danger-bg) !important;
+}
+
+/* ─── Banners ─────────────────────────────────── */
+.inv-replaced-banner {
+  padding: var(--space-3) var(--space-4);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--warning-text);
+}
+
+.inv-void-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--danger-text);
+}
+
+/* ─── Customer card ──────────────────────────── */
+.inv-customer-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.inv-customer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-6);
+}
+
+.inv-customer-primary {
+  flex: 1;
+  min-width: 140px;
+}
+
+.inv-customer-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+}
+
+.inv-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inv-meta-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.inv-meta-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.inv-customer-note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-soft);
+  padding-top: var(--space-3);
+  font-style: italic;
+}
+
+/* ─── Invoice summary ledger ─────────────────── */
+.inv-summary-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 400px;
+}
+
+.inv-ledger-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--font-size-sm);
+  gap: var(--space-4);
+}
+
+.inv-ledger-total {
+  border-top: 2px solid var(--border-soft);
+  padding-top: var(--space-2);
+  font-weight: var(--font-weight-extrabold);
+  font-size: var(--font-size-base);
+}
+
+.inv-ledger-total span:last-child {
+  font-size: var(--font-size-xl);
+}
+
+.inv-settled-note {
+  font-size: var(--font-size-xs);
+  color: var(--success-text);
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+}
+
+/* ─── Collapsible log toggle ─────────────────── */
+.inv-log-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: none;
+  transition: background var(--duration-base);
+}
+
+.inv-log-toggle:hover {
+  background: var(--surface-inset);
+}
+
+/* ─── Void modal info box ────────────────────── */
+.inv-void-info {
+  padding: var(--space-3) var(--space-4);
+  background: var(--danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--danger-text);
+}
+
+.inv-void-info p { margin: 0; }
+
+/* ═══════════════════════════════════════════════
+   GENERATE INVOICE MODAL
+   ═══════════════════════════════════════════════ */
+
+/* ─── Bulk result card ───────────────────────── */
+.gen-result-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--success-bg);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Error details ──────────────────────────── */
+.gen-error-details {
+  font-size: var(--font-size-xs);
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.gen-error-details summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-bold);
+}
+
+.gen-error-details ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* ─── Bulk info banner ───────────────────────── */
+.gen-bulk-info {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--warning-bg);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--warning-text);
+}
+
+/* ─── Selected customer display ──────────────── */
+.gen-selected-customer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--success-bg);
+  border: 1px solid var(--color-primary-muted);
+  border-radius: var(--radius-sm);
+  min-height: 40px;
+}
+
+/* ─── Customer search dropdown ───────────────── */
+.gen-customer-search {
+  position: relative;
+}
+
+.gen-customer-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-dropdown);
+  overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.gen-customer-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-soft);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gen-customer-option:last-child {
+  border-bottom: none;
+}
+
+.gen-customer-option:hover,
+.gen-customer-option:focus-visible {
+  background: var(--surface-muted);
+  outline: none;
+}
+
+.gen-customer-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.gen-customer-phone {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.gen-customer-empty {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ─── Checkbox row ───────────────────────────── */
+.gen-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.gen-checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+/* ─── Force regenerate warning ───────────────── */
+.gen-force-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ═══════════════════════════════════════════════
+   DESKTOP OVERRIDES  (≥ 768px)
    ═══════════════════════════════════════════════ */
 @media (min-width: 768px) {
-
-  /* Tighter gap between sections */
   .invoices-page.view-stack {
+    gap: var(--space-5);
+  }
+
+  .inv-summary-stat {
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .inv-summary-value {
+    font-size: var(--font-size-2xl);
+  }
+
+  .inv-detail-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .inv-detail-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: var(--space-4);
   }
 
-  /* Page header — global 2rem bottom padding is too much */
-  .invoices-page .page-header {
-    padding-bottom: var(--space-5);
+  .inv-detail-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
   }
 
-  /* Tighter filter bar */
-  .invoices-page .surface-filters {
-    padding-top: var(--space-4);
-    padding-bottom: var(--space-4);
+  .inv-detail-actions {
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
   }
 
-  /* 8 columns need tighter cells — global is 1rem 1.5rem */
+  .inv-summary-ledger {
+    max-width: 420px;
+  }
+
+  /* Tighter table cells */
   .invoices-page .table-shell th,
   .invoices-page .table-shell td {
     padding: var(--space-3) var(--space-4);
   }
-
-  /* Summary card-inset padding */
-  .inv-summary-grid .card-inset {
-    padding: var(--space-3) var(--space-5);
-  }
 }
 
 /* ═══════════════════════════════════════════════
-   MOBILE COMPACT OVERRIDES  (≤ 767px)
+   MOBILE OVERRIDES  (≤ 767px)
    ═══════════════════════════════════════════════ */
 @media (max-width: 767px) {
-
-  .invoices-page .surface-filters {
-    padding: var(--space-3);
+  /* 3-stat grid → stay 3 col but tighter */
+  .inv-summary-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 
-  .inv-card-action {
-    padding: var(--space-2) var(--space-3);
+  .inv-summary-stat {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-right: 1px solid var(--border-soft);
+  }
+
+  .inv-summary-stat:last-child {
+    border-right: none;
+  }
+
+  .inv-summary-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .inv-summary-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .inv-summary-value {
+    font-size: var(--font-size-base);
+  }
+
+  .inv-filter-bar {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .inv-detail-wrap {
+    max-width: none;
+  }
+
+  .inv-detail-header {
+    gap: var(--space-3);
+  }
+
+  .inv-detail-actions {
+    gap: var(--space-2);
+  }
+
+  .inv-action-group {
+    padding: var(--space-1) var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .inv-action-group .btn {
+    min-height: var(--touch-min);
+  }
+
+  .inv-customer-meta {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .inv-summary-ledger {
+    max-width: 100%;
+  }
+}
+
+/* Very small screens — summary stat values scale down */
+@media (max-width: 380px) {
+  .inv-summary-stat {
+    padding: var(--space-2);
+  }
+
+  .inv-summary-value {
+    font-size: var(--font-size-sm);
+  }
+
+  .inv-summary-label {
+    font-size: 9px;
+  }
+
+  .inv-summary-icon {
+    display: none;
   }
 }

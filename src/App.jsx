@@ -42,6 +42,8 @@ const SuppliersPage = lazy(() => import("./pages/SuppliersPage"));
 const SupplierDetailPage = lazy(() => import("./pages/SupplierDetailPage"));
 const MilkCollectionsPage = lazy(() => import("./pages/MilkCollectionsPage"));
 const PermissionsPage = lazy(() => import("./pages/PermissionsPage"));
+const InvoicesPage = lazy(() => import("./pages/InvoicesPage"));
+const InvoiceDetailPage = lazy(() => import("./pages/InvoiceDetailPage"));
 
 import "./styles/layout.css";
 import "./styles/components.css";
@@ -190,7 +192,9 @@ function App() {
                           />
                           <Route path="customers/:id" element={<CustomerDetailPage />} />
                           <Route path="products" element={<ProductsPage />} />
-                          <Route path="invoices" element={<BalancesPage />} />
+                          <Route path="invoices" element={<InvoicesPage />} />
+                          <Route path="invoices/:id" element={<InvoiceDetailPage />} />
+                          <Route path="balances" element={<BalancesPage />} />
                           <Route path="areas" element={<AreasPage />} />
                           <Route path="areas/:id/customers" element={<AreaCustomersPage />} />
                           <Route path="agents" element={<AgentsPage />} />
