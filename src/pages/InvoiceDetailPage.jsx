@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
-  ArrowLeft, FileText, Download, MessageCircle, CheckCircle2,
+  FileText, Download, MessageCircle, CheckCircle2,
   XCircle, RefreshCw, ChevronDown, ChevronUp,
   Calendar, User, Printer,
 } from "lucide-react";
