@@ -725,6 +725,21 @@
     gap: var(--space-2);
   }
 
+  /* Stack month/year/status selects in a 3-col grid on mobile */
+  .inv-filter-bar .desktop-filters {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+    width: 100%;
+  }
+
+  .inv-filter-bar .desktop-filters select {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-xs);
+    border-radius: var(--radius-sm);
+  }
+
   .inv-detail-wrap {
     max-width: none;
   }
@@ -735,15 +750,22 @@
 
   .inv-detail-actions {
     gap: var(--space-2);
+    width: 100%;
   }
 
   .inv-action-group {
-    padding: var(--space-1) var(--space-2);
-    gap: var(--space-1);
+    padding: var(--space-2);
+    gap: var(--space-2);
+    border-radius: var(--radius-sm);
+    width: 100%;
+    justify-content: stretch;
   }
 
   .inv-action-group .btn {
+    flex: 1;
     min-height: var(--touch-min);
+    justify-content: center;
+    font-size: var(--font-size-xs);
   }
 
   .inv-customer-meta {
@@ -1179,6 +1201,26 @@
 
   .inv-payment-body > .inv-payment-info:first-child {
     grid-column: 1;
+  }
+
+  /* UPI ID box and tap-to-pay link fill full width on mobile */
+  .inv-payment-upi {
+    width: 100%;
+  }
+
+  .inv-payment-tap-link {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Contact section laid out as a horizontal row on mobile */
+  .inv-payment-contact {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    min-width: unset;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-soft);
   }
 
   .inv-doc-section {

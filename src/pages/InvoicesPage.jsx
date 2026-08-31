@@ -291,7 +291,7 @@ export default function InvoicesPage() {
       <PageHeader
         title="Invoices"
         subtitle={`${stats.count} invoice${stats.count !== 1 ? "s" : ""} for ${monthYearLabel(month, year)}`}
-        action={
+        actions={
           <button className="btn btn-primary" onClick={() => setGenerateOpen(true)}>
             <Plus size={15} /> Generate
           </button>
