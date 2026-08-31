@@ -774,3 +774,471 @@
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════
+   INVOICE DOCUMENT VIEW — reference-style layout
+   ═══════════════════════════════════════════════ */
+
+/* ── Document wrapper ────────────────────────── */
+.inv-doc {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  /* do NOT set overflow:hidden — it clips sticky/dropdown children */
+}
+
+/* ── Doc Header ──────────────────────────────── */
+.inv-doc-header {
+  background: #1a4731;
+  color: #ffffff;
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.inv-doc-brand-name {
+  font-size: 1.8rem;
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: #ffffff;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.inv-doc-brand-sub {
+  font-size: var(--font-size-xs);
+  color: #7dbf9a;
+  margin: 0 0 2px 0;
+}
+
+.inv-doc-brand-tagline {
+  font-size: var(--font-size-xs);
+  color: #b2d8c4;
+  font-style: italic;
+  margin: 0;
+}
+
+.inv-doc-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  text-align: right;
+}
+
+.inv-doc-invoice-label {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: 0.12em;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.inv-doc-invoice-num {
+  font-size: var(--font-size-sm);
+  color: #7dbf9a;
+  font-weight: var(--font-weight-medium);
+}
+
+/* ── Two-column info row ─────────────────────── */
+.inv-doc-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.inv-info-box {
+  border-right: 1px solid var(--border-soft);
+}
+.inv-info-box:last-child {
+  border-right: none;
+}
+
+/* Left box: green header bar */
+.inv-info-box-header {
+  background: #2d6a4f;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: 0.1em;
+  padding: 6px var(--space-4);
+  text-transform: uppercase;
+}
+
+.inv-info-box-body {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Right box (no header bar) — top-pad to align content with left box body */
+.inv-info-box--meta .inv-info-box-body {
+  padding-top: var(--space-4);
+  /* Left box: header (~28px) + top padding = right needs equivalent top gap */
+  padding-top: calc(28px + var(--space-3));
+}
+
+.inv-info-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.inv-info-label {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  min-width: 108px;
+  flex-shrink: 0;
+}
+
+.inv-info-label::after {
+  content: ":";
+}
+
+.inv-info-value {
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+.inv-info-value--bold  { font-weight: var(--font-weight-bold); }
+.inv-info-value--green { color: var(--color-primary); font-weight: var(--font-weight-bold); }
+
+/* ── Generic doc section ─────────────────────── */
+.inv-doc-section {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+/* Full-width green bar section titles (matches reference image) */
+.inv-doc-section-title {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: #2d6a4f;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px var(--space-3);
+  margin-bottom: var(--space-3);
+  border-radius: 2px;
+}
+
+/* Toggle button for collapsible sections */
+.inv-doc-section-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  gap: var(--space-2);
+  /* touch target */
+  min-height: 36px;
+}
+
+.inv-doc-section-toggle .inv-doc-section-title {
+  /* inside toggle the title is a span — reset block/width so it stays inline */
+  margin-bottom: 0;
+  flex: 1;
+}
+
+/* ── Invoice Summary inside doc section ──────── */
+.inv-doc-section .inv-summary-ledger {
+  max-width: 100%;   /* stretch full width of section */
+}
+
+/* ── Product / Milk Summary table ────────────── */
+.inv-product-table thead th {
+  background: #2d6a4f !important;
+  color: #ffffff !important;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+}
+
+.inv-product-table thead tr {
+  background: #2d6a4f;
+}
+
+.inv-table-total-row td {
+  background: #f0faf4;
+  font-weight: var(--font-weight-extrabold);
+  border-top: 2px solid #9ecfb4;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Payment section ─────────────────────────── */
+.inv-doc-payment {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.inv-payment-body {
+  display: grid;
+  /* QR col | instructions col | contact col */
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-5);
+  margin-top: var(--space-3);
+  align-items: start;
+}
+
+/* When QR is absent the grid collapses gracefully */
+.inv-payment-body > .inv-payment-info:first-child {
+  grid-column: 1 / 3;
+}
+
+/* ── QR code column ──────────────────────────── */
+.inv-payment-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.inv-payment-qr-link {
+  display: block;
+  padding: var(--space-2);
+  border: 1.5px solid #9ecfb4;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  line-height: 0; /* remove inline-block gap below SVG */
+  transition: box-shadow var(--duration-base);
+}
+
+.inv-payment-qr-link:hover {
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.18);
+}
+
+.inv-payment-qr-label {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.inv-payment-qr-amount {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary);
+}
+
+/* ── Tap-to-pay link ─────────────────────────── */
+.inv-payment-tap-link {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-decoration: none;
+  padding: 4px var(--space-3);
+  border: 1px solid var(--color-primary-muted, #9ecfb4);
+  border-radius: var(--radius-pill);
+  width: fit-content;
+  transition: background var(--duration-fast);
+}
+
+.inv-payment-tap-link:hover {
+  background: var(--success-bg, #f0faf4);
+}
+
+.inv-payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+/* Reset paragraph margins inside payment blocks */
+.inv-payment-info p,
+.inv-payment-contact p {
+  margin: 0;
+}
+
+.inv-payment-upi {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-muted);
+  border: 1px solid #9ecfb4;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.inv-payment-upi-label {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.inv-payment-upi-id {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  font-size: var(--font-size-base);
+  letter-spacing: 0.02em;
+}
+
+.inv-payment-note {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.inv-payment-contact {
+  font-size: var(--font-size-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+/* ── Notes ───────────────────────────────────── */
+.inv-doc-notes {
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-soft);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Doc Footer ──────────────────────────────── */
+.inv-doc-footer {
+  background: #1a4731;
+  color: #b2d8c4;
+  text-align: center;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
+/* ── Ledger collapsed state (CSS-toggled instead of conditional render) ── */
+.inv-ledger-collapsed {
+  display: none;
+}
+
+/* ── Mobile overrides (≤ 640px) ─────────────── */
+@media (max-width: 640px) {
+  .inv-doc-header {
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
+
+  .inv-doc-brand-name {
+    font-size: 1.4rem;
+  }
+
+  .inv-doc-info-row {
+    grid-template-columns: 1fr;
+  }
+
+  .inv-info-box {
+    border-right: none;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .inv-info-box:last-child {
+    border-bottom: none;
+  }
+
+  /* Right box alignment reset on single-column layout */
+  .inv-info-box--meta .inv-info-box-body {
+    padding-top: var(--space-3);
+  }
+
+  .inv-payment-body {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  /* On mobile: centre the QR code */
+  .inv-payment-qr {
+    align-self: center;
+    margin: 0 auto;
+  }
+
+  .inv-payment-body > .inv-payment-info:first-child {
+    grid-column: 1;
+  }
+
+  .inv-doc-section {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .inv-doc-payment {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+/* ── Print styles ────────────────────────────── */
+@media print {
+  /* Hide all admin chrome */
+  .inv-detail-header,
+  .breadcrumbs,
+  .inv-replaced-banner,
+  .inv-void-banner {
+    display: none !important;
+  }
+
+  /* Always show toggle button label but hide the chevron icon */
+  .inv-doc-section-toggle {
+    pointer-events: none;
+  }
+  .inv-doc-section-toggle svg {
+    display: none !important;
+  }
+
+  /* Always expand the transaction ledger when printing */
+  .inv-ledger-collapsed {
+    display: block !important;
+  }
+
+  .inv-doc {
+    border: none;
+    border-radius: 0;
+  }
+
+  .view-stack {
+    gap: 0;
+  }
+
+  /* Ensure QR and payment grid render correctly */
+  .inv-payment-body {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .inv-payment-qr-link {
+    border-color: #9ecfb4;
+  }
+
+  /* Prevent section breaks inside tables */
+  .inv-product-table,
+  .ledger-table {
+    page-break-inside: auto;
+  }
+
+  .inv-product-table tr,
+  .ledger-table tr {
+    page-break-inside: avoid;
+  }
+}

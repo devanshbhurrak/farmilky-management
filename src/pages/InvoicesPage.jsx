@@ -86,9 +86,22 @@ export default function InvoicesPage() {
     return { count: all.length, outstanding, collected };
   }, [invoices]);
 
+  // Build brand-config query params from frontend env so the PDF generator
+  // renders the QR and UPI link even when backend env vars differ.
+  function buildPdfParams(extra = {}) {
+    const p = new URLSearchParams(extra);
+    const upiId   = import.meta.env.VITE_UPI_ID      || "";
+    const upiName = import.meta.env.VITE_UPI_NAME    || "Farmilky";
+    const phone   = import.meta.env.VITE_BRAND_PHONE || "";
+    if (upiId)   p.set("upiId",   upiId);
+    if (upiName) p.set("upiName", upiName);
+    if (phone)   p.set("phone",   phone);
+    return p.toString();
+  }
+
   async function handleDownloadPDF(inv, detailed = false) {
     try {
-      const res = await apiRequest(`/api/invoices/admin/${inv._id}/pdf?detailed=${detailed}`);
+      const res = await apiRequest(`/api/invoices/admin/${inv._id}/pdf?${buildPdfParams({ detailed })}`);
       if (!res.ok) throw new Error("Failed to generate PDF");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -114,7 +127,7 @@ export default function InvoicesPage() {
     // Fetch PDF first
     let blob;
     try {
-      const res = await apiRequest(`/api/invoices/admin/${inv._id}/pdf`);
+      const res = await apiRequest(`/api/invoices/admin/${inv._id}/pdf?${buildPdfParams()}`);
       if (!res.ok) throw new Error("Failed to generate PDF");
       blob = await res.blob();
     } catch (err) {
