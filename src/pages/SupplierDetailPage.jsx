@@ -52,6 +52,8 @@ export default function SupplierDetailPage() {
   const [editForm, setEditForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [deletingAdjId, setDeletingAdjId] = useState(null);
 
   const [colEditTarget, setColEditTarget] = useState(null); // collection being edited
   const [colEditForm, setColEditForm] = useState({});
@@ -234,6 +236,8 @@ export default function SupplierDetailPage() {
   }, [id, adjForm, fetchPassbook, fetchSupplier]);
 
   const handleDeleteAdjustment = useCallback(async (adjId) => {
+    if (deletingAdjId) return;
+    setDeletingAdjId(adjId);
     try {
       const res = await apiRequest(`/api/suppliers/${id}/adjustments/${adjId}`, { method: "DELETE" });
       const data = await res.json();
@@ -243,8 +247,10 @@ export default function SupplierDetailPage() {
       fetchSupplier();
     } catch (err) {
       toast.error(err.message || "Failed to delete adjustment.");
+    } finally {
+      setDeletingAdjId(null);
     }
-  }, [id, fetchPassbook, fetchSupplier]);
+  }, [id, deletingAdjId, fetchPassbook, fetchSupplier]);
 
   const openColConfirm = useCallback((c) => {
     setColConfirmTarget(c);
@@ -392,6 +398,8 @@ export default function SupplierDetailPage() {
 
   const handleToggleStatus = useCallback(async () => {
     if (!confirmAction || confirmAction.type !== "toggle") return;
+    if (confirmLoading) return;
+    setConfirmLoading(true);
     try {
       const res = await apiRequest(`/api/suppliers/${id}/status`, {
         method: "PATCH", body: JSON.stringify({ isActive: !supplier.isActive }),
@@ -402,10 +410,13 @@ export default function SupplierDetailPage() {
       setConfirmAction(null);
       fetchSupplier();
     } catch (err) { toast.error(err.message); }
-  }, [id, supplier, confirmAction, fetchSupplier]);
+    finally { setConfirmLoading(false); }
+  }, [id, supplier, confirmAction, confirmLoading, fetchSupplier]);
 
   const handleDelete = useCallback(async () => {
     if (!confirmAction || confirmAction.type !== "delete") return;
+    if (confirmLoading) return;
+    setConfirmLoading(true);
     try {
       const res = await apiRequest(`/api/suppliers/${id}`, { method: "DELETE" });
       const result = await res.json();
@@ -414,7 +425,8 @@ export default function SupplierDetailPage() {
       setConfirmAction(null);
       navigate("/suppliers");
     } catch (err) { toast.error(err.message); }
-  }, [id, confirmAction, navigate]);
+    finally { setConfirmLoading(false); }
+  }, [id, confirmAction, confirmLoading, navigate]);
 
   if (loading) return <LoadingScreen />;
   if (!supplier) {
@@ -846,6 +858,7 @@ export default function SupplierDetailPage() {
                         <button
                           className="supplier-card-edit-btn"
                           onClick={() => handleDeleteAdjustment(entry._id)}
+                          disabled={deletingAdjId === entry._id}
                           title="Delete"
                         >
                           <Trash2 size={14} />
@@ -1185,8 +1198,9 @@ export default function SupplierDetailPage() {
       {confirmAction?.type === "toggle" && (
         <ConfirmDialog
           open
-          onClose={() => setConfirmAction(null)}
+          onClose={() => { if (!confirmLoading) setConfirmAction(null); }}
           onConfirm={handleToggleStatus}
+          loading={confirmLoading}
           title={supplier.isActive ? "Deactivate Supplier" : "Activate Supplier"}
           message={supplier.isActive
             ? `Deactivate ${supplier.name}? Their entries will no longer be generated in daily collections.`
@@ -1198,8 +1212,9 @@ export default function SupplierDetailPage() {
       {confirmAction?.type === "delete" && (
         <ConfirmDialog
           open
-          onClose={() => setConfirmAction(null)}
+          onClose={() => { if (!confirmLoading) setConfirmAction(null); }}
           onConfirm={handleDelete}
+          loading={confirmLoading}
           title="Remove Supplier"
           message={`Remove ${supplier.name}? Their collection and payment history will be preserved but they will no longer appear in the active supplier list.`}
           confirmText="Remove"

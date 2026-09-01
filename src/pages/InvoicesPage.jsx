@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useActionMap } from "../hooks/useAction";
 import { useNavigate, Link } from "react-router-dom";
 import {
   FileText, Download, MessageCircle, Plus, RefreshCw,
@@ -50,6 +51,7 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [generateOpen, setGenerateOpen] = useState(false);
+  const { run: runInvoiceAction, isLoading: isInvoiceActionLoading } = useActionMap();
 
   const fetcher = useCallback(
     () => fetchInvoices({ month, year, status, page, limit: 50 }),
@@ -100,20 +102,23 @@ export default function InvoicesPage() {
   }
 
   async function handleDownloadPDF(inv, detailed = false) {
-    try {
-      const res = await apiRequest(`/api/invoices/admin/${inv._id}/pdf?${buildPdfParams({ detailed })}`);
-      if (!res.ok) throw new Error("Failed to generate PDF");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = `${inv.invoiceNumber}.pdf`; a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      toast.error(err.message);
-    }
+    await runInvoiceAction(`${inv._id}_pdf`, async () => {
+      try {
+        const res = await apiRequest(`/api/invoices/admin/${inv._id}/pdf?${buildPdfParams({ detailed })}`);
+        if (!res.ok) throw new Error("Failed to generate PDF");
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `${inv.invoiceNumber}.pdf`; a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        toast.error(err.message);
+      }
+    });
   }
 
   async function handleSendWhatsApp(inv) {
+    await runInvoiceAction(`${inv._id}_wa`, async () => {
     const phone = (inv.userId?.phone || "").replace(/\D/g, "");
     if (!phone) { toast.error("Customer has no phone number."); return; }
     const waPhone = phone.startsWith("91") ? phone : `91${phone}`;
@@ -163,6 +168,7 @@ export default function InvoicesPage() {
       });
       refetch();
     } catch (_) {}
+    }); // end runInvoiceAction
   }
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
@@ -202,11 +208,11 @@ export default function InvoicesPage() {
           <button className="btn btn-sm" onClick={() => navigate(`/invoices/${r._id}`)}>
             <FileText size={13} /> View
           </button>
-          <button className="btn btn-sm" onClick={() => handleDownloadPDF(r)}>
-            <Download size={13} /> PDF
+          <button className="btn btn-sm" onClick={() => handleDownloadPDF(r)} disabled={isInvoiceActionLoading(`${r._id}_pdf`)}>
+            <Download size={13} /> {isInvoiceActionLoading(`${r._id}_pdf`) ? "…" : "PDF"}
           </button>
-          <button className="btn btn-sm" onClick={() => handleSendWhatsApp(r)}>
-            <MessageCircle size={13} /> WA
+          <button className="btn btn-sm" onClick={() => handleSendWhatsApp(r)} disabled={isInvoiceActionLoading(`${r._id}_wa`)}>
+            <MessageCircle size={13} /> {isInvoiceActionLoading(`${r._id}_wa`) ? "…" : "WA"}
           </button>
         </div>
       </>
@@ -272,10 +278,10 @@ export default function InvoicesPage() {
           <button className="btn btn-sm" title="View" onClick={(e) => { e.stopPropagation(); navigate(`/invoices/${r._id}`); }}>
             <FileText size={14} />
           </button>
-          <button className="btn btn-sm" title="Download PDF" onClick={(e) => { e.stopPropagation(); handleDownloadPDF(r); }}>
+          <button className="btn btn-sm" title="Download PDF" disabled={isInvoiceActionLoading(`${r._id}_pdf`)} onClick={(e) => { e.stopPropagation(); handleDownloadPDF(r); }}>
             <Download size={14} />
           </button>
-          <button className="btn btn-sm" title="Send via WhatsApp" onClick={(e) => { e.stopPropagation(); handleSendWhatsApp(r); }}>
+          <button className="btn btn-sm" title="Send via WhatsApp" disabled={isInvoiceActionLoading(`${r._id}_wa`)} onClick={(e) => { e.stopPropagation(); handleSendWhatsApp(r); }}>
             <MessageCircle size={14} />
           </button>
         </div>

@@ -5,7 +5,7 @@ import OutcomeForm from "./OutcomeForm";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 
-export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfirm, onFormChange }) {
+export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfirm, loading = false, onFormChange }) {
   const [localMode, setLocalMode] = useState(null);
   const [subscriptions, setSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
@@ -124,7 +124,8 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
             key={opt.value}
             type="button"
             className={`chip om-mode-chip om-mode-chip--${opt.value} ${localMode === opt.value ? "active" : ""}`}
-            onClick={() => setLocalMode(opt.value)}
+            onClick={() => { if (!loading) setLocalMode(opt.value); }}
+            disabled={loading}
           >
             {opt.label}
           </button>
@@ -133,7 +134,7 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
     </div>
   );
 
-  const confirmLabel =
+  const confirmLabel = loading ? "Processing…" :
     localMode === "delivered" ? "Confirm Delivery" :
     localMode === "skip"      ? "Confirm Skip"     :
     localMode === "failed"    ? "Record Failure"   : "Confirm";
@@ -165,6 +166,7 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
     <button
       className={`btn outcome-confirm-btn om-confirm-btn--${localMode}`}
       onClick={handleConfirm}
+      disabled={loading}
     >
       {confirmLabel}
     </button>

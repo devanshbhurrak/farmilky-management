@@ -7,7 +7,7 @@ import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/format";
 import toast from "react-hot-toast";
 
-export default function CustomerConfirmDrawer({ isMobile, group, onClose, onConfirm }) {
+export default function CustomerConfirmDrawer({ isMobile, group, onClose, onConfirm, loading = false }) {
   const [extraItems, setExtraItems] = useState([]);
   const [paymentMode, setPaymentMode] = useState("pay_at_delivery");
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState(null);
@@ -168,10 +168,10 @@ export default function CustomerConfirmDrawer({ isMobile, group, onClose, onConf
     <button
       className="btn btn-primary ccd-confirm-btn"
       onClick={handleConfirm}
-      disabled={filledItems.length === 0}
+      disabled={filledItems.length === 0 || loading}
       title={filledItems.length === 0 ? "Select at least one product to confirm" : ""}
     >
-      Confirm Extra Products
+      {loading ? "Saving…" : "Confirm Extra Products"}
     </button>
   );
 

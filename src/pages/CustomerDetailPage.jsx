@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck, ArrowLeftRight, QrCode, MessageCircle } from "lucide-react";
+import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck, ArrowLeftRight, QrCode, MessageCircle, Package, Banknote, SlidersHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
@@ -777,31 +777,46 @@ export default function CustomerDetailPage() {
             <DataTable
               columns={[
                 { key: "date",        label: "Date",        render: (r) => formatDate(r.date) },
-                { key: "description", label: "Description", render: (r) => (
-                  <div>
-                    <div className="cell-title">{r.description}</div>
-                    {r.notes && <div className="cell-sub">{r.notes}</div>}
-                  </div>
-                )},
+                { key: "description", label: "Description", render: (r) => {
+                  const detail = r.category === "Subscription" && r.qty != null
+                    ? `${r.qty} ${r.unit}`.trim()
+                    : r.notes || "";
+                  return (
+                    <div>
+                      <div className="cell-title">{r.description}</div>
+                      {detail && <div className="cell-sub">{detail}</div>}
+                    </div>
+                  );
+                }},
                 { key: "debit",  label: "Debit",  render: (r) => r.type === "debit"  ? <span className="danger-text">-{formatCurrency(r.amount)}</span> : "—" },
                 { key: "credit", label: "Credit", render: (r) => r.type === "credit" ? <span className="success-text">+{formatCurrency(r.amount)}</span> : "—" },
               ]}
               data={passbook.entries}
-              renderCard={(r) => (
-                <div className="ledger-entry-card">
-                  <div className={`ledger-type-dot ${r.type}`} aria-hidden="true" />
-                  <div className="ledger-entry-body">
-                    <div className="ledger-entry-desc">{r.description}</div>
-                    <div className="ledger-entry-note">
-                      {r.notes && <span>{r.notes} · </span>}
-                      {formatDate(r.date)}
+              renderCard={(r) => {
+                const Icon = r.category === "Subscription" ? Repeat2
+                           : r.category === "Order"        ? Package
+                           : r.category === "Payment"      ? Banknote
+                           :                                 SlidersHorizontal;
+                const detail = r.category === "Subscription" && r.qty != null
+                  ? `${r.qty} ${r.unit}`.trim()
+                  : r.notes || "";
+                return (
+                  <div className="ledger-entry-card">
+                    <Icon className={`ledger-entry-icon ${r.type}`} size={15} aria-hidden="true" />
+                    <div className="ledger-entry-body">
+                      <div className="ledger-entry-desc">{r.description}</div>
+                      <div className="ledger-entry-note">
+                        {formatDate(r.date)}
+                        {r.category && <span> · {r.category}</span>}
+                        {detail && <span> · {detail}</span>}
+                      </div>
                     </div>
+                    <span className={`ledger-entry-amount ${r.type}`}>
+                      {r.type === "debit" ? "−" : "+"}{formatCurrency(r.amount)}
+                    </span>
                   </div>
-                  <span className={`ledger-entry-amount ${r.type}`}>
-                    {r.type === "debit" ? "−" : "+"}{formatCurrency(r.amount)}
-                  </span>
-                </div>
-              )}
+                );
+              }}
               emptyText="No transactions yet."
               pageSize={15}
               loading={passbookLoading}

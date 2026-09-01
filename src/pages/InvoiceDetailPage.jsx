@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -35,6 +35,8 @@ export default function InvoiceDetailPage() {
   const [sending, setSending] = useState(false);
   const [regenerateConfirm, setRegenerateConfirm] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const downloadInFlight = useRef(false);
 
   const fetchInvoice = useCallback(async () => {
     setLoading(true); setError(null);
@@ -104,6 +106,9 @@ export default function InvoiceDetailPage() {
   }
 
   async function handleDownloadPDF(detailed = false) {
+    if (downloadInFlight.current) return;
+    downloadInFlight.current = true;
+    setDownloading(true);
     try {
       // Pass frontend brand config as query params so the PDF generator can
       // render the QR code and UPI link even if the backend env vars differ.
@@ -124,6 +129,10 @@ export default function InvoiceDetailPage() {
       a.href = url; a.download = `${invoice.invoiceNumber}${detailed ? "-detailed" : ""}.pdf`; a.click();
       URL.revokeObjectURL(url);
     } catch (err) { toast.error(err.message); }
+    finally {
+      downloadInFlight.current = false;
+      setDownloading(false);
+    }
   }
 
   async function handleMarkPaid() {
@@ -211,11 +220,11 @@ export default function InvoiceDetailPage() {
         {!isVoid && (
           <div className="inv-detail-actions">
             <div className="inv-action-group">
-              <button className="btn btn-sm" onClick={() => handleDownloadPDF(false)} title="Download compact PDF">
-                <Download size={14} /> PDF
+              <button className="btn btn-sm" onClick={() => handleDownloadPDF(false)} disabled={downloading} title="Download compact PDF">
+                <Download size={14} /> {downloading ? "…" : "PDF"}
               </button>
-              <button className="btn btn-sm" onClick={() => handleDownloadPDF(true)} title="Download detailed PDF">
-                <Printer size={14} /> Detailed
+              <button className="btn btn-sm" onClick={() => handleDownloadPDF(true)} disabled={downloading} title="Download detailed PDF">
+                <Printer size={14} /> {downloading ? "…" : "Detailed"}
               </button>
               <button className="btn btn-sm" onClick={handleSendWhatsApp} disabled={sending}>
                 <MessageCircle size={14} /> {sending ? "Sending…" : "WhatsApp"}

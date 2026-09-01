@@ -313,7 +313,11 @@
 }
 
 @media (min-width: 600px) {
-  .sd-stats-row { grid-template-columns: repeat(4, 1fr); }
+  .sd-stats-row { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 900px) {
+  .sd-stats-row { grid-template-columns: repeat(5, 1fr); }
 }
 
 .sd-stat {
@@ -662,6 +666,173 @@
   font-size: var(--font-size-xs);
   color: var(--text-muted);
   font-style: italic;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   MONTHLY FINANCIAL SUMMARY BANNER
+   ───────────────────────────────────────────────────────────── */
+.sd-financial-summary {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.sd-fin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border-soft);
+  gap: var(--space-4);
+}
+.sd-fin-row:last-child { border-bottom: none; }
+
+.sd-fin-row--dues { background: var(--warning-bg); }
+.sd-fin-row--total { background: var(--surface-inset); }
+
+.sd-fin-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.sd-fin-row--dues .sd-fin-label { color: var(--warning-text); font-weight: var(--font-weight-semibold); }
+
+.sd-fin-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.sd-fin-value--danger { color: var(--danger); font-weight: var(--font-weight-bold); }
+.sd-fin-value--bold   { font-weight: var(--font-weight-extrabold); color: var(--text-primary); }
+
+
+/* ─────────────────────────────────────────────────────────────
+   DELIVERY HISTORY — MONTH SELECTOR
+   ───────────────────────────────────────────────────────────── */
+.sd-history-header {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.sd-history-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.sd-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.sd-month-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--duration-base), color var(--duration-base);
+  flex-shrink: 0;
+}
+.sd-month-btn:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.sd-month-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sd-month-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  padding: 0 var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 64px;
+  justify-content: center;
+}
+
+.sd-month-current-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   DELIVERY HISTORY — MONTHLY SUMMARY BAR
+   ───────────────────────────────────────────────────────────── */
+.sd-month-summary {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--surface-inset);
+  border-bottom: 1px solid var(--border-soft);
+  /* No flex-wrap: items are fixed-width; dividers stay vertical */
+}
+
+.sd-month-summary-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.sd-month-summary-label {
+  font-size: 0.58rem;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sd-month-summary-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sd-month-summary-value--money { color: var(--color-primary-dark); }
+
+/* Vertical separator between summary items */
+.sd-month-summary-divider {
+  width: 1px;
+  background: var(--border-soft);
+  flex-shrink: 0;
+  align-self: stretch;
 }
 
 

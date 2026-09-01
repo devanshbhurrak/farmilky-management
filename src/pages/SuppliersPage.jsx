@@ -46,6 +46,7 @@ export default function SuppliersPage() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const filtered = useMemo(() => {
     let result = suppliers;
@@ -145,7 +146,9 @@ export default function SuppliersPage() {
 
   const handleToggleStatus = useCallback(async () => {
     if (!confirmAction || confirmAction.type !== "toggle") return;
+    if (confirmLoading) return;
     const supplier = confirmAction.supplier;
+    setConfirmLoading(true);
     try {
       const res = await apiRequest(`/api/suppliers/${supplier._id}/status`, {
         method: "PATCH",
@@ -158,12 +161,16 @@ export default function SuppliersPage() {
       refetch();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setConfirmLoading(false);
     }
-  }, [confirmAction, refetch]);
+  }, [confirmAction, confirmLoading, refetch]);
 
   const handleDelete = useCallback(async () => {
     if (!confirmAction || confirmAction.type !== "delete") return;
+    if (confirmLoading) return;
     const supplier = confirmAction.supplier;
+    setConfirmLoading(true);
     try {
       const res = await apiRequest(`/api/suppliers/${supplier._id}`, { method: "DELETE" });
       const result = await res.json();
@@ -173,8 +180,10 @@ export default function SuppliersPage() {
       refetch();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setConfirmLoading(false);
     }
-  }, [confirmAction, refetch]);
+  }, [confirmAction, confirmLoading, refetch]);
 
   const supplierFormContent = (
     <div className="supplier-form">
@@ -475,8 +484,9 @@ export default function SuppliersPage() {
       {confirmAction?.type === "toggle" && (
         <ConfirmDialog
           open
-          onClose={() => setConfirmAction(null)}
+          onClose={() => { if (!confirmLoading) setConfirmAction(null); }}
           onConfirm={handleToggleStatus}
+          loading={confirmLoading}
           title={confirmAction.supplier.isActive ? "Deactivate Supplier" : "Activate Supplier"}
           message={
             confirmAction.supplier.isActive
@@ -491,8 +501,9 @@ export default function SuppliersPage() {
       {confirmAction?.type === "delete" && (
         <ConfirmDialog
           open
-          onClose={() => setConfirmAction(null)}
+          onClose={() => { if (!confirmLoading) setConfirmAction(null); }}
           onConfirm={handleDelete}
+          loading={confirmLoading}
           title="Remove Supplier"
           message={`Remove ${confirmAction.supplier.name}? Their collection and payment history will be preserved but they will no longer appear in the active supplier list.`}
           confirmText="Remove"

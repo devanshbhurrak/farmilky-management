@@ -626,15 +626,12 @@
 
 .ledger-entry-card:last-child { border-bottom: none; }
 
-.ledger-type-dot {
+.ledger-entry-icon {
   flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
 }
 
-.ledger-type-dot.debit  { background: var(--danger-text); }
-.ledger-type-dot.credit { background: var(--color-primary); }
+.ledger-entry-icon.debit  { color: var(--danger-text); }
+.ledger-entry-icon.credit { color: var(--color-primary); }
 
 .ledger-entry-body {
   flex: 1;

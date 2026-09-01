@@ -42,6 +42,7 @@ export default function AgentsPage() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const filtered = useMemo(() => {
     let result = agents;
@@ -130,7 +131,9 @@ export default function AgentsPage() {
 
   const handleToggleStatus = useCallback(async () => {
     if (!confirmAction || confirmAction.type !== "toggle") return;
+    if (confirmLoading) return;
     const agent = confirmAction.agent;
+    setConfirmLoading(true);
     try {
       const res = await apiRequest(`/api/agents/${agent._id}/status`, {
         method: "PATCH",
@@ -143,12 +146,16 @@ export default function AgentsPage() {
       refetch();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setConfirmLoading(false);
     }
-  }, [confirmAction, refetch]);
+  }, [confirmAction, confirmLoading, refetch]);
 
   const handleDelete = useCallback(async () => {
     if (!confirmAction || confirmAction.type !== "delete") return;
+    if (confirmLoading) return;
     const agent = confirmAction.agent;
+    setConfirmLoading(true);
     try {
       const res = await apiRequest(`/api/agents/${agent._id}`, { method: "DELETE" });
       const result = await res.json();
@@ -158,8 +165,10 @@ export default function AgentsPage() {
       refetch();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setConfirmLoading(false);
     }
-  }, [confirmAction, refetch]);
+  }, [confirmAction, confirmLoading, refetch]);
 
   const columns = useMemo(() => [
     {
@@ -422,8 +431,9 @@ export default function AgentsPage() {
       {confirmAction?.type === "toggle" && (
         <ConfirmDialog
           open
-          onClose={() => setConfirmAction(null)}
+          onClose={() => { if (!confirmLoading) setConfirmAction(null); }}
           onConfirm={handleToggleStatus}
+          loading={confirmLoading}
           title={confirmAction.agent.isActive ? "Deactivate Agent" : "Activate Agent"}
           message={
             confirmAction.agent.isActive
@@ -438,8 +448,9 @@ export default function AgentsPage() {
       {confirmAction?.type === "delete" && (
         <ConfirmDialog
           open
-          onClose={() => setConfirmAction(null)}
+          onClose={() => { if (!confirmLoading) setConfirmAction(null); }}
           onConfirm={handleDelete}
+          loading={confirmLoading}
           title="Delete Agent"
           message={`Delete ${confirmAction.agent.name}? The agent will be deactivated and unassigned from their area. This action cannot be undone.`}
           confirmText="Delete"

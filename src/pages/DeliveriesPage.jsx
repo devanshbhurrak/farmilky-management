@@ -3,7 +3,7 @@ import PageHeader from "../components/ui/PageHeader";
 import Pagination from "../components/ui/Pagination";
 import SearchInput from "../components/ui/SearchInput";
 import IconDropdown from "../components/ui/IconDropdown";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { formatDate, todayLocal } from "../utils/format";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingScreen from "../components/ui/LoadingScreen";
@@ -37,6 +37,10 @@ export default function DeliveriesPage() {
   const [page, setPage] = useState(1);
   const [areas, setAreas] = useState([]);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [outcomeLoading, setOutcomeLoading] = useState(false);
+  const outcomeInFlight = useRef(false);
+  const [drawerLoading, setDrawerLoading] = useState(false);
+  const drawerInFlight = useRef(false);
   const PAGE_SIZE = 50;
 
   const queryParams = useMemo(() => ({ date, type: typeTab !== "all" ? typeTab : undefined, status: statusFilter !== "all" ? statusFilter : undefined }), [date, typeTab, statusFilter]);
@@ -134,8 +138,11 @@ export default function DeliveriesPage() {
 
   async function handleCustomerDrawerConfirm({ extraItems, paymentMode, subscriptionId }) {
     if (extraItems.length === 0) { setCustomerDrawer(null); return; }
+    if (drawerInFlight.current) return;
     const { group } = customerDrawer;
     if (!group.userId) { toast.error("Cannot add extras: customer account not found."); return; }
+    drawerInFlight.current = true;
+    setDrawerLoading(true);
     try {
       const body = {
         customerId: group.userId,
@@ -157,6 +164,9 @@ export default function DeliveriesPage() {
       await refetch();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      drawerInFlight.current = false;
+      setDrawerLoading(false);
     }
   }
 
@@ -192,6 +202,9 @@ export default function DeliveriesPage() {
   }
 
   async function handleOutcomeConfirm({ status, actualQuantity, reason, notes, paymentMode, subscriptionId }) {
+    if (outcomeInFlight.current) return;
+    outcomeInFlight.current = true;
+    setOutcomeLoading(true);
     const { item } = outcomeModal;
     try {
       const endpoint = item.type === "order"
@@ -207,6 +220,9 @@ export default function DeliveriesPage() {
       await refetch();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      outcomeInFlight.current = false;
+      setOutcomeLoading(false);
     }
   }
 
@@ -418,8 +434,9 @@ export default function DeliveriesPage() {
       <OutcomeModal
         isMobile={isMobile}
         outcomeModal={outcomeModal}
-        onClose={() => setOutcomeModal(null)}
+        onClose={() => { if (!outcomeLoading) setOutcomeModal(null); }}
         onConfirm={handleOutcomeConfirm}
+        loading={outcomeLoading}
         onFormChange={(updates) => setOutcomeModal(prev => prev ? ({ ...prev, form: { ...prev.form, ...updates } }) : prev)}
       />
 
@@ -427,8 +444,9 @@ export default function DeliveriesPage() {
         <CustomerConfirmDrawer
           isMobile={isMobile}
           group={customerDrawer.group}
-          onClose={() => setCustomerDrawer(null)}
+          onClose={() => { if (!drawerLoading) setCustomerDrawer(null); }}
           onConfirm={handleCustomerDrawerConfirm}
+          loading={drawerLoading}
         />
       )}
 

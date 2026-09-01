@@ -29,6 +29,7 @@ export default function AgentDetailPage() {
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -112,7 +113,8 @@ export default function AgentDetailPage() {
   }
 
   async function handleToggleStatus() {
-    if (!agent) return;
+    if (!agent || confirmLoading) return;
+    setConfirmLoading(true);
     try {
       const res = await apiRequest(`/api/agents/${id}/status`, {
         method: "PATCH",
@@ -125,6 +127,8 @@ export default function AgentDetailPage() {
       fetchData();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setConfirmLoading(false);
     }
   }
 
@@ -344,8 +348,9 @@ export default function AgentDetailPage() {
       {confirmAction && (
         <ConfirmDialog
           open
-          onClose={() => setConfirmAction(null)}
+          onClose={() => { if (!confirmLoading) setConfirmAction(null); }}
           onConfirm={handleToggleStatus}
+          loading={confirmLoading}
           title={agent.isActive ? "Deactivate Agent" : "Activate Agent"}
           message={
             agent.isActive
