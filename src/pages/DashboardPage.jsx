@@ -1,11 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   TrendingUp, ShoppingCart, Repeat, Truck, AlertCircle, Users,
   ArrowRight, ClipboardList, Droplets,
-  Clock, MapPin,
+  Clock, MapPin, PackageCheck, FlaskConical,
 } from "lucide-react";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
+import { useAuth } from "../context/AuthContext";
 import { formatCurrency, formatDate, formatTime } from "../utils/format";
 import InfoCard from "../components/ui/InfoCard";
 import StatusTag from "../components/ui/StatusTag";
@@ -13,8 +14,14 @@ import EmptyState from "../components/ui/EmptyState";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import NavIcon from "../components/icons/NavIcon";
 
-const fetchPerformance  = createApiFetch("/api/admin/delivery-performance");
-const fetchShift        = createApiFetch("/api/admin/milk-collections/today-shift");
+const fetchPerformance   = createApiFetch("/api/admin/delivery-performance");
+const fetchShift         = createApiFetch("/api/milk-collections/today-shift");
+const fetchDeliveryStats = createApiFetch("/api/admin/delivery-stats");
+
+function fmtQty(n) {
+  if (n == null) return "—";
+  return n % 1 === 0 ? String(n) : n.toFixed(1);
+}
 
 function buildOverview(data) {
   const deliveryBoard = data?.deliveryBoard || {};
@@ -40,6 +47,10 @@ function buildOverview(data) {
     ].filter(Boolean)).size,
     supplyValue: supplySummary.totalAmount || 0,
     topProducts: supplySummary.byProduct || [],
+    // Total liters scheduled for delivery today (from today's supply sheet)
+    scheduledLiters: (supplySummary.byProduct || [])
+      .filter((p) => (p.unit || "").toLowerCase() === "l")
+      .reduce((s, p) => s + (p.totalQuantity || 0), 0),
   };
 }
 
@@ -91,13 +102,161 @@ const sectionGroups = [
   },
 ];
 
+// ── Delivery & Milk Collection Summary ──────────────────────────────────────
+
+function SummaryPanel({ todayDelivery, scheduledLiters, shiftData, deliveryStats }) {
+  const [tab, setTab] = useState("today");
+
+  const currentSession = new Date().getHours() < 13 ? "morning" : "evening";
+
+  // Confirmed actual qty only — matches totalLiters on the collection page
+  const todayMilkQty =
+    (shiftData?.morning?.qty || 0) + (shiftData?.evening?.qty || 0);
+
+  const todayMilkConfirmed =
+    (shiftData?.morning?.confirmed || 0) + (shiftData?.evening?.confirmed || 0);
+  const todayMilkTotal =
+    (shiftData?.morning?.total || 0) + (shiftData?.evening?.total || 0);
+
+  const monthDeliveredQty = deliveryStats?.monthly?.deliveredQty;
+  const monthMilkQty      = deliveryStats?.monthly?.milkQty;
+
+  const deliveryPct =
+    todayDelivery.total > 0
+      ? Math.round((todayDelivery.completed / todayDelivery.total) * 100)
+      : 0;
+
+  return (
+    <section className="panel dash-panel dash-summary-panel">
+      {/* Header */}
+      <div className="dash-summary-header">
+        <div className="dash-summary-title-row">
+          <span className="dash-panel-heading">
+            <PackageCheck size={16} strokeWidth={2} />
+            Today&apos;s Operations
+          </span>
+          <div className="dash-summary-tabs">
+            <button
+              className={`dash-summary-tab${tab === "today" ? " dash-summary-tab--active" : ""}`}
+              onClick={() => setTab("today")}
+            >
+              Today
+            </button>
+            <button
+              className={`dash-summary-tab${tab === "month" ? " dash-summary-tab--active" : ""}`}
+              onClick={() => setTab("month")}
+            >
+              This Month
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats grid */}
+      <div className="dash-summary-cards">
+        {/* ── Deliveries card ── */}
+        <Link to="/deliveries" className="dash-ops-card dash-ops-card--delivery">
+          <div className="dash-ops-card-icon">
+            <Truck size={18} strokeWidth={2} />
+          </div>
+          <div className="dash-ops-card-body">
+            <span className="dash-ops-card-label">Qty Delivered</span>
+            <strong className="dash-ops-card-value">
+              {tab === "today"
+                ? <>{fmtQty(todayDelivery.qty)} <small>L</small></>
+                : monthDeliveredQty != null
+                  ? <>{fmtQty(monthDeliveredQty)} <small>L</small></>
+                  : <span className="dash-ops-card-loading">—</span>
+              }
+            </strong>
+            {tab === "today" && scheduledLiters > 0 && (
+              <span className="dash-ops-of-total">
+                of {fmtQty(scheduledLiters)} L required
+              </span>
+            )}
+            {tab === "today" && (
+              <div className="dash-ops-progress-wrap">
+                <div className="dash-ops-progress">
+                  <div
+                    className="dash-ops-progress-bar"
+                    style={{ width: scheduledLiters > 0 ? `${Math.min(100, Math.round((todayDelivery.qty / scheduledLiters) * 100))}%` : `${deliveryPct}%` }}
+                  />
+                </div>
+                <span className="dash-ops-progress-label">
+                  {todayDelivery.completed}/{todayDelivery.total} confirmed · {deliveryPct}%
+                </span>
+              </div>
+            )}
+          </div>
+          <ArrowRight size={13} className="dash-ops-card-arrow" />
+        </Link>
+
+        {/* ── Milk Collected card ── */}
+        <Link to="/milk-collections" className="dash-ops-card dash-ops-card--milk">
+          <div className="dash-ops-card-icon">
+            <FlaskConical size={18} strokeWidth={2} />
+          </div>
+          <div className="dash-ops-card-body">
+            <span className="dash-ops-card-label">Milk Collected</span>
+            <strong className="dash-ops-card-value">
+              {tab === "today"
+                ? <>{fmtQty(todayMilkQty)} <small>L</small></>
+                : monthMilkQty != null
+                  ? <>{fmtQty(monthMilkQty)} <small>L</small></>
+                  : <span className="dash-ops-card-loading">—</span>
+              }
+            </strong>
+            {tab === "today" && shiftData && (
+              <div className="dash-ops-progress-wrap">
+                <div className="dash-ops-progress dash-ops-progress--milk">
+                  <div
+                    className="dash-ops-progress-bar"
+                    style={{
+                      width: todayMilkTotal > 0
+                        ? `${Math.round((todayMilkConfirmed / todayMilkTotal) * 100)}%`
+                        : "0%",
+                    }}
+                  />
+                </div>
+                <span className="dash-ops-progress-label">
+                  {todayMilkConfirmed}/{todayMilkTotal} confirmed
+                  {" · "}
+                  <span className="dash-ops-session-tag">
+                    {currentSession === "morning" ? "Morning" : "Evening"} shift
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
+          <ArrowRight size={13} className="dash-ops-card-arrow" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardPage({ data, loading }) {
+  const { isAdmin } = useAuth();
   const overview = useMemo(() => buildOverview(data), [data]);
-  const { data: perfData }  = useApiData(fetchPerformance);
-  const { data: shiftData } = useApiData(fetchShift);
+  const { data: perfData }      = useApiData(fetchPerformance);
+  const { data: shiftData }     = useApiData(fetchShift);
+  const { data: deliveryStats } = useApiData(fetchDeliveryStats, isAdmin);
 
   const currentSession = new Date().getHours() < 13 ? "morning" : "evening";
   const shift = shiftData?.[currentSession] || { qty: 0, amount: 0, confirmed: 0, total: 0 };
+
+  const todayDelivery = useMemo(() => {
+    const deliveries = data?.deliveryBoard?.deliveries || [];
+    // Only subscription deliveries are in L (milk); order items are discrete counts
+    const subDeliveries = deliveries.filter((d) => d.type === "subscription");
+    const done = subDeliveries.filter((d) => d.deliveryStatus === "delivered");
+    return {
+      // outcome.actualQuantity = exact qty delivered (handles partial/extra correctly)
+      qty: done.reduce((s, d) => s + (d.outcome?.actualQuantity ?? d.quantity ?? 0), 0),
+      completed: done.length,
+      total: subDeliveries.length,
+    };
+  }, [data?.deliveryBoard?.deliveries]);
 
   const recentOrders = useMemo(() => {
     return (data?.orders || [])
@@ -124,13 +283,21 @@ export default function DashboardPage({ data, loading }) {
     <div className="view-stack">
       {/* ── Key Metrics ─────────────────────────────── */}
       <div className="card-grid">
-        <InfoCard title="Revenue Booked"       value={formatCurrency(overview.revenue)}         icon={TrendingUp}  to="/orders" />
-        <InfoCard title="Today's Orders"        value={overview.todaysOrders}                    icon={ShoppingCart} to="/orders" />
-        <InfoCard title="Active Subscriptions"  value={overview.activeSubscriptions}             icon={Repeat}      to="/subscriptions" />
-        <InfoCard title="Pending Deliveries"    value={overview.pendingDeliveries}               icon={Truck}       color="warning" to="/deliveries" />
-        <InfoCard title="Pending COD"           value={overview.pendingCodOrders}               icon={AlertCircle} color="danger"  to="/orders" />
-        <InfoCard title="Total Customers"       value={overview.totalCustomers}                  icon={Users}       color="info"    to="/customers" />
+        <InfoCard title="Revenue Booked"       value={formatCurrency(overview.revenue)}  icon={TrendingUp}  to="/orders" />
+        <InfoCard title="Today's Orders"        value={overview.todaysOrders}             icon={ShoppingCart} to="/orders" />
+        <InfoCard title="Active Subscriptions"  value={overview.activeSubscriptions}      icon={Repeat}      to="/subscriptions" />
+        <InfoCard title="Pending Deliveries"    value={overview.pendingDeliveries}        icon={Truck}       color="warning" to="/deliveries" />
+        <InfoCard title="Pending COD"           value={overview.pendingCodOrders}         icon={AlertCircle} color="danger"  to="/orders" />
+        <InfoCard title="Total Customers"       value={overview.totalCustomers}           icon={Users}       color="info"    to="/customers" />
       </div>
+
+      {/* ── Delivery & Milk Collection Summary ──────── */}
+      <SummaryPanel
+        todayDelivery={todayDelivery}
+        scheduledLiters={overview.scheduledLiters}
+        shiftData={shiftData}
+        deliveryStats={deliveryStats}
+      />
 
       {/* ── Section Navigator ────────────────────────── */}
       <div className="dash-sections">
@@ -155,7 +322,7 @@ export default function DashboardPage({ data, loading }) {
         ))}
       </div>
 
-      {/* ── Load Sheet + Watchlist ───────────────────── */}
+      {/* ── Load Sheet + Shift Collection ───────────── */}
       <div className="two-column-grid">
         <section className="panel dash-panel">
           <div className="panel-section-header">
