@@ -1,0 +1,327 @@
+/* ═══════════════════════════════════════════════
+   PAYMENTS — Page Styles
+   ═══════════════════════════════════════════════ */
+
+.payments-page.view-stack {
+  gap: var(--space-4);
+}
+
+/* ─── Top-level tabs ──────────────────────────── */
+.pay-top-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.pay-top-tab {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-align: center;
+  transition: all var(--duration-fast);
+  position: relative;
+  font-family: inherit;
+  min-height: var(--touch-min);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pay-top-tab:not(:last-child) {
+  border-right: 1px solid var(--border-soft);
+}
+
+.pay-top-tab.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.pay-top-tab:not(.active):hover {
+  background: var(--surface-muted);
+}
+
+/* ─── Tab content wrapper ─────────────────────── */
+.pay-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ─── Stats row ───────────────────────────────── */
+.pay-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.pay-stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--border-soft);
+  color: var(--text-muted);
+}
+
+.pay-stat-card:last-child {
+  border-right: none;
+}
+
+.pay-stat-card svg {
+  flex-shrink: 0;
+}
+
+.pay-stat--danger svg { color: var(--danger); }
+.pay-stat--success svg { color: var(--color-primary); }
+
+.pay-stat-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1px;
+}
+
+.pay-stat-value {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.pay-stat--danger .pay-stat-value { color: var(--danger); }
+.pay-stat--success .pay-stat-value { color: var(--color-primary); }
+
+/* ─── Filter bar ──────────────────────────────── */
+.pay-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.pay-balance-chips {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.pay-chip {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  font-family: inherit;
+  white-space: nowrap;
+  min-height: 30px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pay-chip.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.pay-chip:not(.active):hover {
+  background: var(--surface-muted);
+}
+
+.pay-refresh-btn {
+  flex-shrink: 0;
+  width: 36px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* ─── Actions cell ────────────────────────────── */
+.pay-actions-cell {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* ─── Card meta row ───────────────────────────── */
+.pay-card-meta {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* ─── History / Passbook list ─────────────────── */
+.pay-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pay-history-balance {
+  padding: var(--space-3);
+  background: var(--surface-muted);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-3);
+}
+
+.pay-history-item {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.pay-history-item:last-child {
+  border-bottom: none;
+}
+
+.pay-history-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.pay-history-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pay-history-desc strong {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pay-history-desc .text-muted {
+  font-size: var(--font-size-xs);
+}
+
+.pay-history-amount {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pay-history-meta {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE (≤ 767px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .payments-page.view-stack {
+    gap: var(--space-3);
+  }
+
+  .pay-top-tab {
+    padding: var(--space-3);
+    font-size: var(--font-size-base);
+  }
+
+  .pay-stats-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pay-stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    padding: var(--space-3);
+  }
+
+  .pay-stat-card svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pay-stat-value {
+    font-size: var(--font-size-base);
+  }
+
+  .pay-filter-bar {
+    gap: var(--space-2);
+  }
+
+  .pay-balance-chips {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .pay-balance-chips::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+  .pay-stat-card {
+    padding: var(--space-2);
+  }
+
+  .pay-stat-value {
+    font-size: var(--font-size-sm);
+  }
+
+  .pay-stat-label {
+    font-size: 9px;
+  }
+
+  .pay-stat-card svg {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   DESKTOP (≥ 768px)
+   ═══════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .payments-page.view-stack {
+    gap: var(--space-5);
+  }
+
+  .pay-top-tab {
+    flex: none;
+    min-width: 160px;
+    padding: var(--space-3) var(--space-6);
+  }
+
+  .pay-top-tabs {
+    align-self: flex-start;
+  }
+
+  .pay-stat-card {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .pay-stat-value {
+    font-size: var(--font-size-xl);
+  }
+}

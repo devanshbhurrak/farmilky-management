@@ -49,8 +49,7 @@ function buildOverview(data) {
     topProducts: supplySummary.byProduct || [],
     // Total liters scheduled for delivery today (from today's supply sheet)
     scheduledLiters: (supplySummary.byProduct || [])
-      .filter((p) => (p.unit || "").toLowerCase() === "l")
-      .reduce((s, p) => s + (p.totalQuantity || 0), 0),
+      .reduce((s, p) => s + (p.totalVolumeLiters || 0), 0),
   };
 }
 
@@ -249,10 +248,15 @@ export default function DashboardPage({ data, loading }) {
     const deliveries = data?.deliveryBoard?.deliveries || [];
     // Only subscription deliveries are in L (milk); order items are discrete counts
     const subDeliveries = deliveries.filter((d) => d.type === "subscription");
-    const done = subDeliveries.filter((d) => d.deliveryStatus === "delivered");
+    const done = subDeliveries.filter((d) => ["delivered", "partial", "extra"].includes(d.deliveryStatus));
     return {
-      // outcome.actualQuantity = exact qty delivered (handles partial/extra correctly)
-      qty: done.reduce((s, d) => s + (d.outcome?.actualQuantity ?? d.quantity ?? 0), 0),
+      // Use volumeInLiters (accounts for variant size); scale by actual vs scheduled for partial/extra
+      qty: done.reduce((s, d) => {
+        const scheduledVol = d.volumeInLiters ?? d.quantity ?? 0;
+        const actualPkts = d.outcome?.actualQuantity ?? d.quantity ?? 0;
+        const scheduledPkts = d.scheduledQuantity ?? d.quantity ?? 1;
+        return s + (scheduledVol * (actualPkts / scheduledPkts));
+      }, 0),
       completed: done.length,
       total: subDeliveries.length,
     };
@@ -342,7 +346,7 @@ export default function DashboardPage({ data, loading }) {
                     <span className="dash-load-item-meta">{item.customerCount} customer stops</span>
                   </div>
                   <div className="dash-load-item-right">
-                    <span className="dash-load-item-qty">{item.totalQuantity} {item.unit}</span>
+                    <span className="dash-load-item-qty">{item.totalVolumeLiters > 0 ? `${fmtQty(item.totalVolumeLiters)} L` : `${item.totalQuantity} ${item.unit}`}</span>
                     <span className="dash-load-item-amount">{formatCurrency(item.totalAmount)}</span>
                   </div>
                 </div>

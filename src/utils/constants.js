@@ -6,6 +6,7 @@ export const navItems = [
   { id: "subscriptions", label: "Subscriptions", path: "/subscriptions", icon: "subscriptions" },
   { id: "suppliers", label: "Suppliers", path: "/suppliers", icon: "suppliers" },
   { id: "milk-collections", label: "Milk Collections", path: "/milk-collections", icon: "collections" },
+  { id: "payments", label: "Payments", path: "/payments", icon: "payments" },
   { id: "invoices", label: "Invoices", path: "/invoices", icon: "invoices" },
   { id: "balances", label: "Outstanding Balances", path: "/balances", icon: "invoices" },
   { id: "products", label: "Products", path: "/products", icon: "products" },

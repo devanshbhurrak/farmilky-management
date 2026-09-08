@@ -17,6 +17,7 @@ import {
   Users2,
   Milk,
   ShieldCheck,
+  Wallet,
 } from "lucide-react";
 
 const NAV_ICONS = {
@@ -27,6 +28,7 @@ const NAV_ICONS = {
   customers: Users,
   products: Package,
   invoices: FileText,
+  payments: Wallet,
   areas: MapPin,
   holidays: Calendar,
   manifests: Clipboard,
