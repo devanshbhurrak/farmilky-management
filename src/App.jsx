@@ -43,6 +43,7 @@ const SupplierDetailPage = lazy(() => import("./pages/SupplierDetailPage"));
 const MilkCollectionsPage = lazy(() => import("./pages/MilkCollectionsPage"));
 const PermissionsPage = lazy(() => import("./pages/PermissionsPage"));
 const PaymentsPage = lazy(() => import("./pages/PaymentsPage"));
+const ExpensesPage = lazy(() => import("./pages/ExpensesPage"));
 const InvoicesPage = lazy(() => import("./pages/InvoicesPage"));
 const InvoiceDetailPage = lazy(() => import("./pages/InvoiceDetailPage"));
 
@@ -64,6 +65,7 @@ import "./styles/pages/orders.css";
 import "./styles/pages/subscriptions.css";
 import "./styles/pages/payments.css";
 import "./styles/pages/permissions.css";
+import "./styles/pages/expenses.css";
 
 function App() {
   const location = useLocation();
@@ -195,6 +197,7 @@ function App() {
                           <Route path="customers/:id" element={<CustomerDetailPage />} />
                           <Route path="products" element={<ProductsPage />} />
                           <Route path="payments" element={<PaymentsPage />} />
+                          <Route path="expenses" element={<ExpensesPage />} />
                           <Route path="invoices" element={<InvoicesPage />} />
                           <Route path="invoices/:id" element={<InvoiceDetailPage />} />
                           <Route path="balances" element={<BalancesPage />} />

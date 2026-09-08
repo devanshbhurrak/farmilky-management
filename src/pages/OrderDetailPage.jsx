@@ -128,11 +128,12 @@ export default function OrderDetailPage() {
   function openEdit() {
     setForm({
       userId: order.userId?._id,
-      items: order.items.map(item => ({ productId: item.productId?._id || item.productId, quantity: item.quantity })),
+      items: order.items.map(item => ({ productId: item.productId?._id || item.productId, variantId: item.variantId || "", quantity: item.quantity })),
       address: order.address || { street: "", city: "", state: "", pincode: "" },
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
       orderStatus: order.orderStatus,
+      orderDate: order.orderDate ? new Date(order.orderDate).toISOString().split("T")[0] : "",
     });
     setEditModalOpen(true);
   }

@@ -9,6 +9,7 @@ export const navItems = [
   { id: "payments", label: "Payments", path: "/payments", icon: "payments" },
   { id: "invoices", label: "Invoices", path: "/invoices", icon: "invoices" },
   { id: "balances", label: "Outstanding Balances", path: "/balances", icon: "invoices" },
+  { id: "expenses", label: "Expenses", path: "/expenses", icon: "payments" },
   { id: "products", label: "Products", path: "/products", icon: "products" },
   { id: "areas", label: "Areas", path: "/areas", icon: "areas" },
   { id: "agents", label: "Agents", path: "/agents", icon: "agents" },
@@ -46,3 +47,17 @@ export const paymentStatusOptions = ["unpaid", "partial", "paid"];
 export const deliveryTypeOptions = ["subscription", "order"];
 
 export const roleOptions = ["customer", "admin", "agent"];
+
+export const expenseCategoryOptions = [
+  "fuel_transport",
+  "packaging",
+  "equipment",
+  "salaries",
+  "rent",
+  "utilities",
+  "maintenance",
+  "marketing",
+  "miscellaneous",
+];
+
+export const expensePaymentMethodOptions = ["cash", "upi", "bank_transfer", "card", "other"];

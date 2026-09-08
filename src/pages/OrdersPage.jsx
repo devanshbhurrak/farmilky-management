@@ -25,7 +25,7 @@ export default function OrdersPage({ orders, onRefresh }) {
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState({ userId: "", items: [], address: { street: "", city: "", state: "", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed" });
+  const [form, setForm] = useState({ userId: "", items: [], address: { street: "", city: "", state: "", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed", orderDate: "" });
 
   useEffect(() => {
     if (modalOpen) {
@@ -64,7 +64,7 @@ export default function OrdersPage({ orders, onRefresh }) {
   }, [filtered]);
 
   function openCreate() {
-    setForm({ userId: "", items: [{ productId: "", quantity: 1 }], address: { street: "", city: "", state: "", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed" });
+    setForm({ userId: "", items: [{ productId: "", variantId: "", quantity: 1 }], address: { street: "", city: "", state: "", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed", orderDate: "" });
     setModalOpen(true);
   }
 
@@ -72,9 +72,11 @@ export default function OrdersPage({ orders, onRefresh }) {
     if (e) e.preventDefault();
     setSaving(true);
     try {
+      const payload_body = { ...form };
+      if (!payload_body.orderDate) delete payload_body.orderDate;
       const res = await apiRequest("/api/order/admin/create", {
         method: "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload_body),
       });
       const payload = await safeParseJson(res);
       if (!res.ok) throw new Error(payload?.message || "Failed to create order");
@@ -100,7 +102,7 @@ export default function OrdersPage({ orders, onRefresh }) {
         </>
       ),
     },
-    { key: "createdAt", label: "Order Date", render: (r) => formatDate(r.createdAt) },
+    { key: "createdAt", label: "Order Date", render: (r) => formatDate(r.orderDate || r.createdAt) },
     {
       key: "totalAmount",
       label: "Amount",
@@ -131,7 +133,7 @@ export default function OrdersPage({ orders, onRefresh }) {
         <div className="mc-identity">
           <span className="mc-name">{order.userId?.name || "Unknown"}</span>
           <span className="mc-sub">
-            {order.userId?.phone || order.userId?.email || ""}&nbsp;&middot;&nbsp;{formatDate(order.createdAt)}
+            {order.userId?.phone || order.userId?.email || ""}&nbsp;&middot;&nbsp;{formatDate(order.orderDate || order.createdAt)}
           </span>
         </div>
         <StatusTag value={order.orderStatus} />

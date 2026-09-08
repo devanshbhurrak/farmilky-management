@@ -511,8 +511,8 @@ function SupplierPaymentsTab() {
       const data = await res.json();
       if (res.ok) {
         setPeriodTotal(data);
-        if (data.collectionTotal > 0) {
-          setPayForm(f => ({ ...f, amount: data.collectionTotal.toFixed(2) }));
+        if (data.grandTotal > 0) {
+          setPayForm(f => ({ ...f, amount: data.grandTotal.toFixed(2) }));
         }
       }
     } catch { setPeriodTotal(null); }
@@ -790,10 +790,14 @@ function SupplierPaymentsTab() {
             />
             {periodTotal && (
               <span className="form-help">
-                Collections in period: {formatCurrency(periodTotal.collectionTotal)} ({periodTotal.collectionCount} entries)
-                {payForm.amount && Math.abs(parseFloat(payForm.amount || 0) - periodTotal.collectionTotal) > 0.01
+                Collections: {formatCurrency(periodTotal.collectionTotal)} ({periodTotal.collectionCount} entries)
+                {periodTotal.adjustmentCount > 0 && (
+                  <> · Passbook: {periodTotal.adjustmentNet >= 0 ? "+" : ""}{formatCurrency(periodTotal.adjustmentNet)} ({periodTotal.adjustmentCount} entries)</>
+                )}
+                {" · "}Expected: {formatCurrency(periodTotal.grandTotal)}
+                {payForm.amount && Math.abs(parseFloat(payForm.amount || 0) - periodTotal.grandTotal) > 0.01
                   ? (() => {
-                      const diff = parseFloat(payForm.amount || 0) - periodTotal.collectionTotal;
+                      const diff = parseFloat(payForm.amount || 0) - periodTotal.grandTotal;
                       return ` · Diff: ${diff > 0 ? "-" : "+"}${formatCurrency(Math.abs(diff))} (auto-adjusted)`;
                     })()
                   : ""}

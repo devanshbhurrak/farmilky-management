@@ -194,8 +194,8 @@ export default function SupplierDetailPage() {
       const data = await res.json();
       if (res.ok) {
         setPeriodTotal(data);
-        if (data.collectionTotal > 0) {
-          setPaymentForm((f) => ({ ...f, amount: data.collectionTotal.toFixed(2) }));
+        if (data.grandTotal > 0) {
+          setPaymentForm((f) => ({ ...f, amount: data.grandTotal.toFixed(2) }));
         }
       }
     } catch { setPeriodTotal(null); }
@@ -842,7 +842,7 @@ export default function SupplierDetailPage() {
                         {formatDate(entry.date)}
                         {entry.notes ? ` · ${entry.notes}` : ""}
                         {entry.recordedBy ? ` · by ${entry.recordedBy}` : ""}
-                        {entry.isAuto ? " · auto" : ""}
+                        {entry.isAuto ? " · auto" : entry.isSettled ? " · settled" : ""}
                       </span>
                     </div>
                     <div className="card-figure" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
@@ -854,7 +854,7 @@ export default function SupplierDetailPage() {
                           {entry.category?.replace("_", " ")}
                         </span>
                       </div>
-                      {!entry.isAuto && (
+                      {!entry.isAuto && !entry.isSettled && (
                         <button
                           className="supplier-card-edit-btn"
                           onClick={() => handleDeleteAdjustment(entry._id)}
@@ -928,10 +928,14 @@ export default function SupplierDetailPage() {
             />
             {periodTotal && (
               <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
-                Collections in period: {formatCurrency(periodTotal.collectionTotal)} ({periodTotal.collectionCount} entries)
-                {paymentForm.amount && Math.abs(parseFloat(paymentForm.amount || 0) - periodTotal.collectionTotal) > 0.01
+                Collections: {formatCurrency(periodTotal.collectionTotal)} ({periodTotal.collectionCount} entries)
+                {periodTotal.adjustmentCount > 0 && (
+                  <> · Passbook: {periodTotal.adjustmentNet >= 0 ? "+" : ""}{formatCurrency(periodTotal.adjustmentNet)} ({periodTotal.adjustmentCount} entries)</>
+                )}
+                {" · "}Expected: {formatCurrency(periodTotal.grandTotal)}
+                {paymentForm.amount && Math.abs(parseFloat(paymentForm.amount || 0) - periodTotal.grandTotal) > 0.01
                   ? (() => {
-                      const diff = parseFloat(paymentForm.amount || 0) - periodTotal.collectionTotal;
+                      const diff = parseFloat(paymentForm.amount || 0) - periodTotal.grandTotal;
                       return ` · Diff: ${diff > 0 ? "−" : "+"}${formatCurrency(Math.abs(diff))} (auto-adjusted)`;
                     })()
                   : ""}

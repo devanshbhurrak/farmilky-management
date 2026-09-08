@@ -4,6 +4,7 @@ import {
   TrendingUp, ShoppingCart, Repeat, Truck, AlertCircle, Users,
   ArrowRight, ClipboardList, Droplets,
   Clock, MapPin, PackageCheck, FlaskConical,
+  IndianRupee, ReceiptText, CircleDollarSign,
 } from "lucide-react";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { useAuth } from "../context/AuthContext";
@@ -17,6 +18,7 @@ import NavIcon from "../components/icons/NavIcon";
 const fetchPerformance   = createApiFetch("/api/admin/delivery-performance");
 const fetchShift         = createApiFetch("/api/milk-collections/today-shift");
 const fetchDeliveryStats = createApiFetch("/api/admin/delivery-stats");
+const fetchProfitStats   = createApiFetch("/api/admin/profit-stats");
 
 function fmtQty(n) {
   if (n == null) return "—";
@@ -100,6 +102,103 @@ const sectionGroups = [
     ],
   },
 ];
+
+// ── Profit Overview Panel ────────────────────────────────────────────────────
+
+function ProfitPanel({ profitData }) {
+  const [tab, setTab] = useState("today");
+  const stats = profitData?.[tab] ?? { revenue: 0, expenses: 0, profit: 0 };
+  const isProfit = stats.profit >= 0;
+
+  // Progress bar: what share of revenue remains after expenses
+  const margin = stats.revenue > 0
+    ? Math.min(100, Math.max(0, Math.round((stats.profit / stats.revenue) * 100)))
+    : 0;
+
+  return (
+    <section className="panel dash-panel dash-profit-panel">
+      <div className="dash-profit-header">
+        <span className="dash-panel-heading">
+          <CircleDollarSign size={16} strokeWidth={2} />
+          Profit Overview
+        </span>
+        <div className="dash-summary-tabs">
+          <button
+            className={`dash-summary-tab${tab === "today" ? " dash-summary-tab--active" : ""}`}
+            onClick={() => setTab("today")}
+          >
+            Today
+          </button>
+          <button
+            className={`dash-summary-tab${tab === "month" ? " dash-summary-tab--active" : ""}`}
+            onClick={() => setTab("month")}
+          >
+            This Month
+          </button>
+        </div>
+      </div>
+
+      <div className="dash-profit-stats">
+        <div className="dash-profit-stat">
+          <div className="dash-profit-stat-icon dash-profit-stat-icon--revenue">
+            <IndianRupee size={16} strokeWidth={2} />
+          </div>
+          <div>
+            <span className="dash-profit-stat-label">Revenue</span>
+            <strong className="dash-profit-stat-value">{formatCurrency(stats.revenue)}</strong>
+          </div>
+        </div>
+
+        <div className="dash-profit-divider" />
+
+        <div className="dash-profit-stat">
+          <div className="dash-profit-stat-icon dash-profit-stat-icon--expenses">
+            <ReceiptText size={16} strokeWidth={2} />
+          </div>
+          <div>
+            <span className="dash-profit-stat-label">Expenses</span>
+            <strong className="dash-profit-stat-value">{formatCurrency(stats.expenses)}</strong>
+          </div>
+        </div>
+
+        <div className="dash-profit-divider" />
+
+        <div className="dash-profit-stat dash-profit-stat--result">
+          <div className={`dash-profit-stat-icon ${isProfit ? "dash-profit-stat-icon--profit" : "dash-profit-stat-icon--loss"}`}>
+            <TrendingUp size={16} strokeWidth={2} />
+          </div>
+          <div>
+            <span className="dash-profit-stat-label">Net Profit</span>
+            <strong className={`dash-profit-stat-value ${isProfit ? "dash-profit-value--profit" : "dash-profit-value--loss"}`}>
+              {isProfit ? "" : "−"}{formatCurrency(Math.abs(stats.profit))}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      {/* Margin bar */}
+      {stats.revenue > 0 && (
+        <div className="dash-profit-bar-wrap">
+          <div className="dash-profit-bar">
+            <div
+              className={`dash-profit-bar-fill ${isProfit ? "dash-profit-bar-fill--profit" : "dash-profit-bar-fill--loss"}`}
+              style={{ width: `${margin}%` }}
+            />
+          </div>
+          <span className="dash-profit-bar-label">
+            {isProfit
+              ? `${margin}% margin · ₹${formatCurrency(stats.expenses)} in expenses`
+              : `Loss of ${formatCurrency(Math.abs(stats.profit))} · expenses exceed revenue`}
+          </span>
+        </div>
+      )}
+
+      <p className="dash-profit-note">
+        Order revenue only · <Link to="/expenses" className="dash-profit-note-link">view expenses →</Link>
+      </p>
+    </section>
+  );
+}
 
 // ── Delivery & Milk Collection Summary ──────────────────────────────────────
 
@@ -240,6 +339,7 @@ export default function DashboardPage({ data, loading }) {
   const { data: perfData }      = useApiData(fetchPerformance);
   const { data: shiftData }     = useApiData(fetchShift);
   const { data: deliveryStats } = useApiData(fetchDeliveryStats, isAdmin);
+  const { data: profitData }    = useApiData(fetchProfitStats, isAdmin);
 
   const currentSession = new Date().getHours() < 13 ? "morning" : "evening";
   const shift = shiftData?.[currentSession] || { qty: 0, amount: 0, confirmed: 0, total: 0 };
@@ -294,6 +394,9 @@ export default function DashboardPage({ data, loading }) {
         <InfoCard title="Pending COD"           value={overview.pendingCodOrders}         icon={AlertCircle} color="danger"  to="/orders" />
         <InfoCard title="Total Customers"       value={overview.totalCustomers}           icon={Users}       color="info"    to="/customers" />
       </div>
+
+      {/* ── Profit Overview ──────────────────────────── */}
+      {isAdmin && <ProfitPanel profitData={profitData} />}
 
       {/* ── Delivery & Milk Collection Summary ──────── */}
       <SummaryPanel
