@@ -45,8 +45,11 @@ function CustomerPaymentsTab() {
 
   // Payment modal
   const [payModal, setPayModal] = useState(null);
-  const [payForm, setPayForm] = useState({ amount: "", transactionId: "", notes: "", date: todayLocal() });
+  const [payForm, setPayForm] = useState({ amount: "", transactionId: "", notes: "", date: todayLocal(), receivedDate: todayLocal() });
   const [paying, setPaying] = useState(false);
+  const [collectUpTo, setCollectUpTo] = useState(todayLocal());
+  const [periodData, setPeriodData] = useState(null);
+  const [periodLoading, setPeriodLoading] = useState(false);
 
   // Adjustment modal
   const [adjModal, setAdjModal] = useState(null);
@@ -57,6 +60,12 @@ function CustomerPaymentsTab() {
   const [historyModal, setHistoryModal] = useState(null);
   const [passbook, setPassbook] = useState(null);
   const [passbookLoading, setPassbookLoading] = useState(false);
+
+  // Edit payment modal (opened from history)
+  const [editEntry, setEditEntry] = useState(null);
+  const [editForm, setEditForm] = useState({ amount: "", type: "payment", transactionId: "", notes: "", date: "", receivedDate: "" });
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     if (!customers) return [];
@@ -101,6 +110,23 @@ function CustomerPaymentsTab() {
     }
   }, []);
 
+  const fetchPeriodBreakdown = useCallback(async (userId, upToDate) => {
+    if (!upToDate) { setPeriodData(null); return; }
+    setPeriodLoading(true);
+    try {
+      const res = await apiRequest(`/api/payments/${userId}`);
+      if (!res.ok) throw new Error("Failed to fetch passbook");
+      const data = await res.json();
+      const cutoff = new Date(upToDate + "T23:59:59");
+      const filtered = (data.entries || []).filter(e => new Date(e.date) <= cutoff);
+      const totalCharges = filtered.filter(e => e.type === "debit").reduce((s, e) => s + e.amount, 0);
+      const totalPayments = filtered.filter(e => e.type === "credit").reduce((s, e) => s + e.amount, 0);
+      const periodNet = Math.round((totalCharges - totalPayments) * 100) / 100;
+      setPeriodData({ totalCharges, totalPayments, periodNet });
+    } catch { setPeriodData(null); }
+    finally { setPeriodLoading(false); }
+  }, []);
+
   function openHistory(user) {
     setHistoryModal(user);
     setPassbook(null);
@@ -116,15 +142,19 @@ function CustomerPaymentsTab() {
     try {
       const res = await apiRequest("/api/payments/admin/record", {
         method: "POST",
-        body: JSON.stringify({ userId: payModal._id, amount, transactionId: payForm.transactionId, notes: payForm.notes, date: payForm.date }),
+        body: JSON.stringify({ userId: payModal._id, amount, transactionId: payForm.transactionId, notes: payForm.notes, date: payForm.date, receivedDate: payForm.receivedDate }),
       });
       if (!res.ok) {
         const payload = await safeParseJson(res);
         throw new Error(payload?.message || "Failed to record payment");
       }
       toast.success("Payment recorded!");
+      const recordedUserId = payModal._id;
       setPayModal(null);
+      setPeriodData(null);
       refetch();
+      // If history is open for this customer, refresh it
+      if (historyModal?._id === recordedUserId) fetchPassbook(recordedUserId);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -154,8 +184,11 @@ function CustomerPaymentsTab() {
         throw new Error(payload?.message || "Failed to record adjustment");
       }
       toast.success("Adjustment recorded!");
+      const adjustedUserId = adjModal._id;
       setAdjModal(null);
       refetch();
+      // If history is open for this customer, refresh it
+      if (historyModal?._id === adjustedUserId) fetchPassbook(adjustedUserId);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -165,7 +198,75 @@ function CustomerPaymentsTab() {
 
   function openPayModal(user) {
     setPayModal(user);
-    setPayForm({ amount: Math.max(0, user.accountBalance || 0).toString(), transactionId: "", notes: "", date: todayLocal() });
+    const today = todayLocal();
+    setCollectUpTo(today);
+    setPeriodData(null);
+    setPayForm({ amount: Math.max(0, user.accountBalance || 0).toString(), transactionId: "", notes: "", date: today, receivedDate: today });
+    fetchPeriodBreakdown(user._id, today);
+  }
+
+  function openEditEntry(entry) {
+    setEditEntry(entry);
+    setEditForm({
+      amount: entry.amount.toString(),
+      type: entry.paymentType,
+      transactionId: entry.transactionId || "",
+      notes: entry.notes || "",
+      date: entry.date ? entry.date.slice(0, 10) : todayLocal(),
+      receivedDate: entry.receivedDate ? entry.receivedDate.slice(0, 10) : "",
+    });
+  }
+
+  async function handleUpdatePayment() {
+    const amount = parseFloat(editForm.amount);
+    if (!amount || amount <= 0) return toast.error("Enter a valid amount");
+    setSaving(true);
+    try {
+      const res = await apiRequest(`/api/payments/admin/${editEntry.referenceId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          amount,
+          type: editForm.type,
+          transactionId: editForm.transactionId,
+          notes: editForm.notes,
+          date: editForm.date,
+          receivedDate: editForm.receivedDate || null,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await safeParseJson(res);
+        throw new Error(payload?.message || "Failed to update payment");
+      }
+      toast.success("Payment updated!");
+      setEditEntry(null);
+      // Refresh passbook and customer list
+      fetchPassbook(historyModal._id);
+      refetch();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeletePayment(entry) {
+    if (!window.confirm(`Delete this ${entry.category === "Adjustment" ? "adjustment" : "payment"} of ${formatCurrency(entry.amount)}? This will reverse the balance change.`)) return;
+    setDeleting(true);
+    try {
+      const res = await apiRequest(`/api/payments/admin/${entry.referenceId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const payload = await safeParseJson(res);
+        throw new Error(payload?.message || "Failed to delete payment");
+      }
+      toast.success("Entry deleted and balance reverted.");
+      // Refresh passbook and customer list
+      fetchPassbook(historyModal._id);
+      refetch();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   function openAdjModal(user) {
@@ -306,7 +407,7 @@ function CustomerPaymentsTab() {
       {/* ── Payment Modal ── */}
       <ResponsiveModal
         open={!!payModal}
-        onClose={() => setPayModal(null)}
+        onClose={() => { setPayModal(null); setPeriodData(null); setCollectUpTo(todayLocal()); }}
         title={`Collect Payment — ${payModal?.name}`}
         footer={
           <div className="product-modal-footer-right">
@@ -318,10 +419,49 @@ function CustomerPaymentsTab() {
         }
       >
         <div className="form-stack">
+          {/* Collect up to date — loads period breakdown */}
+          <div className="form-group">
+            <label>Collect up to</label>
+            <input
+              type="date"
+              value={collectUpTo}
+              onChange={(e) => {
+                const d = e.target.value;
+                setCollectUpTo(d);
+                if (payModal) fetchPeriodBreakdown(payModal._id, d);
+              }}
+            />
+          </div>
+
+          {/* Period breakdown */}
+          {periodLoading ? (
+            <div className="payment-period-breakdown loading">Calculating...</div>
+          ) : periodData ? (
+            <div className="payment-period-breakdown">
+              <div className="ppb-row">
+                <span>Total Charges</span>
+                <span className="danger-text">{formatCurrency(periodData.totalCharges)}</span>
+              </div>
+              <div className="ppb-row">
+                <span>Total Payments Made</span>
+                <span className="success-text">− {formatCurrency(periodData.totalPayments)}</span>
+              </div>
+              <div className="ppb-row ppb-net">
+                <span>Due up to this date</span>
+                <strong className={periodData.periodNet > 0 ? "danger-text" : periodData.periodNet < 0 ? "success-text" : ""}>
+                  {periodData.periodNet < 0
+                    ? `${formatCurrency(Math.abs(periodData.periodNet))} advance`
+                    : formatCurrency(periodData.periodNet)}
+                </strong>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Account balance (all-time truth) */}
           {payModal?.accountBalance > 0 && (
             <div className="payment-balance-banner">
               <div>
-                <span className="payment-balance-label">Outstanding</span>
+                <span className="payment-balance-label">Total Outstanding (all-time)</span>
                 <span className="payment-balance-amount">{formatCurrency(payModal.accountBalance)}</span>
               </div>
               <button type="button" className="payment-fill-btn" onClick={() => setPayForm(f => ({ ...f, amount: payModal.accountBalance.toString() }))}>Fill</button>
@@ -329,15 +469,29 @@ function CustomerPaymentsTab() {
           )}
           {payModal?.accountBalance < 0 && (
             <div className="payment-balance-banner" style={{ background: "var(--success-bg)", color: "var(--success-text)" }}>
-              Credit of {formatCurrency(Math.abs(payModal.accountBalance))} — no collection needed.
+              Advance of {formatCurrency(Math.abs(payModal.accountBalance))} — no collection needed.
             </div>
           )}
+
+          {/* Amount */}
           <div className="form-group">
-            <label>Amount (Rs)</label>
+            <label>Amount Collected (Rs)</label>
             <input type="number" min="0" step="0.01" value={payForm.amount} onChange={(e) => setPayForm(f => ({ ...f, amount: e.target.value }))} />
+            {payForm.amount && payModal && (() => {
+              const amt = parseFloat(payForm.amount) || 0;
+              const after = Math.round(((payModal.accountBalance || 0) - amt) * 100) / 100;
+              if (after > 0) return <span className="form-help danger-text">After payment: {formatCurrency(after)} will remain due</span>;
+              if (after < 0) return <span className="form-help success-text">After payment: {formatCurrency(Math.abs(after))} advance will be created</span>;
+              return <span className="form-help success-text">After payment: fully settled</span>;
+            })()}
+          </div>
+
+          <div className="form-group">
+            <label>Payment Received Date</label>
+            <input type="date" value={payForm.receivedDate} onChange={(e) => setPayForm(f => ({ ...f, receivedDate: e.target.value }))} />
           </div>
           <div className="form-group">
-            <label>Date</label>
+            <label>Entry Date</label>
             <input type="date" value={payForm.date} onChange={(e) => setPayForm(f => ({ ...f, date: e.target.value }))} />
           </div>
           <div className="form-group">
@@ -407,7 +561,7 @@ function CustomerPaymentsTab() {
       {/* ── History Modal ── */}
       <ResponsiveModal
         open={!!historyModal}
-        onClose={() => { setHistoryModal(null); setPassbook(null); }}
+        onClose={() => { setHistoryModal(null); setPassbook(null); setEditEntry(null); }}
         title={`Payment History — ${historyModal?.name}`}
       >
         {passbookLoading ? (
@@ -422,7 +576,7 @@ function CustomerPaymentsTab() {
               </strong>
             </div>
             {passbook.entries.map((entry) => (
-              <div key={entry._id} className="pay-history-item">
+              <div key={entry.referenceId || entry._id} className="pay-history-item">
                 <div className="pay-history-main">
                   <div className="pay-history-desc">
                     <strong>{entry.description || entry.type}</strong>
@@ -432,9 +586,17 @@ function CustomerPaymentsTab() {
                       {entry.recordedBy ? ` · by ${entry.recordedBy}` : ""}
                     </span>
                   </div>
-                  <span className={`pay-history-amount ${entry.type === "credit" ? "success-text" : "danger-text"}`}>
-                    {entry.type === "credit" ? "+" : "-"}{formatCurrency(entry.amount)}
-                  </span>
+                  <div className="pay-history-right">
+                    <span className={`pay-history-amount ${entry.type === "credit" ? "success-text" : "danger-text"}`}>
+                      {entry.type === "credit" ? "+" : "-"}{formatCurrency(entry.amount)}
+                    </span>
+                    {entry.isEditable && (
+                      <div className="pay-history-actions">
+                        <button className="btn btn-sm" onClick={() => openEditEntry(entry)} title="Edit">Edit</button>
+                        <button className="btn btn-sm btn-danger-ghost" onClick={() => handleDeletePayment(entry)} disabled={deleting} title="Delete">Delete</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {(entry.notes || entry.transactionId) && (
                   <div className="pay-history-meta">
@@ -446,6 +608,88 @@ function CustomerPaymentsTab() {
             ))}
           </div>
         )}
+      </ResponsiveModal>
+
+      {/* ── Edit Payment Modal ── */}
+      <ResponsiveModal
+        open={!!editEntry}
+        onClose={() => setEditEntry(null)}
+        title="Edit Payment Entry"
+        footer={
+          <div className="product-modal-footer-right">
+            <button className="btn btn-secondary btn-sm" onClick={() => setEditEntry(null)}>Cancel</button>
+            <button className="btn btn-primary btn-sm" onClick={handleUpdatePayment} disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        }
+      >
+        <div className="form-stack">
+          {/* Show original amount for reference */}
+          {editEntry && (
+            <div className="payment-period-breakdown">
+              <div className="ppb-row">
+                <span>Original Amount</span>
+                <strong>{formatCurrency(editEntry.amount)}</strong>
+              </div>
+              <div className="ppb-row">
+                <span>Type</span>
+                <span className="text-muted">{editEntry.category}</span>
+              </div>
+            </div>
+          )}
+          <div className="form-group">
+            <label>Amount (Rs) <em className="required">*</em></label>
+            <input
+              type="number" min="0" step="0.01"
+              value={editForm.amount}
+              onChange={(e) => setEditForm(f => ({ ...f, amount: e.target.value }))}
+            />
+            {editEntry && editForm.amount && (() => {
+              const newAmt = parseFloat(editForm.amount) || 0;
+              if (newAmt <= 0) return null;
+              // Compute net balance effect the same way the backend does
+              const oldDelta = editEntry.paymentType === "debit_adjustment" ? editEntry.amount : -editEntry.amount;
+              const newDelta = editForm.type === "debit_adjustment" ? newAmt : -newAmt;
+              const netEffect = -oldDelta + newDelta; // positive = balance goes up, negative = balance goes down
+              if (Math.abs(netEffect) < 0.01) return <span className="form-help success-text">No change to balance.</span>;
+              return (
+                <span className={`form-help ${netEffect > 0 ? "danger-text" : "success-text"}`}>
+                  Balance will {netEffect > 0 ? "increase" : "decrease"} by {formatCurrency(Math.abs(netEffect))}
+                </span>
+              );
+            })()}
+          </div>
+          <div className="form-group">
+            <label>Type</label>
+            <select value={editForm.type} onChange={(e) => setEditForm(f => ({ ...f, type: e.target.value }))}>
+              <option value="payment">Payment Received</option>
+              <option value="credit_adjustment">Manual Credit (reduce balance)</option>
+              <option value="debit_adjustment">Manual Debit (add charge)</option>
+            </select>
+            {editEntry && editForm.type !== editEntry.paymentType && (
+              <span className="form-help danger-text">
+                Changing type will recalculate the balance effect.
+              </span>
+            )}
+          </div>
+          <div className="form-group">
+            <label>Entry Date</label>
+            <input type="date" value={editForm.date} onChange={(e) => setEditForm(f => ({ ...f, date: e.target.value }))} />
+          </div>
+          <div className="form-group">
+            <label>Payment Received Date <span className="text-muted" style={{fontWeight:"normal"}}>(optional)</span></label>
+            <input type="date" value={editForm.receivedDate} onChange={(e) => setEditForm(f => ({ ...f, receivedDate: e.target.value }))} />
+          </div>
+          <div className="form-group">
+            <label>Transaction ID / Ref</label>
+            <input type="text" value={editForm.transactionId} onChange={(e) => setEditForm(f => ({ ...f, transactionId: e.target.value }))} placeholder="Optional" />
+          </div>
+          <div className="form-group">
+            <label>Notes</label>
+            <textarea value={editForm.notes} onChange={(e) => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
+          </div>
+        </div>
       </ResponsiveModal>
     </div>
   );

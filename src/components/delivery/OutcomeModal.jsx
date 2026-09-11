@@ -10,10 +10,11 @@ export default function OutcomeModal({ isMobile, outcomeModal, onClose, onConfir
   const [subscriptions, setSubscriptions] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
 
-  // Sync mode whenever a new modal opens (or modal closes)
+  // Sync mode only when a new item is opened or the modal closes
   useEffect(() => {
     setLocalMode(outcomeModal ? outcomeModal.mode : null);
-  }, [outcomeModal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outcomeModal?.item?.id, outcomeModal?.item?.type, !outcomeModal]);
 
   // Fetch subscriptions only for order items in delivered mode (for payment linking)
   useEffect(() => {

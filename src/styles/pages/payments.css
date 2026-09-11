@@ -231,6 +231,36 @@
   gap: var(--space-2);
 }
 
+/* Right side of history item: amount + action buttons */
+.pay-history-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.pay-history-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.pay-history-actions .btn {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-2);
+  height: auto;
+}
+
+.btn-danger-ghost {
+  color: var(--danger-text);
+  border-color: color-mix(in srgb, var(--danger-text) 30%, transparent);
+  background: transparent;
+}
+
+.btn-danger-ghost:hover {
+  background: var(--danger-bg);
+}
+
 /* ═══════════════════════════════════════════════
    MOBILE (≤ 767px)
    ═══════════════════════════════════════════════ */
