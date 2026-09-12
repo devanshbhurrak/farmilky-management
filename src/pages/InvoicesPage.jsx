@@ -3,7 +3,7 @@ import { useActionMap } from "../hooks/useAction";
 import { useNavigate, Link } from "react-router-dom";
 import {
   FileText, Download, MessageCircle, Plus, RefreshCw,
-  ReceiptText, AlertCircle, Wallet,
+  ReceiptText, AlertCircle, Wallet, FilePlus,
 } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import PageHeader from "../components/ui/PageHeader";
@@ -14,6 +14,7 @@ import StatusTag from "../components/ui/StatusTag";
 import SearchInput from "../components/ui/SearchInput";
 import DataTable from "../components/ui/DataTable";
 import GenerateInvoiceModal from "../components/invoice/GenerateInvoiceModal";
+import CustomInvoiceModal from "../components/invoice/CustomInvoiceModal";
 import { useApiData } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import toast from "react-hot-toast";
@@ -51,6 +52,7 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [generateOpen, setGenerateOpen] = useState(false);
+  const [customInvOpen, setCustomInvOpen] = useState(false);
   const { run: runInvoiceAction, isLoading: isInvoiceActionLoading } = useActionMap();
 
   const fetcher = useCallback(
@@ -298,9 +300,14 @@ export default function InvoicesPage() {
         title="Invoices"
         subtitle={`${stats.count} invoice${stats.count !== 1 ? "s" : ""} for ${monthYearLabel(month, year)}`}
         actions={
-          <button className="btn btn-primary" onClick={() => setGenerateOpen(true)}>
-            <Plus size={15} /> Generate
-          </button>
+          <div style={{ display: "flex", gap: "var(--space-2)" }}>
+            <button className="btn" onClick={() => setCustomInvOpen(true)}>
+              <FilePlus size={15} /> Custom Invoice
+            </button>
+            <button className="btn btn-primary" onClick={() => setGenerateOpen(true)}>
+              <Plus size={15} /> Generate
+            </button>
+          </div>
         }
       />
 
@@ -382,6 +389,11 @@ export default function InvoicesPage() {
         open={generateOpen}
         onClose={() => setGenerateOpen(false)}
         onSuccess={refetch}
+      />
+
+      <CustomInvoiceModal
+        open={customInvOpen}
+        onClose={() => setCustomInvOpen(false)}
       />
     </div>
   );

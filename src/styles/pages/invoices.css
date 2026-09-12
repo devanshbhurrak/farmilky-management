@@ -1232,6 +1232,400 @@
   }
 }
 
+/* ═══════════════════════════════════════════════
+   CUSTOM INVOICE MODAL
+   ═══════════════════════════════════════════════ */
+
+/* ─── Indicators ──────────────────────────────── */
+.ci-required { color: var(--danger); }
+.ci-optional {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-normal);
+}
+
+/* ─── Form container ──────────────────────────── */
+.ci-form { gap: var(--space-4); }
+
+/* ─── Section card ────────────────────────────── */
+.ci-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.ci-section-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-extrabold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.ci-tx-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* ─── Two-column grid (phone + email) ────────── */
+.ci-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* ─── Invoice info grid (3 fields) ───────────── */
+.ci-invoice-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* ─── Adjustments grid (3 fields) ────────────── */
+.ci-adj-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* ─── Product card ────────────────────────────── */
+.ci-product-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+/* Header row: index number + optional remove button */
+.ci-product-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 24px;
+}
+
+.ci-product-index {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  display: grid;
+  place-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* 4-col grid: qty | unit | rate | amount */
+.ci-product-nums {
+  display: grid;
+  grid-template-columns: 1fr 0.75fr 1fr 1fr;
+  gap: var(--space-2);
+}
+
+/* Auto-calculated amount display */
+.ci-amt-display {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+}
+
+/* ─── Shared add / remove button styles ──────── */
+.ci-add-btn {
+  align-self: flex-start;
+  color: var(--color-primary);
+  border-color: var(--color-primary-muted, #9ecfb4) !important;
+}
+
+.ci-add-btn:hover:not(:disabled) {
+  background: var(--success-bg);
+}
+
+.ci-remove-btn {
+  color: var(--text-muted);
+}
+
+.ci-remove-btn:hover:not(:disabled) {
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border-color: var(--danger) !important;
+}
+
+/* ─── Running total card ─────────────────────── */
+.ci-total-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.ci-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.ci-total-net {
+  border-top: 2px solid var(--border-soft);
+  padding-top: var(--space-2);
+  margin-top: var(--space-1);
+  font-weight: var(--font-weight-extrabold);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.ci-total-net span:last-child {
+  font-size: var(--font-size-xl);
+}
+
+/* ─── Transaction section toggle ─────────────── */
+.ci-tx-section {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ci-tx-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: var(--space-4);
+  gap: var(--space-3);
+  min-height: 64px;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast);
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ci-tx-toggle:hover {
+  background: var(--surface-muted);
+}
+
+.ci-tx-toggle-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+
+.ci-tx-toggle-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.ci-tx-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.4;
+}
+
+.ci-tx-badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  border: 1px solid var(--border-soft);
+  transition: background var(--duration-fast), color var(--duration-fast);
+  white-space: nowrap;
+}
+
+.ci-tx-badge--on {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: transparent;
+}
+
+/* ─── Transaction body (expanded) ────────────── */
+.ci-tx-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-4);
+  border-top: 1px solid var(--border-soft);
+}
+
+/* Desktop column header row */
+.ci-tx-header-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding-top: var(--space-3);
+}
+
+.ci-tx-col-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Transaction entry row (desktop: inline flex) ── */
+.ci-tx-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end; /* align bottom so labels don't affect spacing */
+}
+
+/* Width slots for each column */
+.ci-tx-f-date  { flex: 0 0 120px; min-width: 0; }
+.ci-tx-f-desc  { flex: 1 1 0; min-width: 0; }
+.ci-tx-f-qty   { flex: 0 0 72px; min-width: 0; }
+.ci-tx-f-amt   { flex: 0 0 104px; min-width: 0; }
+.ci-tx-f-type  { flex: 0 0 100px; min-width: 0; }
+.ci-tx-f-del   { flex: 0 0 34px; min-width: 0; display: flex; align-items: flex-end; }
+
+/* Field wrapper inside each tx cell */
+.ci-tx-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Mobile label: hidden on desktop, shown on mobile */
+.ci-tx-mobile-label {
+  display: none;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  min-height: 14px; /* keeps delete button aligned */
+}
+
+/* Compact inputs inside tx rows on desktop */
+.ci-tx-row input,
+.ci-tx-row select {
+  width: 100%;
+  height: 34px;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+}
+
+.ci-tx-del-btn {
+  height: 34px;
+  width: 34px;
+  padding: 0;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.ci-tx-del-btn:hover:not(:disabled) {
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border-color: var(--danger) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   CUSTOM INVOICE — MOBILE (≤ 640px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Collapse 2-col customer fields to 1 col */
+  .ci-two-col {
+    grid-template-columns: 1fr;
+  }
+
+  /* Invoice info: 1 col */
+  .ci-invoice-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Adjustments: 2 col (fits better than 1 or 3) */
+  .ci-adj-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Product number fields: 2 col */
+  .ci-product-nums {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* ── Transaction rows: card layout on mobile ── */
+
+  /* Hide desktop column headers */
+  .ci-tx-header-row {
+    display: none;
+  }
+
+  /* Show inline labels for each field */
+  .ci-tx-mobile-label {
+    display: block;
+  }
+
+  /* Stack fields in a responsive wrap grid */
+  .ci-tx-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: var(--space-3);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    gap: var(--space-2);
+  }
+
+  /* Description spans full width on mobile */
+  .ci-tx-f-desc  { flex: 1 1 100%; }
+  /* Date + Type share a row */
+  .ci-tx-f-date  { flex: 1 1 120px; }
+  .ci-tx-f-type  { flex: 1 1 100px; }
+  /* Qty + Amount share a row */
+  .ci-tx-f-qty   { flex: 1 1 80px; }
+  .ci-tx-f-amt   { flex: 1 1 100px; }
+  /* Delete button sits at end */
+  .ci-tx-f-del   { flex: 0 0 auto; margin-left: auto; align-self: flex-end; }
+
+  /* Restore normal input height on mobile */
+  .ci-tx-row input,
+  .ci-tx-row select {
+    height: 40px;
+    font-size: var(--font-size-sm);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .ci-tx-del-btn {
+    height: 40px;
+    width: 40px;
+  }
+}
+
 /* ── Print styles ────────────────────────────── */
 @media print {
   /* Hide all admin chrome */
