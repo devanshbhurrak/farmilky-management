@@ -11,7 +11,7 @@ export default function Topbar({ onRefresh, loading }) {
         </div>
         <div className="topbar-right">
           <button
-            className="mini-button refresh-button with-icon"
+            className="btn btn-sm refresh-button with-icon"
             type="button"
             onClick={onRefresh}
             disabled={loading}

@@ -13,6 +13,7 @@ import PageError from "../components/ui/PageError";
 import EmptyState from "../components/ui/EmptyState";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
+import StickyActionBar from "../components/ui/StickyActionBar";
 import OrderForm from "../components/order/OrderForm";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
@@ -424,7 +425,7 @@ export default function OrderDetailPage() {
         <div className="od-actions-card">
           {order.orderStatus === "placed" && (
             <button
-              className="od-action-btn-primary"
+              className="btn btn-primary"
               onClick={() => handleStatusUpdate("confirmed")}
               disabled={statusLoading}
             >
@@ -433,7 +434,7 @@ export default function OrderDetailPage() {
           )}
           {(order.orderStatus === "placed" || order.orderStatus === "confirmed") && (
             <button
-              className="od-action-btn-primary"
+              className="btn btn-primary"
               onClick={() => handleStatusUpdate("delivered")}
               disabled={statusLoading}
             >
@@ -441,14 +442,14 @@ export default function OrderDetailPage() {
             </button>
           )}
           <button
-            className="od-action-btn-secondary"
+            className="btn btn-secondary"
             onClick={openEdit}
             disabled={statusLoading}
           >
             <Edit2 size={14} /> Edit Order
           </button>
           <button
-            className="od-action-btn-danger"
+            className="btn btn-danger"
             onClick={() => setCancelConfirm(true)}
             disabled={statusLoading}
           >
@@ -477,6 +478,15 @@ export default function OrderDetailPage() {
         onConfirm={handleDeliverConfirm}
         onFormChange={(patch) => setDeliverModal(prev => prev ? { ...prev, form: { ...prev.form, ...patch } } : prev)}
       />
+
+      <StickyActionBar>
+        <button className="btn btn-secondary" onClick={() => setEditModalOpen(true)} disabled={order.status === "cancelled"}>
+          <Edit2 size={16} /> Edit Order
+        </button>
+        <button className="btn btn-primary" onClick={() => order.status === "placed" && setConfirmAction("confirm")} disabled={order.status !== "placed"}>
+          Confirm Order
+        </button>
+      </StickyActionBar>
 
       <ResponsiveModal
         open={editModalOpen}

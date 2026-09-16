@@ -621,7 +621,8 @@
 /* Shared base for all mobile action buttons */
 .od-action-btn-primary,
 .od-action-btn-secondary,
-.od-action-btn-danger {
+.od-action-btn-danger,
+.od-actions-card .btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -639,32 +640,44 @@
 }
 
 .od-action-btn-primary:disabled,
+.od-actions-card .btn-primary:disabled,
 .od-action-btn-secondary:disabled,
-.od-action-btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
+.od-actions-card .btn-secondary:disabled,
+.od-action-btn-danger:disabled,
+.od-actions-card .btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .od-action-btn-primary:not(:disabled):hover,
+.od-actions-card .btn-primary:not(:disabled):hover,
 .od-action-btn-secondary:not(:disabled):hover,
-.od-action-btn-danger:not(:disabled):hover { filter: brightness(0.94); }
+.od-actions-card .btn-secondary:not(:disabled):hover,
+.od-action-btn-danger:not(:disabled):hover,
+.od-actions-card .btn-danger:not(:disabled):hover { filter: brightness(0.94); }
 
 .od-action-btn-primary:not(:disabled):active,
+.od-actions-card .btn-primary:not(:disabled):active,
 .od-action-btn-secondary:not(:disabled):active,
-.od-action-btn-danger:not(:disabled):active { filter: brightness(0.88); }
+.od-actions-card .btn-secondary:not(:disabled):active,
+.od-action-btn-danger:not(:disabled):active,
+.od-actions-card .btn-danger:not(:disabled):active { filter: brightness(0.88); }
 
 /* Primary — solid green */
-.od-action-btn-primary {
+.od-action-btn-primary,
+.od-actions-card .btn-primary {
   background: var(--color-primary);
   color: #fff;
 }
 
 /* Secondary — outlined */
-.od-action-btn-secondary {
+.od-action-btn-secondary,
+.od-actions-card .btn-secondary {
   background: var(--surface);
   color: var(--text-secondary);
   border: 1.5px solid var(--border-strong);
 }
 
 /* Danger — red */
-.od-action-btn-danger {
+.od-action-btn-danger,
+.od-actions-card .btn-danger {
   background: var(--danger-bg);
   color: var(--danger);
   border: 1.5px solid var(--danger);

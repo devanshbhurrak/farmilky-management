@@ -1,22 +1,27 @@
-/* ─── Form Groups ────────────────────────────── */
+/* ─── Form Groups — canonical .form-field, alias .form-group ── */
+.form-field,
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  margin-bottom: var(--space-6);
+  gap: var(--space-1);
 }
 
+.form-field > span:first-child,
+.form-field > label,
+.form-group > span:first-child,
+.form-group > label,
 .form-group label {
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  padding-left: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 2px solid var(--border-soft);
   padding: var(--space-3) var(--space-4);
   background: var(--surface);
@@ -100,14 +105,14 @@
   text-align: center;
   padding: var(--space-4);
   background: var(--surface-muted);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px dashed var(--border-soft);
 }
 
 /* ─── Item Cards (for orders) ────────────────── */
 .item-card {
   border: 1.5px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   overflow: hidden;
   margin-bottom: var(--space-2);
 }
@@ -187,7 +192,7 @@
 .item-qty-group input {
   width: 64px;
   border: 1.5px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: var(--space-1) var(--space-2);
   font-size: var(--font-size-sm);
   text-align: center;
@@ -208,7 +213,7 @@
   width: 30px;
   height: 30px;
   flex-shrink: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--danger-bg);
   color: var(--danger-text);
   border: none;
@@ -229,7 +234,7 @@
   width: 44px;
   height: 44px;
   flex-shrink: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   color: var(--text-secondary);
 }
@@ -242,7 +247,7 @@
 .btn-icon-danger {
   background: var(--danger-bg);
   color: var(--danger-text);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   width: 44px;
   height: 44px;
   flex-shrink: 0;
@@ -332,18 +337,36 @@
 .checkbox-label input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   accent-color: var(--color-primary);
   cursor: pointer;
 }
 
 /* ─── Validation States ──────────────────────── */
-.form-group.has-error input {
+.form-group.has-error input,
+.form-field.has-error input,
+.form-group.has-error select,
+.form-field.has-error select,
+.form-group.has-error textarea,
+.form-field.has-error textarea {
   border-color: var(--danger);
 }
 
-.form-group.has-error input:focus {
+.form-group.has-error input:focus,
+.form-field.has-error input:focus,
+.form-group.has-error select:focus,
+.form-field.has-error select:focus,
+.form-group.has-error textarea:focus,
+.form-field.has-error textarea:focus {
   box-shadow: 0 0 0 4px var(--danger-bg);
+}
+
+.form-error {
+  font-size: var(--font-size-xs);
+  color: var(--danger);
+  margin-top: var(--space-1);
+  line-height: var(--line-height-normal);
+  font-weight: var(--font-weight-medium);
 }
 
 /* ─── Screen-reader only ───────────────────────── */
@@ -427,7 +450,7 @@
   max-width: 440px;
   padding: var(--space-8);
   background: var(--surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: var(--shadow-lg);
   animation: login-enter var(--duration-slow) var(--ease-out);
@@ -484,7 +507,7 @@
   width: 40px;
   height: 40px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -506,39 +529,15 @@
   padding-right: 3.5rem;
 }
 
-/* ─── Input Wrapper (relative parent for absolute icon) ── */
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-wrapper .input-icon {
-  position: absolute;
-  left: 1.25rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-}
-
-.input-wrapper input,
-.input-wrapper select {
-  width: 100%;
-  padding-left: 3.5rem;
-}
-
-/* ─── Input With Icon (legacy alias) ──────────── */
+/* ─── Input Wrapper (canonical) + alias .input-with-icon ── */
+.input-wrapper,
 .input-with-icon {
   position: relative;
   display: flex;
   align-items: center;
 }
 
+.input-wrapper .input-icon,
 .input-with-icon .input-icon {
   position: absolute;
   left: 1.25rem;
@@ -552,7 +551,10 @@
   z-index: 1;
 }
 
-.input-with-icon input {
+.input-wrapper input,
+.input-wrapper select,
+.input-with-icon input,
+.input-with-icon select {
   width: 100%;
   padding-left: 3.5rem;
 }
@@ -567,7 +569,7 @@
 
   .login-card {
     padding: var(--space-6);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
   }
 
   .login-logo {
@@ -688,7 +690,7 @@
 .form-field input,
 .form-field select,
 .form-field textarea {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 2px solid var(--border-soft);
   padding: var(--space-3) var(--space-4);
   background: var(--surface);
@@ -758,7 +760,7 @@
   min-height: 54px;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   background: var(--gradient-hero);
   box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
   transition: transform var(--duration-base) var(--ease-out),
@@ -784,7 +786,7 @@
   font-weight: var(--font-weight-bold);
   color: var(--warning-text);
   background: var(--warning-bg);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: 1px var(--space-2);
   vertical-align: middle;
 }
@@ -806,7 +808,7 @@
 
 .variant-card {
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
   margin-bottom: var(--space-2);
   background: var(--surface-inset);
@@ -844,7 +846,7 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   transition: background var(--duration-base), color var(--duration-base);
 }
 
@@ -858,7 +860,7 @@
   color: var(--color-accent);
   background: none;
   border: 1px dashed var(--color-accent-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: var(--space-1) var(--space-3);
   cursor: pointer;
   width: 100%;
@@ -898,7 +900,7 @@
   width: 100%;
   padding: var(--space-3) var(--space-4);
   border: 2px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--text-primary);
   font-size: var(--font-size-base);
@@ -943,7 +945,7 @@
   z-index: 50;
   background: var(--surface);
   border: 1.5px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   max-height: 280px;
   display: flex;
@@ -1104,7 +1106,7 @@
   padding: var(--space-3) var(--space-4);
   margin-top: var(--space-3);
   background: var(--success-bg);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   color: var(--success-text);
 }
@@ -1127,7 +1129,7 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   border: 1.5px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
@@ -1166,7 +1168,7 @@
     left: 0;
     right: 0;
     max-height: 60vh;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     border: none;
     box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
     animation: slide-up 0.2s var(--ease-out);

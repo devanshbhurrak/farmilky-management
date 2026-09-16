@@ -30,7 +30,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
   const renderMobilePagination = () => (
     <div className="pagination mobile">
       <button
-        className="mini-button with-icon"
+        className="btn btn-sm with-icon"
         disabled={page <= 1}
         onClick={() => onPageChange(page - 1)}
         type="button"
@@ -45,7 +45,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
           ) : (
             <button
               key={p}
-              className={p === page ? "mini-button active" : "mini-button"}
+              className={p === page ? "btn btn-sm active" : "btn btn-sm"}
               onClick={() => onPageChange(p)}
               type="button"
               aria-current={p === page ? "page" : undefined}
@@ -56,7 +56,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
         ))}
       </div>
       <button
-        className="mini-button with-icon"
+        className="btn btn-sm with-icon"
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
         type="button"
@@ -70,7 +70,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
   const renderDesktopPagination = () => (
     <div className="pagination">
       <button
-        className="mini-button with-icon"
+        className="btn btn-sm with-icon"
         disabled={page <= 1}
         onClick={() => onPageChange(page - 1)}
         type="button"
@@ -86,7 +86,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
           ) : (
             <button
               key={p}
-              className={p === page ? "mini-button active" : "mini-button"}
+              className={p === page ? "btn btn-sm active" : "btn btn-sm"}
               onClick={() => onPageChange(p)}
               type="button"
               aria-current={p === page ? "page" : undefined}
@@ -97,7 +97,7 @@ export default function Pagination({ page, totalPages, onPageChange }) {
         ))}
       </div>
       <button
-        className="mini-button with-icon"
+        className="btn btn-sm with-icon"
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
         type="button"

@@ -93,7 +93,7 @@
 .sd-hero {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -109,7 +109,7 @@
 .sd-hero-product-icon {
   width: 52px;
   height: 52px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   border: 1px solid var(--border-soft);
   display: flex;
@@ -199,7 +199,7 @@
 .sd-summary-card {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   padding: var(--space-4);
   display: flex;
@@ -216,7 +216,7 @@
 .sd-summary-product-icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   border: 1px solid var(--border-soft);
   display: flex;
@@ -323,7 +323,7 @@
 .sd-stat {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
   display: flex;
   align-items: flex-start;
@@ -401,7 +401,7 @@
 .sd-card {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -675,7 +675,7 @@
 .sd-financial-summary {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -732,7 +732,7 @@
   gap: 2px;
   background: var(--surface-muted);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: 2px;
 }
 
@@ -743,7 +743,7 @@
   width: 24px;
   height: 24px;
   border: none;
-  border-radius: calc(var(--radius-sm) - 2px);
+  border-radius: calc(var(--radius-md) - 2px);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;

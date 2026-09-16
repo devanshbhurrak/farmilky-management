@@ -92,7 +92,8 @@
 }
 
 .supplier-form-actions .btn-primary,
-.supplier-form-actions .primary-button {
+.supplier-form-actions .primary-button,
+.supplier-form-actions .btn-primary {
   width: 100%;
   justify-content: center;
   min-height: 44px;
@@ -103,7 +104,8 @@
   gap: var(--space-2);
 }
 
-.supplier-form-actions-row .mini-button {
+.supplier-form-actions-row .mini-button,
+.supplier-form-actions-row .btn-sm {
   flex: 1;
   justify-content: center;
   min-height: 44px;
@@ -650,6 +652,7 @@
   }
 
   .supplier-col-filters .mini-button,
+.supplier-col-filters .btn-sm,
   .sc-apply-btn {
     width: 100%;
     justify-content: center;
@@ -663,7 +666,8 @@
   }
 
   .tab-action-row .btn-primary,
-  .tab-action-row .primary-button {
+  .tab-action-row .primary-button,
+.tab-action-row .btn-primary {
     width: 100%;
     justify-content: center;
   }

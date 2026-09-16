@@ -9,6 +9,7 @@ import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import EmptyState from "../components/ui/EmptyState";
 import PageHeader from "../components/ui/PageHeader";
+import StickyActionBar from "../components/ui/StickyActionBar";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
@@ -433,7 +434,7 @@ export default function SupplierDetailPage() {
     return (
       <EmptyState
         text="Supplier not found."
-        action={<button className="mini-button" onClick={() => navigate("/suppliers")}>Back to Suppliers</button>}
+        action={<button className="btn btn-sm" onClick={() => navigate("/suppliers")}>Back to Suppliers</button>}
       />
     );
   }
@@ -462,7 +463,7 @@ export default function SupplierDetailPage() {
             <div className="supplier-name-row">
               <h2>{supplier.name}</h2>
               <StatusTag value={supplier.isActive ? "active" : "inactive"} />
-              <button className="mini-button supplier-name-edit" onClick={openEdit}>
+              <button className="btn btn-sm supplier-name-edit" onClick={openEdit}>
                 <Pencil size={14} /> Edit
               </button>
             </div>
@@ -607,7 +608,7 @@ export default function SupplierDetailPage() {
                     onChange={(e) => setCollectionFilters((f) => ({ ...f, to: e.target.value }))}
                   />
                 </label>
-                <button className="mini-button sc-apply-btn" onClick={fetchCollections} disabled={collectionsLoading}>
+                <button className="btn btn-sm sc-apply-btn" onClick={fetchCollections} disabled={collectionsLoading}>
                   {collectionsLoading ? "Loading…" : "Apply"}
                 </button>
               </div>
@@ -646,7 +647,7 @@ export default function SupplierDetailPage() {
                         <StatusTag value={c.status} />
                         {c.status === "confirmed" && (c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />)}
                         {c.status === "pending"
-                          ? <button className="mini-button active" style={{ fontSize: "11px", padding: "2px 8px" }} onClick={() => openColConfirm(c)}>Confirm</button>
+                          ? <button className="btn btn-sm active" style={{ fontSize: "11px", padding: "2px 8px" }} onClick={() => openColConfirm(c)}>Confirm</button>
                           : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={14} /></button>
                         }
                       </div>
@@ -726,7 +727,7 @@ export default function SupplierDetailPage() {
                         <td>{c.status === "confirmed" ? (c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />) : null}</td>
                         <td>
                           {c.status === "pending"
-                            ? <button className="mini-button active" style={{ fontSize: "11px", padding: "2px 10px" }} onClick={() => openColConfirm(c)}>Confirm</button>
+                            ? <button className="btn btn-sm active" style={{ fontSize: "11px", padding: "2px 10px" }} onClick={() => openColConfirm(c)}>Confirm</button>
                             : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={14} /></button>
                           }
                         </td>
@@ -880,10 +881,10 @@ export default function SupplierDetailPage() {
         title="Record Payment"
         footer={
           <div className="modal-actions">
-            <button className="mini-button" onClick={() => setPaymentModal(false)} disabled={savingPayment}>
+            <button className="btn btn-sm" onClick={() => setPaymentModal(false)} disabled={savingPayment}>
               Cancel
             </button>
-            <button className="mini-button active" onClick={handleRecordPayment} disabled={savingPayment}>
+            <button className="btn btn-sm active" onClick={handleRecordPayment} disabled={savingPayment}>
               {savingPayment ? "Saving…" : "Record"}
             </button>
           </div>
@@ -981,13 +982,13 @@ export default function SupplierDetailPage() {
           title="Edit Supplier"
           footer={
             <div className="modal-actions">
-              <button className="mini-button" onClick={closeEdit} disabled={saving}>Cancel</button>
+              <button className="btn btn-sm" onClick={closeEdit} disabled={saving}>Cancel</button>
               <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? "Saving\u2026" : "Save"}</button>
               <span className="modal-actions-sep" />
-              <button className={`mini-button ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
+              <button className={`btn btn-sm ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
                 {supplier.isActive ? "Deactivate" : "Activate"}
               </button>
-              <button className="mini-button danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
+              <button className="btn btn-sm danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
             </div>
           }
         >
@@ -1042,8 +1043,8 @@ export default function SupplierDetailPage() {
         title={colConfirmTarget ? `Confirm — ${formatDate(colConfirmTarget.date)} ${colConfirmTarget.session}` : "Confirm Collection"}
         footer={
           <div className="modal-actions">
-            <button className="mini-button" onClick={() => setColConfirmTarget(null)} disabled={savingConfirm}>Cancel</button>
-            <button className="mini-button active" onClick={handleColConfirm} disabled={savingConfirm}>
+            <button className="btn btn-sm" onClick={() => setColConfirmTarget(null)} disabled={savingConfirm}>Cancel</button>
+            <button className="btn btn-sm active" onClick={handleColConfirm} disabled={savingConfirm}>
               {savingConfirm ? "Confirming…" : "Confirm"}
             </button>
           </div>
@@ -1095,8 +1096,8 @@ export default function SupplierDetailPage() {
         title="Add Adjustment"
         footer={
           <div className="modal-actions">
-            <button className="mini-button" onClick={() => setAdjOpen(false)} disabled={savingAdj}>Cancel</button>
-            <button className="mini-button active" onClick={handleCreateAdjustment} disabled={savingAdj}>
+            <button className="btn btn-sm" onClick={() => setAdjOpen(false)} disabled={savingAdj}>Cancel</button>
+            <button className="btn btn-sm active" onClick={handleCreateAdjustment} disabled={savingAdj}>
               {savingAdj ? "Saving…" : "Save"}
             </button>
           </div>
@@ -1152,8 +1153,8 @@ export default function SupplierDetailPage() {
         title={colEditTarget ? `Edit — ${formatDate(colEditTarget.date)} ${colEditTarget.session}` : "Edit Collection"}
         footer={
           <div className="modal-actions">
-            <button className="mini-button" onClick={() => setColEditTarget(null)} disabled={savingCol}>Cancel</button>
-            <button className="mini-button active" onClick={handleColSave} disabled={savingCol}>
+            <button className="btn btn-sm" onClick={() => setColEditTarget(null)} disabled={savingCol}>Cancel</button>
+            <button className="btn btn-sm active" onClick={handleColSave} disabled={savingCol}>
               {savingCol ? "Saving…" : "Save"}
             </button>
           </div>
@@ -1225,6 +1226,15 @@ export default function SupplierDetailPage() {
           variant="danger"
         />
       )}
+
+      <StickyActionBar>
+        <button className="btn btn-secondary" onClick={openEdit}>
+          <Pencil size={16} /> Edit Supplier
+        </button>
+        <button className="btn btn-primary" onClick={() => setAdjOpen(true)}>
+          Add Adjustment
+        </button>
+      </StickyActionBar>
     </div>
   );
 }

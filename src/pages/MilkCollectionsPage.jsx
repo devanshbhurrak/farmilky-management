@@ -568,7 +568,7 @@ export default function MilkCollectionsPage() {
               </div>
               {!isToday && (
                 <button
-                  className="mini-button mc-today-btn"
+                  className="btn btn-sm mc-today-btn"
                   onClick={() => setSelectedDate(todayStr())}
                   title="Jump to today"
                 >
@@ -745,7 +745,7 @@ export default function MilkCollectionsPage() {
                             {isPending ? (
                               <div className="mc-row-actions">
                                 <button
-                                  className="mini-button mc-no-supply-btn"
+                                  className="btn btn-sm mc-no-supply-btn"
                                   onClick={() => handleNoSupply(c)}
                                   disabled={confirmingId === c._id}
                                   title="Record no supply (0 L)"
@@ -954,7 +954,7 @@ export default function MilkCollectionsPage() {
                               </div>
                               <div className="mc-card-footer" style={{ justifyContent: "flex-end" }}>
                                 <button
-                                  className="mini-button"
+                                  className="btn btn-sm"
                                   onClick={() => openColEdit(c)}
                                   title="Edit confirmed entry"
                                 >
@@ -1219,8 +1219,8 @@ export default function MilkCollectionsPage() {
         title={colEditTarget ? `Edit — ${formatDate(colEditTarget.date)} ${colEditTarget.session} · ${colEditTarget.supplierId?.name || ""}` : "Edit Collection"}
         footer={
           <div className="modal-actions">
-            <button className="mini-button" onClick={() => setColEditTarget(null)} disabled={savingCol}>Cancel</button>
-            <button className="mini-button active" onClick={handleColSave} disabled={savingCol}>
+            <button className="btn btn-sm" onClick={() => setColEditTarget(null)} disabled={savingCol}>Cancel</button>
+            <button className="btn btn-sm active" onClick={handleColSave} disabled={savingCol}>
               {savingCol ? "Saving…" : "Save"}
             </button>
           </div>
@@ -1272,7 +1272,7 @@ export default function MilkCollectionsPage() {
         title={`Missing Entries (${missing.length})`}
         footer={
           <div className="modal-actions">
-            <button className="mini-button" onClick={() => setShowMissingModal(false)}>Close</button>
+            <button className="btn btn-sm" onClick={() => setShowMissingModal(false)}>Close</button>
           </div>
         }
       >
@@ -1285,7 +1285,7 @@ export default function MilkCollectionsPage() {
               <div className="mc-missing-group-date">
                 {formatDate(date)} — {items.length} missing
                 <button
-                  className="mini-button active mc-missing-fix-btn"
+                  className="btn btn-sm active mc-missing-fix-btn"
                   onClick={() => handleFixMissing(date)}
                   disabled={fixingDate === date}
                 >

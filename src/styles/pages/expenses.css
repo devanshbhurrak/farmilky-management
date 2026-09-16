@@ -12,7 +12,7 @@
   grid-template-columns: repeat(3, 1fr);
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -34,7 +34,7 @@
   width: 34px;
   height: 34px;
   flex-shrink: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--success-bg);
   color: var(--color-primary);
 }
@@ -144,7 +144,7 @@
   font-size: var(--font-size-sm);
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--text-primary);
   min-height: var(--touch-min);

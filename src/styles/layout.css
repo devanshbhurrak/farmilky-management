@@ -43,6 +43,12 @@
 .page-content {
   flex: 1;
   padding: var(--space-4);
+  animation: pageFadeIn 0.2s var(--ease-out);
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 767px) {
@@ -683,7 +689,7 @@
   gap: var(--space-3);
   padding: var(--space-3) var(--space-3);
   min-height: 48px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   color: var(--text-secondary);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
@@ -704,7 +710,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   color: var(--text-muted);
   flex-shrink: 0;
@@ -740,7 +746,7 @@
   width: 100%;
   max-height: calc(100dvh - 60px);
   background: var(--surface);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   display: flex;
   flex-direction: column;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
@@ -772,7 +778,7 @@
   max-width: 600px;
   max-height: calc(100dvh - 60px);
   background: var(--surface);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
@@ -971,7 +977,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: rgba(0, 0, 0, 0.05);
   color: var(--text-secondary);
   border: none;
@@ -999,7 +1005,7 @@
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--sidebar-text);
   text-decoration: none;
   font-weight: var(--font-weight-semibold);
@@ -1069,7 +1075,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 .sidebar.collapsed .sidebar-link.active {

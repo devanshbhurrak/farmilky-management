@@ -42,7 +42,7 @@
 .cust-stat-card {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: var(--space-3) var(--space-4);
   display: flex;
   flex-direction: column;
@@ -213,7 +213,7 @@
 .customer-hero {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: var(--space-4);
   box-shadow: var(--shadow-soft);
   display: flex;
@@ -437,7 +437,7 @@
 .customer-metric-card {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: var(--space-3) var(--space-2) var(--space-2);
   display: flex;
   flex-direction: column;
@@ -456,7 +456,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .customer-metric-card.metric-danger::before  { background: var(--danger-text); }
@@ -527,7 +527,7 @@
 .customer-tabs-panel {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
 }
@@ -732,7 +732,7 @@
 
 /* Period breakdown card */
 .payment-period-card {
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
@@ -742,7 +742,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) var(--space-3);
-  background: var(--surface-2);
+  background: var(--surface-muted);
   gap: var(--space-2);
 }
 
@@ -776,7 +776,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-soft);
   font-size: var(--font-size-sm);
 }
 
@@ -809,7 +809,7 @@
   padding: var(--space-3) var(--space-4);
   background: var(--danger-bg);
   border: 1px solid color-mix(in srgb, var(--danger-text) 20%, transparent);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 
 .payment-balance-label {
@@ -835,7 +835,7 @@
   background: var(--danger-text);
   color: #fff;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   cursor: pointer;
@@ -848,10 +848,10 @@
 
 /* Period breakdown inside collect modal */
 .payment-period-breakdown {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
   padding: var(--space-3) var(--space-4);
-  background: var(--surface-2);
+  background: var(--surface-muted);
   font-size: var(--font-size-sm);
 }
 
@@ -868,7 +868,7 @@
 }
 
 .ppb-net {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-soft);
   margin-top: var(--space-2);
   padding-top: var(--space-2);
   font-size: var(--font-size-base);
@@ -887,7 +887,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   background: var(--surface-1);
   color: var(--text-secondary);
@@ -912,9 +912,9 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4);
-  background: var(--surface-2);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-soft);
 }
 
 .payment-qr-meta {
@@ -1018,7 +1018,7 @@
   padding: var(--space-3) var(--space-4);
   background: rgba(16, 185, 129, 0.06);
   border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 
 .payment-amount-preview-label {
@@ -1040,7 +1040,7 @@
   padding: var(--space-3) var(--space-4);
   background: rgba(16, 185, 129, 0.06);
   border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 
 .sub-preview-label {
@@ -1069,7 +1069,7 @@
 .customer-form-section-icon {
   width: 28px;
   height: 28px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: rgba(16, 185, 129, 0.1);
   color: var(--color-primary);
   display: flex;
@@ -1124,9 +1124,9 @@
 .adj-type-btn {
   flex: 1;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius);
-  border: 1px solid var(--border-default);
-  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft);
+  background: var(--surface-muted);
   color: var(--text-muted);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);

@@ -193,7 +193,7 @@ function RoleCard({ role, roleData, registry, onSave, onReset }) {
       <div className="perm-role-actions">
         <button
           type="button"
-          className="mini-button"
+          className="btn btn-sm"
           onClick={handleReset}
           disabled={resetting || saving}
           title="Reset to system defaults"

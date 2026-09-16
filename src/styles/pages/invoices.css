@@ -66,7 +66,7 @@
   width: 36px;
   height: 36px;
   flex-shrink: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
   color: var(--text-muted);
   display: grid;
@@ -220,7 +220,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   padding: 2px 6px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 .inv-entry-cr {
@@ -342,7 +342,7 @@
   padding: var(--space-3) var(--space-4);
   background: var(--warning-bg);
   border: 1px solid var(--warning);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   color: var(--warning-text);
 }
@@ -354,7 +354,7 @@
   padding: var(--space-3) var(--space-4);
   background: var(--danger-bg);
   border: 1px solid var(--danger);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   color: var(--danger-text);
 }
@@ -468,7 +468,7 @@
   padding: var(--space-3) var(--space-4);
   background: var(--danger-bg);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   color: var(--danger-text);
 }
@@ -487,7 +487,7 @@
   padding: var(--space-4);
   background: var(--success-bg);
   border: 1px solid var(--success);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 /* ─── Error details ──────────────────────────── */
@@ -496,7 +496,7 @@
   color: var(--danger-text);
   background: var(--danger-bg);
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
@@ -521,7 +521,7 @@
   padding: var(--space-3) var(--space-4);
   background: var(--warning-bg);
   border: 1px solid rgba(245, 158, 11, 0.25);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   color: var(--warning-text);
 }
@@ -534,7 +534,7 @@
   padding: var(--space-2) var(--space-3);
   background: var(--success-bg);
   border: 1px solid var(--color-primary-muted);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   min-height: 40px;
 }
 
@@ -550,7 +550,7 @@
   right: 0;
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   z-index: var(--z-dropdown);
   overflow: hidden;
@@ -630,7 +630,7 @@
   color: var(--danger-text);
   background: var(--danger-bg);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(239, 68, 68, 0.2);
   margin-top: calc(-1 * var(--space-2));
 }
@@ -737,7 +737,7 @@
     width: 100%;
     padding: var(--space-2) var(--space-3);
     font-size: var(--font-size-xs);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
   }
 
   .inv-detail-wrap {
@@ -756,7 +756,7 @@
   .inv-action-group {
     padding: var(--space-2);
     gap: var(--space-2);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     width: 100%;
     justify-content: stretch;
   }
@@ -805,7 +805,7 @@
 .inv-doc {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   /* do NOT set overflow:hidden — it clips sticky/dropdown children */
 }
 
@@ -818,7 +818,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-4);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .inv-doc-brand-name {
@@ -1036,7 +1036,7 @@
   display: block;
   padding: var(--space-2);
   border: 1.5px solid #9ecfb4;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: #ffffff;
   line-height: 0; /* remove inline-block gap below SVG */
   transition: box-shadow var(--duration-base);
@@ -1098,7 +1098,7 @@
   padding: var(--space-2) var(--space-3);
   background: var(--surface-muted);
   border: 1px solid #9ecfb4;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   width: fit-content;
 }
 
@@ -1152,7 +1152,7 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.06em;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 /* ── Ledger collapsed state (CSS-toggled instead of conditional render) ── */
@@ -1255,7 +1255,7 @@
   padding: var(--space-4);
   background: var(--surface-muted);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 .ci-section-label {
@@ -1303,7 +1303,7 @@
   padding: var(--space-3);
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 /* Header row: index number + optional remove button */
@@ -1343,7 +1343,7 @@
   padding: 0 var(--space-3);
   background: var(--surface-muted);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary);
   font-size: var(--font-size-sm);
@@ -1378,7 +1378,7 @@
   padding: var(--space-3) var(--space-4);
   background: var(--surface-muted);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 .ci-total-row {
@@ -1421,7 +1421,7 @@
   padding: var(--space-4);
   gap: var(--space-3);
   min-height: 64px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   transition: background var(--duration-fast);
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
@@ -1597,7 +1597,7 @@
     padding: var(--space-3);
     background: var(--surface);
     border: 1px solid var(--border-soft);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     gap: var(--space-2);
   }
 

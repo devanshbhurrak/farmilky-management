@@ -10,7 +10,7 @@
   height: 32px;
   min-width: var(--touch-min);
   min-height: var(--touch-min);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);
@@ -43,7 +43,7 @@
 
 .panel {
   background: var(--surface);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   padding: var(--space-4) var(--space-5);
   border: 1px solid rgba(0, 0, 0, 0.02);
@@ -77,7 +77,7 @@
 /* Card — 1rem padding, for data items */
 .card {
   background: var(--surface);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
   padding: var(--space-5);
   transition: transform var(--duration-base), box-shadow var(--duration-base);
@@ -91,7 +91,7 @@
 /* Card inset — muted bg for nested content */
 .card-inset {
   background: var(--surface-muted);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: var(--space-5);
 }
 
@@ -106,7 +106,7 @@
   align-items: flex-start;
   gap: var(--space-6);
   padding: var(--space-6) var(--space-5);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   color: var(--text-on-dark);
   background: var(--gradient-hero);
   box-shadow: var(--shadow-lg);
@@ -121,7 +121,7 @@
     align-items: center;
     gap: var(--space-8);
     padding: var(--space-10);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
   }
 }
 
@@ -175,7 +175,7 @@
 }
 
 .metric-chip {
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: var(--space-5) var(--space-6);
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
@@ -206,7 +206,7 @@
 .info-card {
   padding: var(--space-5) var(--space-6);
   background: linear-gradient(135deg, var(--surface) 0%, var(--surface-inset) 100%);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   transition: all 0.25s ease;
   position: relative;
@@ -239,7 +239,7 @@
 @media (max-width: 639px) {
   .info-card {
     padding: 14px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
   }
 }
 
@@ -418,6 +418,25 @@
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
 }
 
+.info-card-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--success-text);
+}
+
+/* Surface card — panel-style wrapper for page content sections */
+.surface-card {
+  background: var(--surface);
+  border-radius: var(--card-radius);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
 /* ═══════════════════════════════════════════════════
    UNIFIED BUTTON SYSTEM
    Canonical: .btn + variants (.btn-primary / .btn-secondary /
@@ -445,6 +464,7 @@
   cursor: pointer;
   transition: all var(--duration-base);
   -webkit-tap-highlight-color: transparent;
+  min-height: var(--btn-height);
 }
 
 .btn:disabled, .mini-button:disabled, .action-btn:disabled {
@@ -513,54 +533,72 @@
   color: var(--text-on-primary);
 }
 
-/* Small buttons */
+/* Small buttons — canonical .btn-sm, legacy alias .mini-button */
 .mini-button, .btn-sm {
   padding: 0.375rem 0.875rem;
   font-size: var(--font-size-xs);
-  min-height: 32px;
+  min-height: var(--btn-height-sm);
 }
 
-.mini-button {
+.mini-button,
+.btn-sm:not(.btn-primary):not(.btn-secondary):not(.btn-danger):not(.btn-warning):not(.active):not(.warning):not(.danger) {
   background: var(--surface);
   color: var(--text-secondary);
   border-color: var(--border-soft);
 }
 
-.mini-button:hover:not(:disabled) {
+.mini-button:hover:not(:disabled),
+.btn-sm:not(.btn-primary):not(.btn-secondary):not(.btn-danger):not(.btn-warning):not(.active):not(.warning):not(.danger):hover:not(:disabled) {
   background: var(--surface-muted);
   border-color: var(--border-strong);
   color: var(--text-primary);
 }
 
-.mini-button.active {
+.mini-button.active,
+.btn-sm.active,
+.btn.active {
   background: var(--color-primary);
   color: var(--text-on-primary);
   border-color: var(--color-primary);
 }
 
-.mini-button.active:hover:not(:disabled) {
+.mini-button.active:hover:not(:disabled),
+.btn-sm.active:hover:not(:disabled),
+.btn.active:hover:not(:disabled) {
   background: var(--color-primary-dark);
   border-color: var(--color-primary-dark);
 }
 
-.mini-button.warning {
+.mini-button.warning,
+.btn-sm.warning,
+.btn.warning,
+.btn-warning {
   background: var(--warning-bg);
   color: var(--warning-text);
   border-color: var(--warning);
 }
 
-.mini-button.warning:hover:not(:disabled) {
+.mini-button.warning:hover:not(:disabled),
+.btn-sm.warning:hover:not(:disabled),
+.btn.warning:hover:not(:disabled),
+.btn-warning:hover:not(:disabled) {
   background: var(--warning);
   color: var(--text-on-primary);
 }
 
-.mini-button.danger {
+.mini-button.danger,
+.btn-sm.danger,
+.btn.danger,
+.btn-danger {
   background: var(--danger-bg);
   color: var(--danger-text);
   border-color: var(--danger);
 }
 
-.mini-button.danger:hover:not(:disabled) {
+.mini-button.danger:hover:not(:disabled),
+.btn-sm.danger:hover:not(:disabled),
+.btn.danger:hover:not(:disabled),
+.btn-danger:hover:not(:disabled) {
   background: var(--danger);
   color: var(--text-on-primary);
 }
@@ -595,7 +633,13 @@
 .btn-sm {
   padding: 0.375rem 0.875rem;
   font-size: var(--font-size-xs);
-  min-height: 32px;
+  min-height: var(--btn-height-sm);
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: var(--font-size-base);
+  min-height: var(--btn-height-lg);
 }
 
 /* ─── Detail Action Buttons ───────────────────────
@@ -763,7 +807,7 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow);
   text-decoration: none;
@@ -848,7 +892,7 @@
 .customer-address-card {
   background: var(--surface-muted);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
@@ -1042,7 +1086,7 @@
   text-align: center;
   padding: var(--space-12) var(--space-8);
   background: var(--surface);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   border: 2px dashed var(--border-soft);
   color: var(--text-muted);
 }
@@ -1092,7 +1136,7 @@
   height: 88px;
   border-radius: 50%;
   background: var(--danger-bg);
-  color: var(--color-danger);
+  color: var(--danger);
 }
 
 .error-boundary h1 {
@@ -1233,7 +1277,7 @@
 /* ─── Surface wrapper (list-page container) ─── */
 .surface {
   background: var(--surface);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border-soft);
   overflow: hidden;
@@ -1250,7 +1294,7 @@
 /* ─── Mobile data card (DataTable wrapper) ───── */
 .mobile-data-card {
   background: var(--surface);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -1466,6 +1510,74 @@
   line-height: 1.5;
 }
 
+/* ─── Detail row for mobile detail pages ─────── */
+.mc-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: var(--font-size-sm);
+}
+
+.mc-detail-row:last-child {
+  border-bottom: none;
+}
+
+.mc-detail-row-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.mc-detail-row-value {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  text-align: right;
+}
+
+/* ─── Tap affordance — subtle right-edge indicator on tappable cards ── */
+.mobile-data-card--tappable {
+  position: relative;
+}
+
+.mobile-data-card--tappable::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  width: 6px;
+  height: 6px;
+  border-top: 1.5px solid var(--border-strong);
+  border-right: 1.5px solid var(--border-strong);
+  transform: translateY(-50%) rotate(45deg);
+  opacity: 0.35;
+  transition: opacity var(--duration-base), transform var(--duration-base);
+}
+
+.mobile-data-card--tappable:hover::after {
+  opacity: 0.7;
+  transform: translateY(-50%) rotate(45deg) translateX(1px);
+}
+
+/* Also apply subtle indicator to any mobile-data-card that is clickable */
+.mobile-data-card[role="button"]::after,
+.mobile-data-card.clickable::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  width: 6px;
+  height: 6px;
+  border-top: 1.5px solid var(--border-strong);
+  border-right: 1.5px solid var(--border-strong);
+  transform: translateY(-50%) rotate(45deg);
+  opacity: 0.3;
+}
+
 /* ─── Scroll Table (wide tables that scroll horizontally on mobile) ── */
 .scroll-table {
   overflow-x: auto;
@@ -1527,6 +1639,170 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   SHARED PAGE PATTERNS (extracted from pages/*)
+   ═══════════════════════════════════════════════════ */
+
+/* Panel header + view-all link — extracted from dashboard.css */
+.panel-header,
+.dash-panel .panel-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.view-all-link,
+.dash-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.view-all-link:hover,
+.dash-view-all:hover { color: var(--color-primary); }
+
+/* Info-card accent modifier — extracted from dashboard.css */
+.info-card--accent {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.info-card--accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.info-card--accent.info-card--warning::before { background: var(--color-secondary); }
+.info-card--accent.info-card--danger::before  { background: var(--danger); }
+.info-card--accent.info-card--info::before    { background: var(--color-accent); }
+
+/* Ops card — extracted from dashboard.css .dash-ops-card */
+.ops-card,
+.dash-ops-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft);
+  background: var(--surface-inset);
+  text-decoration: none;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s var(--ease-out), background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.ops-card::before,
+.dash-ops-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  border-radius: 0 2px 2px 0;
+}
+
+.ops-card--delivery::before,
+.dash-ops-card--delivery::before { background: var(--color-primary); }
+.ops-card--milk::before,
+.dash-ops-card--milk::before { background: var(--color-secondary); }
+
+.ops-card:hover,
+.dash-ops-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.ops-card--delivery:hover,
+.dash-ops-card--delivery:hover { border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.04); }
+.ops-card--milk:hover,
+.dash-ops-card--milk:hover { border-color: rgba(245, 158, 11, 0.3);  background: rgba(245, 158, 11, 0.04);  }
+
+.ops-card:active,
+.dash-ops-card:active { transform: scale(0.98); }
+
+/* Delivery status accents — alias to mc-head--* (shared) */
+.delivery-card--pending,
+.mc-card--pending { border-left: 3px solid var(--warning); }
+.delivery-card--delivered,
+.mc-card--confirmed { border-left: 3px solid var(--success); }
+.delivery-card--failed { border-left: 3px solid var(--danger); }
+.delivery-card--skipped { border-left: 3px solid var(--warning); }
+
+/* Shift cards & collection rows — shared from milk-collections.css */
+.shift-card,
+.mc-summary {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.collection-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+}
+
+/* Invoice line-item table — shared from invoices.css */
+.line-item-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.line-item-table th {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.line-item-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-soft);
+  font-size: var(--font-size-sm);
+}
+
+.line-item-table .total-row {
+  font-weight: var(--font-weight-bold);
+  background: var(--surface-muted);
+}
+
+/* Customers — cust-card deduplicated via mc-* alias */
+.cust-card {
+  /* alias container — inherits mobile-data-card + mc-* internals */
+}
+
+/* ═══════════════════════════════════════════════════
    MOBILE RESPONSIVE OVERRIDES
    ═══════════════════════════════════════════════════ */
 
@@ -1534,7 +1810,7 @@
   /* Panel — tighter padding on mobile */
   .panel {
     padding: var(--space-5);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
   }
 
   /* view-stack — tighter vertical gap */
@@ -1635,7 +1911,7 @@
   min-height: 36px;
   padding: 0;
   font-size: var(--font-size-sm);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 
 .pagination-pages .mini-button.active {
@@ -1992,7 +2268,7 @@
   color: var(--danger-text);
   background: var(--danger-bg);
   border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-snug);
@@ -2101,7 +2377,7 @@
 .skeleton-bar {
   display: block;
   height: 16px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: linear-gradient(
     90deg,
     var(--surface-muted) 25%,
@@ -2115,6 +2391,13 @@
 .skeleton-row + .skeleton-row .skeleton-bar {
   height: 12px;
 }
+
+.skeleton-row:nth-child(1) .skeleton-bar { animation-delay: 0s; }
+.skeleton-row:nth-child(2) .skeleton-bar { animation-delay: 0.05s; }
+.skeleton-row:nth-child(3) .skeleton-bar { animation-delay: 0.1s; }
+.skeleton-row:nth-child(4) .skeleton-bar { animation-delay: 0.15s; }
+.skeleton-row:nth-child(5) .skeleton-bar { animation-delay: 0.2s; }
+.skeleton-row:nth-child(6) .skeleton-bar { animation-delay: 0.25s; }
 
 @keyframes skeleton-shimmer {
   from { background-position: 200% 0; }
@@ -2164,4 +2447,90 @@
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
+}
+
+/* ═══════════════════════════════════════════════════
+   ACTIVE STATES — consistent scale 0.97
+   ═══════════════════════════════════════════════════ */
+
+.btn:active:not(:disabled),
+.card:active,
+.panel:active,
+.mobile-data-card:active,
+.info-card--clickable:active,
+.info-card:active,
+.list-card:active,
+.ops-card:active,
+.dash-ops-card:active,
+.cust-card:active,
+.product-mobile-card:active,
+.manifest-card:active,
+.area-card:active,
+.delivery-card:active,
+.mc-card:active {
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════
+   EXTENDED FOCUS-VISIBLE
+   ═══════════════════════════════════════════════════ */
+
+.chip:focus-visible,
+select:focus-visible,
+.searchable-select-trigger:focus-visible,
+.mobile-data-card:focus-visible,
+.cust-card:focus-visible,
+.product-mobile-card:focus-visible,
+.manifest-card:focus-visible,
+.area-card:focus-visible,
+.mc-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
+  border-color: var(--color-primary);
+}
+
+/* Customer detail tabs — alias to canonical tab-pill / scrollable-tab-bar */
+.customer-tabs-header {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: var(--space-1);
+}
+
+.customer-tabs-header::-webkit-scrollbar { display: none; }
+
+.customer-tab-btn {
+  flex-shrink: 0;
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-soft);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--duration-base);
+  white-space: nowrap;
+}
+
+.customer-tab-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.customer-tab-btn:active { transform: scale(0.96); }
+
+.customer-tab-btn.active {
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+  border-color: var(--color-primary);
+}
+
+.customer-tab-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring);
+  border-color: var(--color-primary);
 }

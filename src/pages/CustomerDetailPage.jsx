@@ -13,6 +13,8 @@ import SubscriptionForm from "../components/subscription/SubscriptionForm";
 import OrderForm from "../components/order/OrderForm";
 import CustomerForm from "../components/customer/CustomerForm";
 import PageError from "../components/ui/PageError";
+import PageHeader from "../components/ui/PageHeader";
+import StickyActionBar from "../components/ui/StickyActionBar";
 import toast from "react-hot-toast";
 
 function getInitials(name = "") {
@@ -650,12 +652,24 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="customer-detail-page view-stack">
-      {/* Breadcrumb */}
-      <nav className="customer-page-breadcrumb" aria-label="Breadcrumb">
-        <Link to="/customers">Customers</Link>
-        <ChevronRight size={14} />
-        <span className="text-primary">{user.name}</span>
-      </nav>
+      <PageHeader
+        title={user.name}
+        subtitle={user.phone || user.email}
+        breadcrumb={[
+          { label: "Customers", path: "/customers" },
+          { label: user.name },
+        ]}
+        actions={
+          <div className="detail-actions">
+            <StatusTag value={user.isActive ? "active" : "inactive"} />
+            <div className="detail-actions-buttons">
+              <button className="btn btn-secondary btn-sm" onClick={() => setModalType("edit")}>
+                <Edit2 size={14} /> Edit
+              </button>
+            </div>
+          </div>
+        }
+      />
 
       {/* Hero profile panel */}
       <div className="customer-hero">
@@ -845,6 +859,15 @@ export default function CustomerDetailPage() {
           )}
         </div>
       </div>
+
+      <StickyActionBar>
+        <button className="btn btn-secondary" onClick={() => setModalType("edit")}>
+          <Edit2 size={16} /> Edit Customer
+        </button>
+        <button className="btn btn-primary" onClick={() => setModalType("subscription")}>
+          <Repeat2 size={16} /> New Subscription
+        </button>
+      </StickyActionBar>
 
       {/* Modal */}
       <ResponsiveModal

@@ -5,7 +5,7 @@ export default function ActionRow({ current, options, onSelect }) {
         <button
           key={option}
           type="button"
-          className={current === option ? "mini-button active" : "mini-button"}
+          className={current === option ? "btn btn-sm active" : "btn btn-sm"}
           disabled={current === option}
           onClick={() => onSelect(option)}
         >

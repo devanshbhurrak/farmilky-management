@@ -222,19 +222,19 @@ export default function AgentsPage() {
       render: (row) => (
         <div className="table-actions" onClick={(e) => e.stopPropagation()}>
           <button
-            className="mini-button"
+            className="btn btn-sm"
             onClick={() => openEdit(row)}
           >
             Edit
           </button>
           <button
-            className={`mini-button ${row.isActive ? "warning" : "active"}`}
+            className={`btn btn-sm ${row.isActive ? "warning" : "active"}`}
             onClick={() => setConfirmAction({ type: "toggle", agent: row })}
           >
             {row.isActive ? "Deactivate" : "Activate"}
           </button>
           <button
-            className="mini-button danger"
+            className="btn btn-sm danger"
             onClick={() => setConfirmAction({ type: "delete", agent: row })}
           >
             Delete
@@ -266,15 +266,15 @@ export default function AgentsPage() {
         </div>
       </div>
       <div className="mc-action-bar" onClick={(e) => e.stopPropagation()}>
-        <button className="mini-button" onClick={() => openEdit(row)}>Edit</button>
+        <button className="btn btn-sm" onClick={() => openEdit(row)}>Edit</button>
         <button
-          className={`mini-button ${row.isActive ? "warning" : "active"}`}
+          className={`btn btn-sm ${row.isActive ? "warning" : "active"}`}
           onClick={() => setConfirmAction({ type: "toggle", agent: row })}
         >
           {row.isActive ? "Deactivate" : "Activate"}
         </button>
         <button
-          className="mini-button danger"
+          className="btn btn-sm danger"
           onClick={() => setConfirmAction({ type: "delete", agent: row })}
         >
           Delete
@@ -340,10 +340,10 @@ export default function AgentsPage() {
         title={modalMode === "create" ? "New Agent" : "Edit Agent"}
         footer={
           <div className="modal-actions">
-            <button className="mini-button" onClick={closeModal} disabled={saving}>
+            <button className="btn btn-sm" onClick={closeModal} disabled={saving}>
               Cancel
             </button>
-            <button className="mini-button active" onClick={handleSave} disabled={saving}>
+            <button className="btn btn-sm active" onClick={handleSave} disabled={saving}>
               {saving ? "Saving…" : "Save"}
             </button>
           </div>

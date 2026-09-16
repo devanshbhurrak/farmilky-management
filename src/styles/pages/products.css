@@ -42,7 +42,7 @@
 .product-thumb {
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   object-fit: cover;
   border: 1px solid var(--border-soft);
   display: block;
@@ -74,7 +74,7 @@
 .product-mobile-card {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: 12px var(--space-4);
   box-shadow: var(--shadow-sm);
   display: flex;
@@ -97,7 +97,7 @@
 .pm-thumb {
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   object-fit: cover;
   border: 1px solid var(--border-soft);
   flex-shrink: 0;
@@ -212,7 +212,7 @@
 
   .product-mobile-card {
     padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     gap: var(--space-2);
   }
 

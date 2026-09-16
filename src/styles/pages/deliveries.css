@@ -213,7 +213,8 @@
   gap: var(--space-2);
 }
 
-.delivery-card .action-btn-primary {
+.delivery-card .action-btn-primary,
+.delivery-card .btn-primary {
   background: var(--color-secondary);
   color: white;
   border: none;
@@ -227,8 +228,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.delivery-card .action-btn-primary:hover  { background: #d97706; }
-.delivery-card .action-btn-primary:active { opacity: 0.8; }
+.delivery-card .action-btn-primary:hover, .delivery-card .btn-primary:hover  { background: #d97706; }
+.delivery-card .action-btn-primary:active, .delivery-card .btn-primary:active { opacity: 0.8; }
 
 .action-row-secondary {
   display: grid;
@@ -236,7 +237,8 @@
   gap: var(--space-2);
 }
 
-.delivery-card .action-btn-secondary {
+.delivery-card .action-btn-secondary,
+.delivery-card .btn-secondary {
   background: var(--surface-muted);
   color: var(--text-primary);
   border: 1px solid var(--border-soft);
@@ -250,10 +252,11 @@
   white-space: nowrap;
 }
 
-.delivery-card .action-btn-secondary:hover  { background: var(--surface-inset); border-color: var(--border-strong); }
-.delivery-card .action-btn-secondary:active { transform: scale(0.97); }
+.delivery-card .action-btn-secondary:hover, .delivery-card .btn-secondary:hover  { background: var(--surface-inset); border-color: var(--border-strong); }
+.delivery-card .action-btn-secondary:active, .delivery-card .btn-secondary:active { transform: scale(0.97); }
 
-.delivery-card .action-btn-danger {
+.delivery-card .action-btn-danger,
+.delivery-card .btn-danger {
   background: var(--danger-bg);
   color: var(--danger-text);
   border: 1px solid rgba(220, 38, 38, 0.25);
@@ -267,8 +270,8 @@
   white-space: nowrap;
 }
 
-.delivery-card .action-btn-danger:hover  { background: rgba(239, 68, 68, 0.15); border-color: rgba(220, 38, 38, 0.4); }
-.delivery-card .action-btn-danger:active { transform: scale(0.97); }
+.delivery-card .action-btn-danger:hover, .delivery-card .btn-danger:hover  { background: rgba(239, 68, 68, 0.15); border-color: rgba(220, 38, 38, 0.4); }
+.delivery-card .action-btn-danger:active, .delivery-card .btn-danger:active { transform: scale(0.97); }
 
 /* ─── Actions Dropdown Menu ───────────────────── */
 .delivery-dropdown-container {

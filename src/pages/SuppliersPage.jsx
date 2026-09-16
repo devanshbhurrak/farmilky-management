@@ -287,13 +287,13 @@ export default function SuppliersPage() {
         {modalMode === "edit" && editingSupplier && (
           <div className="supplier-form-actions-row">
             <button
-              className={`mini-button ${editingSupplier.isActive ? "warning" : "active"}`}
+              className={`btn btn-sm ${editingSupplier.isActive ? "warning" : "active"}`}
               onClick={() => { closeModal(); setConfirmAction({ type: "toggle", supplier: editingSupplier }); }}
             >
               {editingSupplier.isActive ? "Deactivate" : "Activate"}
             </button>
             <button
-              className="mini-button danger"
+              className="btn btn-sm danger"
               onClick={() => { closeModal(); setConfirmAction({ type: "delete", supplier: editingSupplier }); }}
             >
               Remove
@@ -352,7 +352,7 @@ export default function SuppliersPage() {
       sortable: false,
       render: (row) => (
         <div className="table-actions" onClick={(e) => e.stopPropagation()}>
-          <button className="mini-button" onClick={() => openEdit(row)}>Edit</button>
+          <button className="btn btn-sm" onClick={() => openEdit(row)}>Edit</button>
         </div>
       ),
     },
@@ -456,13 +456,13 @@ export default function SuppliersPage() {
               {modalMode === "edit" && editingSupplier && (
                 <>
                   <button
-                    className={`mini-button ${editingSupplier.isActive ? "warning" : "active"}`}
+                    className={`btn btn-sm ${editingSupplier.isActive ? "warning" : "active"}`}
                     onClick={() => { closeModal(); setConfirmAction({ type: "toggle", supplier: editingSupplier }); }}
                   >
                     {editingSupplier.isActive ? "Deactivate" : "Activate"}
                   </button>
                   <button
-                    className="mini-button danger"
+                    className="btn btn-sm danger"
                     onClick={() => { closeModal(); setConfirmAction({ type: "delete", supplier: editingSupplier }); }}
                   >
                     Remove
@@ -470,7 +470,7 @@ export default function SuppliersPage() {
                   <span className="modal-actions-sep" />
                 </>
               )}
-              <button className="mini-button" onClick={closeModal} disabled={saving}>Cancel</button>
+              <button className="btn btn-sm" onClick={closeModal} disabled={saving}>Cancel</button>
               <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
                 {saving ? "Saving…" : "Save"}
               </button>
