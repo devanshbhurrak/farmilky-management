@@ -474,7 +474,6 @@ export default function InvoiceDetailPage() {
                     <tr>
                       <th>Date</th>
                       <th>Description</th>
-                      <th>Category</th>
                       <th style={{ textAlign: "right" }}>Qty</th>
                       <th style={{ textAlign: "right" }}>Amount</th>
                       <th style={{ textAlign: "right" }}>Type</th>
@@ -492,7 +491,6 @@ export default function InvoiceDetailPage() {
                             </span>
                           )}
                         </td>
-                        <td style={{ whiteSpace: "nowrap" }}>{item.category}</td>
                         <td style={{ textAlign: "right" }}>{item.quantity != null ? item.quantity : "—"}</td>
                         <td style={{ textAlign: "right", color: item.entryType === "credit" ? "var(--color-primary)" : "var(--text-primary)" }}>
                           {formatCurrency(item.amount)}
