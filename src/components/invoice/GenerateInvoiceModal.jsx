@@ -1,11 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
-import { CheckCircle2, AlertTriangle, User, X } from "lucide-react";
+import { CheckCircle2, AlertTriangle, User, X, Calendar } from "lucide-react";
 import ResponsiveModal from "../ui/ResponsiveModal";
 import { apiRequest, safeParseJson } from "../../api/client";
-import { todayLocal } from "../../utils/format";
 import toast from "react-hot-toast";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/** Returns "YYYY-MM-DD" for a given year/month/day (local, no timezone shift) */
+function localDate(year, month, day) {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
 
 export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
   const now = new Date();
@@ -15,19 +19,32 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
   const [customerSearch, setCustomerSearch] = useState("");
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [isEarlyBilling, setIsEarlyBilling] = useState(false);
-  const [cutoffDate, setCutoffDate] = useState(todayLocal());
+  const [useCustomEndDate, setUseCustomEndDate] = useState(false);
+  const [endDate, setEndDate] = useState("");
   const [force, setForce] = useState(false);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState(null);
+
+  // Derived bounds for the end date picker
+  const lastDay = new Date(year, month, 0).getDate(); // last day of selected month
+  const endDateMin = localDate(year, month, 1);
+  const endDateMax = localDate(year, month, lastDay);
+
+  // Default end date = last day of selected month
+  const defaultEndDate = endDateMax;
+
+  // isEarlyBilling is true when the chosen end date is before the last day of the month
+  const effectiveEndDate = useCustomEndDate ? endDate : defaultEndDate;
+  const isEarlyBilling = useCustomEndDate && endDate !== "" && endDate < endDateMax;
 
   useEffect(() => {
     if (!open) {
       setResult(null);
       setSelectedCustomer(null);
       setCustomerSearch("");
-      setIsEarlyBilling(false);
+      setUseCustomEndDate(false);
+      setEndDate("");
       setForce(false);
       setNotes("");
       return;
@@ -38,6 +55,24 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
       .catch(() => {});
   }, [open]);
 
+  // When month/year changes, clamp the end date to stay within the new month
+  useEffect(() => {
+    if (!useCustomEndDate || !endDate) return;
+    const newMin = localDate(year, month, 1);
+    const newMax = localDate(year, month, new Date(year, month, 0).getDate());
+    if (endDate < newMin) setEndDate(newMin);
+    else if (endDate > newMax) setEndDate(newMax);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month, year]);
+
+  // When enabling custom end date, initialise to last day of month (full month → easy to adjust)
+  function handleToggleCustomEndDate(checked) {
+    setUseCustomEndDate(checked);
+    if (checked && !endDate) {
+      setEndDate(endDateMax);
+    }
+  }
+
   const filteredCustomers = useMemo(() => {
     const q = customerSearch.toLowerCase();
     return customers.filter(c =>
@@ -47,30 +82,31 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
 
-  // Cutoff date bounds — must fall within the selected billing month
-  const cutoffMin = `${year}-${String(month).padStart(2, "0")}-01`;
-  const lastDay = new Date(year, month, 0).getDate(); // day 0 of next month = last day of this month
-  const cutoffMax = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-
-  // Clamp cutoffDate whenever month/year changes
-  useEffect(() => {
-    if (cutoffDate < cutoffMin) setCutoffDate(cutoffMin);
-    else if (cutoffDate > cutoffMax) setCutoffDate(cutoffMax);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, year]);
-
   async function handleSubmit(e) {
     e.preventDefault();
     if (mode === "single" && !selectedCustomer) {
       toast.error("Select a customer"); return;
     }
+    // Validate end date if custom
+    if (useCustomEndDate) {
+      if (!endDate) { toast.error("Select a billing end date"); return; }
+      if (endDate < endDateMin || endDate > endDateMax) {
+        toast.error(`End date must be within ${MONTHS[month - 1]} ${year}`); return;
+      }
+    }
     setSaving(true); setResult(null);
     try {
       let res, payload;
+      const billingEndDate = useCustomEndDate ? effectiveEndDate : undefined;
+
       if (mode === "bulk") {
         res = await apiRequest("/api/invoices/admin/generate-bulk", {
           method: "POST",
-          body: JSON.stringify({ month, year, force }),
+          body: JSON.stringify({
+            month, year, force,
+            isEarlyBilling,
+            billingCutoffDate: billingEndDate,
+          }),
         });
         payload = await safeParseJson(res);
         if (!res.ok) throw new Error(payload?.message || "Bulk generation failed");
@@ -82,7 +118,7 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
           body: JSON.stringify({
             month, year, force,
             isEarlyBilling,
-            billingCutoffDate: isEarlyBilling ? cutoffDate : undefined,
+            billingCutoffDate: billingEndDate,
             notes: notes || undefined,
           }),
         });
@@ -241,27 +277,41 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
             </div>
           )}
 
-          {/* Early billing (single mode) */}
-          {mode === "single" && (
-            <label className="gen-checkbox-row">
-              <input
-                type="checkbox"
-                checked={isEarlyBilling}
-                onChange={e => setIsEarlyBilling(e.target.checked)}
-              />
-              <span>Early Billing (mid-month cutoff)</span>
-            </label>
-          )}
-          {mode === "single" && isEarlyBilling && (
+          {/* Billing end date */}
+          <label className="gen-checkbox-row">
+            <input
+              type="checkbox"
+              checked={useCustomEndDate}
+              onChange={e => handleToggleCustomEndDate(e.target.checked)}
+            />
+            <span>Custom Billing End Date</span>
+          </label>
+          {useCustomEndDate && (
             <div className="form-group">
-              <label>Billing Cutoff Date</label>
+              <label style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+                <Calendar size={14} style={{ color: "var(--text-muted)" }} />
+                Bill End Date
+                <span style={{ color: "var(--text-muted)", fontWeight: "var(--font-weight-normal)", fontSize: "var(--font-size-sm)" }}>
+                  (defaults to last day of month)
+                </span>
+              </label>
               <input
                 type="date"
-                value={cutoffDate}
-                min={cutoffMin}
-                max={cutoffMax}
-                onChange={e => setCutoffDate(e.target.value)}
+                value={endDate}
+                min={endDateMin}
+                max={endDateMax}
+                onChange={e => setEndDate(e.target.value)}
               />
+              {isEarlyBilling && (
+                <p style={{ margin: "var(--space-1) 0 0", fontSize: "var(--font-size-xs)", color: "var(--warning-text)" }}>
+                  Early billing — invoice will cover {MONTHS[month - 1]} 1 to {endDate}.
+                </p>
+              )}
+              {useCustomEndDate && endDate === endDateMax && (
+                <p style={{ margin: "var(--space-1) 0 0", fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>
+                  Full month billing — same as default.
+                </p>
+              )}
             </div>
           )}
 
