@@ -540,22 +540,17 @@
 
 /* ─── Customer search dropdown ───────────────── */
 .gen-customer-search {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .gen-customer-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
   background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: var(--z-dropdown);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  max-height: 240px;
-  overflow-y: auto;
 }
 
 .gen-customer-option {
