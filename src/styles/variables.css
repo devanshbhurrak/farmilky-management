@@ -23,11 +23,11 @@
   --surface-inset: #f8fafc;
 
   /* ─── Sidebar & Chrome ──────────────────────────── */
-  --sidebar-bg: #f1f5f9;
-  --sidebar-border: transparent;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e2e8f0;
   --sidebar-text: #475569;
   --sidebar-text-muted: #94a3b8;
-  --sidebar-hover: rgba(0, 0, 0, 0.05);
+  --sidebar-hover: rgba(0, 0, 0, 0.04);
   --sidebar-active-bg: #ecfdf5;
   --sidebar-active-accent: var(--color-primary);
 
@@ -82,7 +82,8 @@
   --touch-min: 44px;
   --avatar-size: 40px;
   --bottom-nav-height: 64px;
-  --mobile-header-height: 72px;
+  --mobile-header-height: 60px;
+  --input-height: 44px;
   --info-card-icon: 36px;
   --icon-size-sm: 14px;
   --icon-size-md: 18px;
@@ -127,6 +128,7 @@
   --radius-md:   0.75rem;       /* 12px */
   --radius-lg:   1rem;          /* 16px */
   --radius-xl:   1.5rem;        /* 24px */
+  --radius-2xl:  2rem;          /* 32px */
   --radius:      var(--radius-lg); /* alias — 16px (back-compat) */
   --radius-pill: 9999px;
 
@@ -140,12 +142,12 @@
 
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow:     0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-md:  0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-  --shadow-lg:  0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
-  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
-  --shadow-card: var(--shadow-sm);
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow:     0 4px 8px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-md:  0 12px 20px -4px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.03);
+  --shadow-lg:  0 20px 32px -6px rgba(0, 0, 0, 0.10), 0 8px 16px -6px rgba(0, 0, 0, 0.04);
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 
   /* ─── Z-Index Hierarchy ─────────────────────────── */
   --z-base:     0;

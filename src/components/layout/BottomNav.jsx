@@ -22,7 +22,9 @@ export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
             <NavLink key={item.id} to={item.path} className={linkClass}>
               {({ isActive }) => (
                 <>
-                  <NavIcon name={item.icon} size={24} />
+                  <span className="nav-item-icon-wrap">
+                    <NavIcon name={item.icon} size={22} />
+                  </span>
                   <span aria-current={isActive ? "page" : undefined}>{item.label}</span>
                 </>
               )}
@@ -39,7 +41,9 @@ export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
         <NavLink to="/" className={linkClass} end>
           {({ isActive }) => (
             <>
-              <LayoutDashboard size={24} aria-hidden />
+              <span className="nav-item-icon-wrap">
+                <LayoutDashboard size={22} aria-hidden />
+              </span>
               <span aria-current={isActive ? "page" : undefined}>Home</span>
             </>
           )}
@@ -47,7 +51,9 @@ export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
         <NavLink to="/deliveries" className={linkClass}>
           {({ isActive }) => (
             <>
-              <Truck size={24} aria-hidden />
+              <span className="nav-item-icon-wrap">
+                <Truck size={22} aria-hidden />
+              </span>
               <span aria-current={isActive ? "page" : undefined}>Deliveries</span>
             </>
           )}
@@ -55,7 +61,9 @@ export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
         <NavLink to="/milk-collections" className={linkClass}>
           {({ isActive }) => (
             <>
-              <Droplets size={24} aria-hidden />
+              <span className="nav-item-icon-wrap">
+                <Droplets size={22} aria-hidden />
+              </span>
               <span aria-current={isActive ? "page" : undefined}>Collections</span>
             </>
           )}
@@ -67,7 +75,9 @@ export default function BottomNav({ onMoreClick, isDrawerOpen = false }) {
           aria-haspopup="dialog"
           aria-expanded={isDrawerOpen}
         >
-          <MoreHorizontal size={24} aria-hidden />
+          <span className="nav-item-icon-wrap">
+            <MoreHorizontal size={22} aria-hidden />
+          </span>
           <span>More</span>
         </button>
       </div>

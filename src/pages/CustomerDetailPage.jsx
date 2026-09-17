@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck, ArrowLeftRight, QrCode, MessageCircle, Package, Banknote, SlidersHorizontal } from "lucide-react";
+import { ChevronRight, ChevronLeft, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck, ArrowLeftRight, QrCode, MessageCircle, Package, Banknote, SlidersHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { apiRequest, safeParseJson } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
@@ -23,6 +23,8 @@ function getInitials(name = "") {
   return (name.slice(0, 2) || "?").toUpperCase();
 }
 
+const NOW = new Date();
+
 export default function CustomerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -32,6 +34,14 @@ export default function CustomerDetailPage() {
   const [tab, setTab] = useState("ledger");
   const [passbook, setPassbook] = useState({ user: {}, entries: [] });
   const [passbookLoading, setPassbookLoading] = useState(false);
+  // Full (unfiltered) passbook used for payment period summary calculations
+  const [fullPassbook, setFullPassbook] = useState({ entries: [] });
+  const [fullPassbookLoading, setFullPassbookLoading] = useState(false);
+
+  const [selectedMonth, setSelectedMonth] = useState({
+    month: NOW.getMonth() + 1,
+    year: NOW.getFullYear(),
+  });
 
   const [modalType, setModalType] = useState(null);
   const [showQr, setShowQr] = useState(false);
@@ -45,7 +55,8 @@ export default function CustomerDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest(`/api/user/admin/${id}`);
+      const qs = `?month=${selectedMonth.month}&year=${selectedMonth.year}`;
+      const res = await apiRequest(`/api/user/admin/${id}${qs}`);
       if (res.status === 401) return;
       if (!res.ok) {
         const p = await safeParseJson(res);
@@ -63,12 +74,13 @@ export default function CustomerDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, selectedMonth]);
 
   const fetchPassbook = useCallback(async () => {
     setPassbookLoading(true);
     try {
-      const res = await apiRequest(`/api/payments/${id}`);
+      const qs = `?month=${selectedMonth.month}&year=${selectedMonth.year}`;
+      const res = await apiRequest(`/api/payments/${id}${qs}`);
       if (!res.ok) throw new Error("Failed to fetch passbook");
       setPassbook(await res.json());
     } catch (err) {
@@ -76,10 +88,10 @@ export default function CustomerDetailPage() {
     } finally {
       setPassbookLoading(false);
     }
-  }, [id]);
+  }, [id, selectedMonth]);
 
   useEffect(() => { fetchCustomer(); }, [fetchCustomer]);
-  useEffect(() => { if (tab === "ledger") fetchPassbook(); }, [tab, fetchPassbook]);
+  useEffect(() => { fetchPassbook(); }, [fetchPassbook]);
 
   useEffect(() => {
     apiRequest("/api/areas")
@@ -97,11 +109,10 @@ export default function CustomerDetailPage() {
     }
   }, [modalType]);
 
-  // When passbook finishes loading while payment modal is open, auto-update amount
+  // When full passbook finishes loading while payment modal is open, auto-update amount
   useEffect(() => {
-    if (modalType !== "payment" || passbookLoading || !form?.date) return;
-    // Recompute period total with fresh passbook data
-    const entries = passbook.entries || [];
+    if (modalType !== "payment" || fullPassbookLoading || !form?.date) return;
+    const entries = fullPassbook.entries || [];
     const lastPayment = entries.find(e => e.type === "credit" && e.category === "Payment");
     const fromDate = lastPayment ? (lastPayment.date || "").slice(0, 10) : null;
     const toDate = form.date;
@@ -115,7 +126,7 @@ export default function CustomerDetailPage() {
     if (total > 0) {
       setForm(prev => prev ? { ...prev, amount: total } : prev);
     }
-  }, [passbookLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fullPassbookLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <PageSkeleton />;
   if (error) return <PageError message={error} onRetry={fetchCustomer} />;
@@ -126,10 +137,11 @@ export default function CustomerDetailPage() {
   const subscriptions = customer.subscriptions || [];
 
 
-  // Total quantities delivered per product (all time, from delivery history)
+  // Total quantities delivered per product for the selected month
   const productTotals = (() => {
     const map = {};
     const COUNTED = new Set(["delivered", "extra", "partial"]);
+    const { month, year } = selectedMonth;
     for (const sub of subscriptions) {
       const pid  = sub.productId?._id ? String(sub.productId._id) : String(sub.productId || "");
       if (!pid) continue;
@@ -138,16 +150,38 @@ export default function CustomerDetailPage() {
       const qpd  = Number(sub.quantityPerDay) || 1;
       for (const dh of sub.deliveryHistory || []) {
         if (!COUNTED.has(dh.status || "delivered")) continue;
+        const d = new Date(dh.deliveryDate || dh.date);
+        if (d.getMonth() + 1 !== month || d.getFullYear() !== year) continue;
         const q = Number(dh.actualQuantity || dh.scheduledQuantity || qpd);
         if (!map[pid]) map[pid] = { name, unit, qty: 0 };
         map[pid].qty += isNaN(q) ? qpd : q;
       }
-      // If no delivery history entries passed filter, still show the product with 0
-      if (!map[pid]) map[pid] = { name, unit, qty: 0 };
     }
-    return Object.values(map);
+    return Object.values(map).filter((p) => p.qty > 0);
   })();
   const areaName = areas.find((a) => a._id === deliveryConfig.assignedArea)?.name || null;
+
+  // Month selector helpers
+  const isCurrentMonth =
+    selectedMonth.month === NOW.getMonth() + 1 &&
+    selectedMonth.year === NOW.getFullYear();
+  const monthLabel = new Date(selectedMonth.year, selectedMonth.month - 1, 1).toLocaleString(
+    "default",
+    { month: "long", year: "numeric" }
+  );
+  function goPrevMonth() {
+    setSelectedMonth((prev) => {
+      if (prev.month === 1) return { month: 12, year: prev.year - 1 };
+      return { ...prev, month: prev.month - 1 };
+    });
+  }
+  function goNextMonth() {
+    if (isCurrentMonth) return;
+    setSelectedMonth((prev) => {
+      if (prev.month === 12) return { month: 1, year: prev.year + 1 };
+      return { ...prev, month: prev.month + 1 };
+    });
+  }
 
   async function saveDeliveryConfigFor(userId, dc) {
     const res = await apiRequest(`/api/user/admin/${userId}/delivery-config`, {
@@ -183,7 +217,7 @@ export default function CustomerDetailPage() {
   // Returns { fromDateStr, totalAmount, products: [{name, unit, qty, amount}] }
   // fromDateStr = date of last payment (exclusive lower bound), null = beginning of time
   function computePeriodSummary(toDateStr) {
-    const entries = passbook.entries || [];
+    const entries = fullPassbook.entries || [];
 
     // Most recent payment credit (entries are sorted descending by date)
     const lastPayment = entries.find(
@@ -267,10 +301,23 @@ export default function CustomerDetailPage() {
     };
   }
 
+  async function fetchFullPassbook() {
+    setFullPassbookLoading(true);
+    try {
+      const res = await apiRequest(`/api/payments/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch passbook");
+      setFullPassbook(await res.json());
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setFullPassbookLoading(false);
+    }
+  }
+
   function openAddPayment() {
     const today = new Date().toISOString().split("T")[0];
-    // Always refresh passbook so period summary is accurate
-    fetchPassbook();
+    // Fetch full (unfiltered) passbook for accurate period summary
+    fetchFullPassbook();
     setForm({
       userId: id,
       amount: user.accountBalance || "",
@@ -414,7 +461,7 @@ export default function CustomerDetailPage() {
           <div className="payment-period-card">
             <div className="payment-period-header">
               <span className="payment-period-label">
-                {passbookLoading
+                {fullPassbookLoading
                   ? "Loading period…"
                   : summary?.fromDateStr
                   ? `Since last payment · ${formatDate(summary.fromDateStr)}`
@@ -435,7 +482,7 @@ export default function CustomerDetailPage() {
               </div>
             ) : (
               <p className="payment-period-empty">
-                {passbookLoading ? "Calculating…" : "No deliveries in this period."}
+                {fullPassbookLoading ? "Calculating…" : "No deliveries in this period."}
               </p>
             )}
           </div>
@@ -602,9 +649,9 @@ export default function CustomerDetailPage() {
 
   /* ─── Tab data ──────────────────────────────── */
   const tabs = [
-    { key: "ledger",        label: "Ledger",        icon: BookOpen,   count: passbook.entries?.length },
+    { key: "ledger",        label: "Ledger",        icon: BookOpen,    count: passbook.entries?.length },
     { key: "orders",        label: "Orders",        icon: ShoppingBag, count: orders.length },
-    { key: "subscriptions", label: "Subscriptions", icon: Repeat2,    count: subscriptions.length },
+    { key: "subscriptions", label: "Subscriptions", icon: Repeat2,     count: subscriptions.length },
   ];
 
   /* ─── Order columns ─────────────────────────── */
@@ -754,8 +801,32 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      {/* Product totals strip */}
-      {productTotals.length > 0 && (
+      {/* Month selector */}
+      <div className="month-selector">
+        <button
+          className="month-selector-nav"
+          onClick={goPrevMonth}
+          aria-label="Previous month"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <span className="month-selector-label">
+          <Calendar size={13} />
+          {monthLabel}
+          {isCurrentMonth && <span className="month-selector-current">This Month</span>}
+        </span>
+        <button
+          className="month-selector-nav"
+          onClick={goNextMonth}
+          disabled={isCurrentMonth}
+          aria-label="Next month"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
+      {/* Product totals strip — filtered by selected month */}
+      {productTotals.length > 0 ? (
         <div className="customer-metrics">
           {productTotals.map((p) => (
             <div key={p.name} className="customer-metric-card metric-info">
@@ -766,6 +837,8 @@ export default function CustomerDetailPage() {
             </div>
           ))}
         </div>
+      ) : (
+        <div className="customer-metrics-empty">No deliveries in {monthLabel}.</div>
       )}
 
       {/* Tabs */}

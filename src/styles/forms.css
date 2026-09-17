@@ -42,6 +42,12 @@
   cursor: pointer;
 }
 
+.form-group input:hover:not(:focus),
+.form-group select:hover:not(:focus),
+.form-group textarea:hover:not(:focus) {
+  border-color: var(--border-strong);
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -568,7 +574,7 @@
   }
 
   .login-card {
-    padding: var(--space-6);
+    padding: var(--space-6) var(--space-5);
     border-radius: var(--radius-xl);
   }
 
@@ -697,6 +703,12 @@
   color: var(--text-primary);
   transition: all var(--duration-base);
   width: 100%;
+}
+
+.form-field input:hover:not(:focus),
+.form-field select:hover:not(:focus),
+.form-field textarea:hover:not(:focus) {
+  border-color: var(--border-strong);
 }
 
 .form-field input:focus,

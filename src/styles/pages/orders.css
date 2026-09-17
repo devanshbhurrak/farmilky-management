@@ -75,9 +75,9 @@
   gap: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   padding: var(--space-5) var(--space-5);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-card);
 }
 
 .od-hero-left  { flex: 1; min-width: 0; }
