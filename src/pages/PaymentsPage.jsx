@@ -12,36 +12,41 @@ import PageError from "../components/ui/PageError";
 import EmptyState from "../components/ui/EmptyState";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
 import SearchInput from "../components/ui/SearchInput";
-import { useApiData } from "../hooks/useApiData";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
 
 /* ═══════════════════════════════════════════════════
-   Data fetchers
-   ═══════════════════════════════════════════════════ */
-
-async function fetchAllCustomers() {
-  const res = await apiRequest("/api/user/admin/all");
-  if (!res.ok) throw new Error("Failed to fetch customers");
-  const data = await res.json();
-  return data.users || [];
-}
-
-async function fetchAllSuppliers() {
-  const res = await apiRequest("/api/suppliers");
-  if (!res.ok) throw new Error("Failed to fetch suppliers");
-  const data = await res.json();
-  return data.suppliers || [];
-}
-
-/* ═══════════════════════════════════════════════════
-   Customer Payments Tab
+   Customer Payments Tab — now backend-paginated via usePaginatedFetch
    ═══════════════════════════════════════════════════ */
 
 function CustomerPaymentsTab() {
-  const { data: customers, loading, error, refetch } = useApiData(fetchAllCustomers);
-  const [search, setSearch] = useState("");
   const [balanceFilter, setBalanceFilter] = useState("all"); // all | due | advance | zero
+  const {
+    data: customers,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/user/admin/all", {
+    initialLimit: 20,
+    initialFilters: { role: "customer" },
+    initialSort: { sortBy: "accountBalance", sortOrder: "desc" },
+    dataKey: "users",
+  });
+  const handleBalanceFilter = (val) => {
+    setBalanceFilter(val);
+    const map = { all: "", due: "due", advance: "advance", zero: "zero" };
+    setFilterValue("balance", map[val] || "");
+  };
+  const handleSort = (key, dir) => setSort(key, dir);
 
   // Payment modal
   const [payModal, setPayModal] = useState(null);
@@ -67,33 +72,15 @@ function CustomerPaymentsTab() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const filtered = useMemo(() => {
-    if (!customers) return [];
-    let list = customers;
-
-    if (balanceFilter === "due") list = list.filter(u => u.accountBalance > 0);
-    else if (balanceFilter === "advance") list = list.filter(u => u.accountBalance < 0);
-    else if (balanceFilter === "zero") list = list.filter(u => !u.accountBalance);
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(u =>
-        u.name?.toLowerCase().includes(q) ||
-        u.phone?.includes(q) ||
-        u.email?.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort: highest balance first
-    return [...list].sort((a, b) => (b.accountBalance || 0) - (a.accountBalance || 0));
-  }, [customers, search, balanceFilter]);
-
+  // Backend already filtered/sorted/searched; customers is paginated slice
+  const filtered = customers;
   const stats = useMemo(() => {
     if (!customers) return { totalDue: 0, totalAdvance: 0, count: 0 };
+    // For paginated view, stats reflect current page; global totals would need separate summary endpoint
     const totalDue = customers.reduce((s, u) => s + Math.max(0, u.accountBalance || 0), 0);
     const totalAdvance = Math.abs(customers.reduce((s, u) => s + Math.min(0, u.accountBalance || 0), 0));
-    return { totalDue, totalAdvance, count: customers.length };
-  }, [customers]);
+    return { totalDue, totalAdvance, count: pagination.total };
+  }, [customers, pagination.total]);
 
   // Fetch passbook for history modal
   const fetchPassbook = useCallback(async (userId) => {
@@ -354,7 +341,7 @@ function CustomerPaymentsTab() {
             <button
               key={opt.value}
               className={`pay-chip${balanceFilter === opt.value ? " active" : ""}`}
-              onClick={() => setBalanceFilter(opt.value)}
+              onClick={() => handleBalanceFilter(opt.value)}
             >
               {opt.label}
             </button>
@@ -370,7 +357,13 @@ function CustomerPaymentsTab() {
       <DataTable
         columns={columns}
         data={filtered}
+        loading={loading}
         emptyText="No customers match the current filters."
+        pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+        sortBy={sort.sortBy}
+        sortOrder={sort.sortOrder}
+        onSortChange={handleSort}
+        serverSide
         renderCard={(u) => (
           <>
             <div className="mc-head">
@@ -401,7 +394,6 @@ function CustomerPaymentsTab() {
             </div>
           </>
         )}
-        pageSize={20}
       />
 
       {/* ── Payment Modal ── */}
@@ -476,7 +468,7 @@ function CustomerPaymentsTab() {
           {/* Amount */}
           <div className="form-group">
             <label>Amount Collected (Rs)</label>
-            <input type="number" min="0" step="0.01" value={payForm.amount} onChange={(e) => setPayForm(f => ({ ...f, amount: e.target.value }))} />
+            <input type="text" inputMode="decimal" value={payForm.amount} onChange={(e) => setPayForm(f => ({ ...f, amount: e.target.value }))} />
             {payForm.amount && payModal && (() => {
               const amt = parseFloat(payForm.amount) || 0;
               const after = Math.round(((payModal.accountBalance || 0) - amt) * 100) / 100;
@@ -544,7 +536,7 @@ function CustomerPaymentsTab() {
           <div className="form-row">
             <div className="form-group">
               <label>Amount (Rs)</label>
-              <input type="number" min="0" step="0.01" value={adjForm.amount} onChange={(e) => setAdjForm(f => ({ ...f, amount: e.target.value }))} />
+              <input type="text" inputMode="decimal" value={adjForm.amount} onChange={(e) => setAdjForm(f => ({ ...f, amount: e.target.value }))} />
             </div>
             <div className="form-group">
               <label>Date</label>
@@ -641,7 +633,7 @@ function CustomerPaymentsTab() {
           <div className="form-group">
             <label>Amount (Rs) <em className="required">*</em></label>
             <input
-              type="number" min="0" step="0.01"
+              type="text" inputMode="decimal"
               value={editForm.amount}
               onChange={(e) => setEditForm(f => ({ ...f, amount: e.target.value }))}
             />
@@ -700,9 +692,32 @@ function CustomerPaymentsTab() {
    ═══════════════════════════════════════════════════ */
 
 function SupplierPaymentsTab() {
-  const { data: suppliers, loading, error, refetch } = useApiData(fetchAllSuppliers);
-  const [search, setSearch] = useState("");
   const [balanceFilter, setBalanceFilter] = useState("all");
+  const {
+    data: suppliers,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/suppliers", {
+    initialLimit: 20,
+    initialSort: { sortBy: "outstandingAmount", sortOrder: "desc" },
+    dataKey: "suppliers",
+  });
+  const handleSupplierBalanceFilter = (val) => {
+    setBalanceFilter(val);
+    if (val === "due") setFilterValue("balance", "due");
+    else if (val === "settled") setFilterValue("balance", "settled");
+    else setFilterValue("balance", "");
+  };
+  const handleSupplierSort = (key, dir) => setSort(key, dir);
 
   // Payment modal
   const [payModal, setPayModal] = useState(null);
@@ -720,31 +735,12 @@ function SupplierPaymentsTab() {
   const [adjForm, setAdjForm] = useState({ type: "debit", category: "other", amount: "", date: todayLocal(), description: "", notes: "" });
   const [savingAdj, setSavingAdj] = useState(false);
 
-  const filtered = useMemo(() => {
-    if (!suppliers) return [];
-    let list = suppliers.filter(s => s.isActive !== false);
-
-    if (balanceFilter === "due") list = list.filter(s => (s.outstandingAmount || 0) > 0);
-    else if (balanceFilter === "settled") list = list.filter(s => (s.outstandingAmount || 0) <= 0);
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(s =>
-        s.name?.toLowerCase().includes(q) ||
-        s.phone?.includes(q) ||
-        s.location?.toLowerCase().includes(q)
-      );
-    }
-
-    return [...list].sort((a, b) => (b.outstandingAmount || 0) - (a.outstandingAmount || 0));
-  }, [suppliers, search, balanceFilter]);
-
+  const filtered = suppliers;
   const stats = useMemo(() => {
     if (!suppliers) return { totalDue: 0, totalPaid: 0, count: 0 };
-    const active = suppliers.filter(s => s.isActive !== false);
-    const totalDue = active.reduce((s, u) => s + Math.max(0, u.outstandingAmount || 0), 0);
-    const totalPaid = active.reduce((s, u) => s + (u.amountPaid || 0), 0);
-    return { totalDue, totalPaid, count: active.length };
+    const totalDue = suppliers.reduce((s, u) => s + Math.max(0, u.outstandingAmount || 0), 0);
+    const totalPaid = suppliers.reduce((s, u) => s + (u.amountPaid || 0), 0);
+    return { totalDue, totalPaid, count: pagination.total };
   }, [suppliers]);
 
   const fetchPeriodTotal = useCallback(async (supplierId, fromDate, toDate) => {
@@ -925,7 +921,7 @@ function SupplierPaymentsTab() {
             <button
               key={opt.value}
               className={`pay-chip${balanceFilter === opt.value ? " active" : ""}`}
-              onClick={() => setBalanceFilter(opt.value)}
+              onClick={() => handleSupplierBalanceFilter(opt.value)}
             >
               {opt.label}
             </button>
@@ -941,6 +937,7 @@ function SupplierPaymentsTab() {
       <DataTable
         columns={columns}
         data={filtered}
+        loading={loading}
         emptyText="No suppliers match the current filters."
         renderCard={(s) => (
           <>
@@ -972,7 +969,11 @@ function SupplierPaymentsTab() {
             </div>
           </>
         )}
-        pageSize={20}
+        pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+        sortBy={sort.sortBy}
+        sortOrder={sort.sortOrder}
+        onSortChange={handleSupplierSort}
+        serverSide
       />
 
       {/* ── Record Payment Modal ── */}
@@ -1027,7 +1028,7 @@ function SupplierPaymentsTab() {
           <div className="form-group">
             <label>Amount (Rs) <em className="required">*</em></label>
             <input
-              type="number" min="0" step="0.01"
+              type="text" inputMode="decimal"
               value={payForm.amount}
               onChange={(e) => setPayForm(f => ({ ...f, amount: e.target.value }))}
               placeholder="0.00"
@@ -1107,7 +1108,7 @@ function SupplierPaymentsTab() {
           <div className="form-row">
             <div className="form-group">
               <label>Amount (Rs) <em className="required">*</em></label>
-              <input type="number" min="0" step="0.01" value={adjForm.amount} onChange={(e) => setAdjForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
+              <input type="text" inputMode="decimal" value={adjForm.amount} onChange={(e) => setAdjForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
             </div>
             <div className="form-group">
               <label>Date <em className="required">*</em></label>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Plus } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
@@ -10,15 +10,17 @@ import SearchInput from "../components/ui/SearchInput";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
 import OrderForm from "../components/order/OrderForm";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest, safeParseJson } from "../api/client";
+import PageSkeleton from "../components/ui/PageSkeleton";
+import PageError from "../components/ui/PageError";
 import toast from "react-hot-toast";
 
-export default function OrdersPage({ orders, onRefresh }) {
+export default function OrdersPage() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
-  const [search, setSearch] = useState("");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -27,11 +29,30 @@ export default function OrdersPage({ orders, onRefresh }) {
   const [customers, setCustomers] = useState([]);
   const [form, setForm] = useState({ userId: "", items: [], address: { street: "", city: "", state: "", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed", orderDate: "" });
 
+  const {
+    data: orders,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/order/admin/all", {
+    initialLimit: 20,
+    initialSort: { sortBy: "createdAt", sortOrder: "desc" },
+    dataKey: "orders",
+  });
+
   useEffect(() => {
     if (modalOpen) {
       Promise.all([
-        apiRequest("/api/products").then(r => r.json()),
-        apiRequest("/api/user/admin/all").then(r => r.json())
+        apiRequest("/api/products?limit=100").then(r => r.json()),
+        apiRequest("/api/user/admin/all?limit=100&role=customer").then(r => r.json())
       ]).then(([pData, cData]) => {
         setProducts(pData.products || pData || []);
         setCustomers(cData.users || cData || []);
@@ -41,27 +62,15 @@ export default function OrdersPage({ orders, onRefresh }) {
     }
   }, [modalOpen]);
 
-  const debouncedSearch = useMemo(() => search.trim(), [search]);
-
-  const filtered = useMemo(() => {
-    let items = orders || [];
-    if (statusFilter !== "all") items = items.filter((o) => o.orderStatus === statusFilter);
-    if (paymentFilter !== "all") items = items.filter((o) => o.paymentStatus === paymentFilter);
-    if (debouncedSearch.trim()) {
-      const q = debouncedSearch.toLowerCase();
-      items = items.filter(
-        (o) =>
-          (o.userId?.name || "").toLowerCase().includes(q) ||
-          (o.userId?.email || "").toLowerCase().includes(q) ||
-          (o.userId?.phone || "").toLowerCase().includes(q)
-      );
-    }
-    return items;
-  }, [orders, statusFilter, paymentFilter, debouncedSearch]);
-
-  const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [filtered]);
+  const handleStatusFilter = (val) => {
+    setStatusFilter(val);
+    setFilterValue("status", val === "all" ? "" : val);
+  };
+  const handlePaymentFilter = (val) => {
+    setPaymentFilter(val);
+    setFilterValue("paymentStatus", val === "all" ? "" : val);
+  };
+  const handleSort = (key, dir) => setSort(key, dir);
 
   function openCreate() {
     setForm({ userId: "", items: [{ productId: "", variantId: "", quantity: 1 }], address: { street: "", city: "", state: "", pincode: "" }, paymentMethod: "COD", paymentStatus: "pending", orderStatus: "confirmed", orderDate: "" });
@@ -80,10 +89,10 @@ export default function OrdersPage({ orders, onRefresh }) {
       });
       const payload = await safeParseJson(res);
       if (!res.ok) throw new Error(payload?.message || "Failed to create order");
-      
+
       toast.success("Order created successfully!");
       setModalOpen(false);
-      if (onRefresh) onRefresh();
+      refetch();
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -161,7 +170,7 @@ export default function OrdersPage({ orders, onRefresh }) {
     <>
       <div className="form-group">
         <label>Status</label>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+        <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
           <option value="all">All Status</option>
           <option value="placed">Placed</option>
           <option value="confirmed">Confirmed</option>
@@ -171,7 +180,7 @@ export default function OrdersPage({ orders, onRefresh }) {
       </div>
       <div className="form-group">
         <label>Payment</label>
-        <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
+        <select value={paymentFilter} onChange={(e) => handlePaymentFilter(e.target.value)}>
           <option value="all">All Payments</option>
           <option value="pending">Pending</option>
           <option value="paid">Paid</option>
@@ -186,6 +195,8 @@ export default function OrdersPage({ orders, onRefresh }) {
     setStatusFilter("all");
     setPaymentFilter("all");
     setSearch("");
+    setFilterValue("status", "");
+    setFilterValue("paymentStatus", "");
   };
 
   const formContent = (
@@ -199,11 +210,14 @@ export default function OrdersPage({ orders, onRefresh }) {
     />
   );
 
+  if (loading && orders.length === 0) return <PageSkeleton />;
+  if (error) return <PageError message={error} onRetry={refetch} />;
+
   return (
     <div className="orders-page view-stack">
       <PageHeader
         title="Orders"
-        subtitle={`Showing ${sorted.length} orders total`}
+        subtitle={`${pagination.total} order${pagination.total !== 1 ? "s" : ""} total`}
         actions={
           <button className="btn btn-primary btn-sm" onClick={openCreate}>
             <Plus size={16} /> Add Order
@@ -221,14 +235,14 @@ export default function OrdersPage({ orders, onRefresh }) {
           />
           {!isMobile && (
             <div className="desktop-filters">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
                 <option value="all">All Status</option>
                 <option value="placed">Placed</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
               </select>
-              <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
+              <select value={paymentFilter} onChange={(e) => handlePaymentFilter(e.target.value)}>
                 <option value="all">All Payments</option>
                 <option value="pending">Pending</option>
                 <option value="paid">Paid</option>
@@ -248,13 +262,17 @@ export default function OrdersPage({ orders, onRefresh }) {
         </div>
         <DataTable
           columns={columns}
-          data={sorted}
+          data={orders}
           renderCard={renderOrderCard}
           onRowClick={(row) => navigate(`/orders/${row._id}`)}
+          loading={loading}
           emptyText="No orders available."
           noMatchAction={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
-          defaultSortKey="createdAt"
-          defaultSortDir="desc"
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 

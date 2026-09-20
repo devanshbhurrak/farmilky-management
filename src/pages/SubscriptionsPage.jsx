@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Pause, Play, Plus } from "lucide-react";
 import { formatCurrency, formatDate, todayLocal } from "../utils/format";
@@ -11,15 +11,17 @@ import SearchInput from "../components/ui/SearchInput";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
 import SubscriptionForm from "../components/subscription/SubscriptionForm";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest, safeParseJson } from "../api/client";
+import PageSkeleton from "../components/ui/PageSkeleton";
+import PageError from "../components/ui/PageError";
 import toast from "react-hot-toast";
 
-export default function SubscriptionsPage({ subscriptions, onRefresh }) {
+export default function SubscriptionsPage() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [statusFilter, setStatusFilter] = useState("all");
   const [scheduleFilter, setScheduleFilter] = useState("all");
-  const [search, setSearch] = useState("");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [selected, setSelected] = useState(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -33,11 +35,30 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
   const [customers, setCustomers] = useState([]);
   const [form, setForm] = useState({ userId: "", productId: "", variantId: null, quantityPerDay: 1, pricePerUnit: null, deliverySchedule: "daily", customDays: [], startDate: todayLocal() });
 
+  const {
+    data: subscriptions,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/subscriptions/admin/all", {
+    initialLimit: 20,
+    initialSort: { sortBy: "createdAt", sortOrder: "desc" },
+    dataKey: "subscriptions",
+  });
+
   useEffect(() => {
     if (modalOpen) {
       Promise.all([
-        apiRequest("/api/products").then(r => r.json()),
-        apiRequest("/api/user/admin/all").then(r => r.json())
+        apiRequest("/api/products?limit=100").then(r => r.json()),
+        apiRequest("/api/user/admin/all?limit=100&role=customer").then(r => r.json())
       ]).then(([pData, cData]) => {
         setProducts(pData.products || pData || []);
         setCustomers(cData.users || cData || []);
@@ -47,22 +68,15 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
     }
   }, [modalOpen]);
 
-  const filtered = useMemo(() => {
-    let items = subscriptions || [];
-    if (statusFilter !== "all") items = items.filter((s) => s.status === statusFilter);
-    if (scheduleFilter !== "all") items = items.filter((s) => s.deliverySchedule === scheduleFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      items = items.filter(
-        (s) =>
-          (s.userId?.name || "").toLowerCase().includes(q) ||
-          (s.userId?.email || "").toLowerCase().includes(q) ||
-          (s.userId?.phone || "").toLowerCase().includes(q) ||
-          (s.productId?.name || "").toLowerCase().includes(q)
-      );
-    }
-    return items;
-  }, [subscriptions, statusFilter, scheduleFilter, search]);
+  const handleStatusFilter = (val) => {
+    setStatusFilter(val);
+    setFilterValue("status", val === "all" ? "" : val);
+  };
+  const handleScheduleFilter = (val) => {
+    setScheduleFilter(val);
+    setFilterValue("deliverySchedule", val === "all" ? "" : val);
+  };
+  const handleSort = (key, dir) => setSort(key, dir);
 
   const toggleSelect = (id) => setSelected((prev) => {
     const next = new Set(prev);
@@ -72,8 +86,8 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
   });
 
   const toggleSelectAll = () => {
-    if (filtered.every((s) => selected.has(s._id))) setSelected(new Set());
-    else setSelected(new Set(filtered.map((s) => s._id)));
+    if (subscriptions.every((s) => selected.has(s._id))) setSelected(new Set());
+    else setSelected(new Set(subscriptions.map((s) => s._id)));
   };
 
   const bulkAction = async (action) => {
@@ -101,7 +115,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       toast.success(payload.message || `Bulk ${action} done.`);
       setSelected(new Set());
       setBulkConfirm(null);
-      if (onRefresh) onRefresh();
+      refetch();
     } catch (err) {
       toast.error(err.message || `Bulk ${action} failed.`);
     } finally {
@@ -115,7 +129,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       label: (
         <input
           type="checkbox"
-          checked={filtered.length > 0 && filtered.every((s) => selected.has(s._id))}
+          checked={subscriptions.length > 0 && subscriptions.every((s) => selected.has(s._id))}
           onChange={toggleSelectAll}
         />
       ),
@@ -231,7 +245,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
     <>
       <div className="form-group">
         <label>Status</label>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+        <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="paused">Paused</option>
@@ -240,7 +254,7 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       </div>
       <div className="form-group">
         <label>Schedule</label>
-        <select value={scheduleFilter} onChange={(e) => setScheduleFilter(e.target.value)}>
+        <select value={scheduleFilter} onChange={(e) => handleScheduleFilter(e.target.value)}>
           <option value="all">All Schedules</option>
           <option value="daily">Daily</option>
           <option value="alternate">Alternate</option>
@@ -256,6 +270,8 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
     setStatusFilter("all");
     setScheduleFilter("all");
     setSearch("");
+    setFilterValue("status", "");
+    setFilterValue("deliverySchedule", "");
   };
 
   function openCreate() {
@@ -273,10 +289,10 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
       });
       const payload = await safeParseJson(res);
       if (!res.ok) throw new Error(payload?.message || "Failed to create subscription");
-      
+
       toast.success("Subscription created successfully!");
       setModalOpen(false);
-      if (onRefresh) onRefresh();
+      refetch();
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -295,11 +311,14 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
     />
   );
 
+  if (loading && subscriptions.length === 0) return <PageSkeleton />;
+  if (error) return <PageError message={error} onRetry={refetch} />;
+
   return (
     <div className="view-stack subscriptions-page">
       <PageHeader
         title="Subscriptions"
-        subtitle={`Total active subscriptions: ${subscriptions?.filter(s => s.status === "active").length || 0}`}
+        subtitle={`${pagination.total} subscription${pagination.total !== 1 ? "s" : ""} total`}
         actions={
           <button className="btn btn-primary btn-sm" onClick={openCreate}>
             <Plus size={16} /> Add Subscription
@@ -317,13 +336,13 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
           />
           {!isMobile && (
             <div className="desktop-filters">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="paused">Paused</option>
                 <option value="cancelled">Cancelled</option>
               </select>
-              <select value={scheduleFilter} onChange={(e) => setScheduleFilter(e.target.value)}>
+              <select value={scheduleFilter} onChange={(e) => handleScheduleFilter(e.target.value)}>
                 <option value="all">All Schedules</option>
                 <option value="daily">Daily</option>
                 <option value="alternate">Alternate</option>
@@ -368,13 +387,17 @@ export default function SubscriptionsPage({ subscriptions, onRefresh }) {
 
         <DataTable
           columns={columns}
-          data={filtered}
+          data={subscriptions}
+          loading={loading}
           renderCard={renderSubscriptionCard}
           onRowClick={(row) => navigate(`/subscriptions/${row._id}`)}
           emptyText="No subscriptions available."
           noMatchAction={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
-          defaultSortKey="startDate"
-          defaultSortDir="desc"
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 

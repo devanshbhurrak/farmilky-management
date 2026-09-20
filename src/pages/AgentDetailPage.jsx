@@ -330,7 +330,7 @@ export default function AgentDetailPage() {
             </label>
             <label className="form-field">
               <span>Max Capacity</span>
-              <input type="number" value={form.maxCapacity} onChange={(e) => setForm((f) => ({ ...f, maxCapacity: e.target.value }))} placeholder="Max items per trip" />
+              <input type="number" inputMode="numeric" value={form.maxCapacity} onChange={(e) => setForm((f) => ({ ...f, maxCapacity: e.target.value }))} placeholder="Max items per trip" />
             </label>
             <label className="form-field">
               <span>Assigned Area</span>

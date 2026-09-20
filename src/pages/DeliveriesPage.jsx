@@ -7,19 +7,17 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { formatDate, todayLocal } from "../utils/format";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingScreen from "../components/ui/LoadingScreen";
+import PageError from "../components/ui/PageError";
 import FilterSheet from "../components/ui/FilterSheet";
 import OutcomeModal from "../components/delivery/OutcomeModal";
 import BulkActionsBar from "../components/delivery/BulkActionsBar";
 import CustomerDeliveryGroup from "../components/delivery/CustomerDeliveryGroup";
 import CustomerConfirmDrawer from "../components/delivery/CustomerConfirmDrawer";
 import DeliveryFilters from "../components/delivery/DeliveryFilters";
-import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
-
-const fetchBoard = createApiFetch("/api/subscriptions/admin/delivery-board");
 
 export default function DeliveriesPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -43,58 +41,59 @@ export default function DeliveriesPage() {
   const drawerInFlight = useRef(false);
   const PAGE_SIZE = 50;
 
-  const queryParams = useMemo(() => ({ date, type: typeTab !== "all" ? typeTab : undefined, status: statusFilter !== "all" ? statusFilter : undefined }), [date, typeTab, statusFilter]);
-  const fetchFn = useCallback(() => fetchBoard(queryParams), [queryParams]);
-  const { data, loading, refetch } = useApiData(fetchFn, false);
+  const [boardData, setBoardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const abortRef = useRef(null);
 
-  useEffect(() => { refetch(); }, [refetch, queryParams]);
+  const fetchBoard = useCallback(async () => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ date, page: String(page), limit: String(PAGE_SIZE) });
+      if (typeTab !== "all") params.set("type", typeTab);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (areaFilter !== "all") params.set("area", areaFilter);
+      if (searchValue.trim()) params.set("search", searchValue.trim());
+      if (sortMode) params.set("sort", sortMode);
+      const res = await apiRequest(`/api/subscriptions/admin/delivery-board?${params}`, { signal: controller.signal });
+      if (!res.ok) {
+        const payload = await safeParseJson(res);
+        throw new Error(payload?.message || "Failed to load delivery board");
+      }
+      const payload = await res.json();
+      setBoardData(payload);
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setError(err.message || "Failed to load delivery board");
+    } finally {
+      setLoading(false);
+    }
+  }, [date, page, typeTab, statusFilter, areaFilter, searchValue, sortMode]);
+
+  useEffect(() => { fetchBoard(); return () => { if (abortRef.current) abortRef.current.abort(); }; }, [fetchBoard]);
+
+  useEffect(() => { setPage(1); }, [searchValue, typeTab, statusFilter, date, areaFilter, sortMode]);
 
   useEffect(() => {
-    apiRequest("/api/areas")
+    apiRequest("/api/areas?limit=100")
       .then((r) => r.json())
       .then((d) => setAreas(d.areas || []))
       .catch(() => {});
   }, []);
 
-  const deliveryBoard = useMemo(() => data || {}, [data]);
-  const summary = useMemo(() => deliveryBoard.summary || {}, [deliveryBoard]);
-  const deliveries = useMemo(() => deliveryBoard.deliveries || [], [deliveryBoard]);
+  const summary = useMemo(() => boardData?.summary || {}, [boardData]);
+  const deliveries = useMemo(() => boardData?.deliveries || [], [boardData]);
+  const total = boardData?.total ?? deliveries.length;
+  const totalPages = boardData?.totalPages ?? Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const filteredDeliveries = useMemo(() => {
-    let items = deliveries;
-    const query = searchValue.trim().toLowerCase();
-    if (query) {
-      items = items.filter((item) =>
-        [item.customerName, item.phone, item.email, item.productLabel, item.schedule, item.address, item.type, item.areaName]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(query)
-      );
-    }
-    if (areaFilter !== "all") {
-      items = items.filter((item) => item.areaId === areaFilter);
-    }
-    if (sortMode === "sequence") {
-      items = [...items].sort((a, b) => {
-        if (a.canRecordOutcome !== b.canRecordOutcome) return a.canRecordOutcome ? -1 : 1;
-        if (a.sequence == null && b.sequence == null) return (a.customerName || "").localeCompare(b.customerName || "");
-        if (a.sequence == null) return 1;
-        if (b.sequence == null) return -1;
-        return a.sequence - b.sequence;
-      });
-    } else {
-      items = [...items].sort((a, b) => {
-        if (a.canRecordOutcome !== b.canRecordOutcome) return a.canRecordOutcome ? -1 : 1;
-        return (a.customerName || "").localeCompare(b.customerName || "");
-      });
-    }
-    return items;
-  }, [deliveries, searchValue, areaFilter, sortMode]);
-
+  // Group deliveries by customer (backend already paginated, so grouping is on paged data)
   const customerGroups = useMemo(() => {
     const map = new Map();
-    for (const item of filteredDeliveries) {
+    for (const item of deliveries) {
       const key = item.userId || item.customerName;
       if (!map.has(key)) {
         map.set(key, {
@@ -113,13 +112,7 @@ export default function DeliveriesPage() {
       map.get(key).items.push(item);
     }
     return Array.from(map.values());
-  }, [filteredDeliveries]);
-
-  const totalPages = Math.ceil(customerGroups.length / PAGE_SIZE);
-  const pagedGroups = useMemo(
-    () => customerGroups.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [customerGroups, page]
-  );
+  }, [deliveries]);
 
   function openOutcomeModal(item, mode) {
     const prefilledQty = item.scheduledQuantity ?? item.quantity ?? 0;
@@ -161,7 +154,7 @@ export default function DeliveriesPage() {
       if (!res.ok) { const p = await safeParseJson(res); throw new Error(p?.message || "Failed to record extra products."); }
       setCustomerDrawer(null);
       toast.success("Extra products recorded.");
-      await refetch();
+      await fetchBoard();
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -198,7 +191,7 @@ export default function DeliveriesPage() {
       toast.success(`All ${success} items marked delivered.`);
     }
     setBulkLoading(false);
-    await refetch();
+    await fetchBoard();
   }
 
   async function handleOutcomeConfirm({ status, actualQuantity, reason, notes, paymentMode, subscriptionId }) {
@@ -217,7 +210,7 @@ export default function DeliveriesPage() {
       if (!res.ok) { const p = await safeParseJson(res); throw new Error(p?.message || "Failed to record outcome."); }
       setOutcomeModal(null);
       toast.success(`Marked as ${status}.`);
-      await refetch();
+      await fetchBoard();
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -228,7 +221,7 @@ export default function DeliveriesPage() {
 
   async function handleBulkDeliver() {
     if (bulkLoading) return;
-    const pending = filteredDeliveries.filter((d) => selectedIds.has(d.id) && d.canRecordOutcome !== false);
+    const pending = deliveries.filter((d) => selectedIds.has(d.id) && d.canRecordOutcome !== false);
     if (pending.length === 0) {
       toast.error("No selected items can be marked delivered.");
       return;
@@ -258,7 +251,7 @@ export default function DeliveriesPage() {
     }
     setBulkLoading(false);
     setSelectedIds(new Set());
-    await refetch();
+    await fetchBoard();
   }
 
   function toggleSelect(id) {
@@ -270,7 +263,7 @@ export default function DeliveriesPage() {
   }
 
   function toggleSelectAll() {
-    const selectable = filteredDeliveries.filter((d) => d.canRecordOutcome !== false);
+    const selectable = deliveries.filter((d) => d.canRecordOutcome !== false);
     if (selectedIds.size === selectable.length) {
       setSelectedIds(new Set());
     } else {
@@ -287,9 +280,8 @@ export default function DeliveriesPage() {
     setPage(1);
   };
 
-  useEffect(() => { setPage(1); }, [searchValue, typeTab, statusFilter, date, areaFilter, sortMode]);
-
-  if (loading && (!data || deliveries.length === 0)) return <LoadingScreen text="Loading route..." />;
+  if (loading && !boardData) return <LoadingScreen text="Loading route..." />;
+  if (error && !boardData) return <PageError message={error} onRetry={fetchBoard} />;
 
   return (
     <div className="view-stack delivery-board">
@@ -361,7 +353,7 @@ export default function DeliveriesPage() {
       <section className="delivery-list-section">
         <div className="list-header">
           <div className="list-header-left">
-            <h3>Queue <span className="queue-count">({customerGroups.length} customers · {filteredDeliveries.length} items)</span></h3>
+            <h3>Queue <span className="queue-count">({total} items · {customerGroups.length} customers on this page)</span></h3>
             <div className="delivery-inline-stats">
               <span className="dis-pending">{summary.remainingDeliveries || 0} pending</span>
               <span className="dis-sep">·</span>
@@ -374,11 +366,11 @@ export default function DeliveriesPage() {
               )}
             </div>
           </div>
-          {!isMobile && filteredDeliveries.some((d) => d.canRecordOutcome !== false) && (
+          {!isMobile && deliveries.some((d) => d.canRecordOutcome !== false) && (
              <div className="bulk-selection-controls">
                 <label className="checkbox-label">
-                  <input type="checkbox" onChange={toggleSelectAll} checked={selectedIds.size > 0 && selectedIds.size === filteredDeliveries.filter((d) => d.canRecordOutcome !== false).length} />
-                  Select All
+                  <input type="checkbox" onChange={toggleSelectAll} checked={selectedIds.size > 0 && selectedIds.size === deliveries.filter((d) => d.canRecordOutcome !== false).length} />
+                  Select All (page)
                 </label>
                 {selectedIds.size > 0 && (
                   <button className="btn btn-primary btn-sm" onClick={handleBulkDeliver} disabled={bulkLoading}>
@@ -390,6 +382,8 @@ export default function DeliveriesPage() {
           )}
         </div>
 
+        {loading && <div style={{ padding: "12px", textAlign: "center", color: "var(--text-muted)" }}>Updating…</div>}
+
         <div className="delivery-card-list">
           {customerGroups.length === 0 ? (
             <EmptyState
@@ -397,7 +391,7 @@ export default function DeliveriesPage() {
               action={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
             />
           ) : (
-            pagedGroups.map((group) => (
+            customerGroups.map((group) => (
               <CustomerDeliveryGroup
                 key={group.userId || group.customerName}
                 group={group}
@@ -410,7 +404,7 @@ export default function DeliveriesPage() {
             ))
           )}
         </div>
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination page={page} totalPages={totalPages} total={total} limit={PAGE_SIZE} onPageChange={setPage} showMeta />
       </section>
 
       <FilterSheet isOpen={isFilterSheetOpen} onClose={() => setIsFilterSheetOpen(false)}>

@@ -193,29 +193,14 @@
     max-width: 50%;
   }
 
-  /* Detail-action pages (multiple buttons + status) — revert to column layout
-     so actions flow below the title rather than squeezing it */
+  /* Detail-action pages — keep row layout, align actions to top-right */
   .page-header:has(.detail-actions) {
-    flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-2);
-  }
-
-  .page-header:has(.detail-actions) .page-header-left {
-    width: 100%;
-    flex: none;
-    overflow: visible;
-  }
-
-  .page-header:has(.detail-actions) .page-header-subtitle {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
   }
 
   .page-header:has(.detail-actions) .page-header-right {
-    width: 100%;
-    max-width: none;
+    flex-shrink: 0;
+    max-width: 44%;
   }
 }
 
@@ -295,7 +280,7 @@
   gap: var(--space-3);
   padding: var(--space-3);
   border-bottom: 1px solid var(--border-soft);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   background: var(--surface);
 }
 

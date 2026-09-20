@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { CheckCircle2, AlertTriangle, User, X, Calendar } from "lucide-react";
+import { CheckCircle2, AlertTriangle, User, X } from "lucide-react";
 import ResponsiveModal from "../ui/ResponsiveModal";
 import { apiRequest, safeParseJson } from "../../api/client";
 import toast from "react-hot-toast";
@@ -288,13 +288,7 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
           </label>
           {useCustomEndDate && (
             <div className="form-group">
-              <label style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-                <Calendar size={14} style={{ color: "var(--text-muted)" }} />
-                Bill End Date
-                <span style={{ color: "var(--text-muted)", fontWeight: "var(--font-weight-normal)", fontSize: "var(--font-size-sm)" }}>
-                  (defaults to last day of month)
-                </span>
-              </label>
+              <label>Bill End Date</label>
               <input
                 type="date"
                 value={endDate}
@@ -302,14 +296,13 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
                 max={endDateMax}
                 onChange={e => setEndDate(e.target.value)}
               />
-              {isEarlyBilling && (
+              {isEarlyBilling ? (
                 <p style={{ margin: "var(--space-1) 0 0", fontSize: "var(--font-size-xs)", color: "var(--warning-text)" }}>
-                  Early billing — invoice will cover {MONTHS[month - 1]} 1 to {endDate}.
+                  Early billing — covers {MONTHS[month - 1]} 1–{endDate.split("-")[2]}.
                 </p>
-              )}
-              {useCustomEndDate && endDate === endDateMax && (
+              ) : (
                 <p style={{ margin: "var(--space-1) 0 0", fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>
-                  Full month billing — same as default.
+                  Covers full {MONTHS[month - 1]} {year} (last day).
                 </p>
               )}
             </div>

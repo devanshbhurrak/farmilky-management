@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Edit2, Trash2, MapPin, User, ListOrdered } from "lucide-react";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import LoadingScreen from "../components/ui/LoadingScreen";
@@ -9,21 +10,19 @@ import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
+import Pagination from "../components/ui/Pagination";
 import StatusTag from "../components/ui/StatusTag";
 import SearchInput from "../components/ui/SearchInput";
 import toast from "react-hot-toast";
 
-const fetchAreas = createApiFetch("/api/areas");
 const fetchAgents = createApiFetch("/api/areas/agents");
 
 const EMPTY_FORM = { name: "", pincodes: "", localities: "", assignedAgent: "", sequence: "" };
 
 export default function AreasPage() {
-  const { data: areaData, loading, error, refetch } = useApiData(fetchAreas);
   const { data: agentData } = useApiData(fetchAgents);
-  const areas = useMemo(() => areaData?.areas ?? [], [areaData?.areas]);
   const agents = agentData?.agents ?? [];
-  const [search, setSearch] = useState("");
+
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -31,16 +30,21 @@ export default function AreasPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return areas;
-    const q = search.toLowerCase();
-    return areas.filter(
-      (a) =>
-        a.name?.toLowerCase().includes(q) ||
-        a.pincodes.some((p) => p.includes(q)) ||
-        a.localities.some((l) => l.toLowerCase().includes(q))
-    );
-  }, [areas, search]);
+  const {
+    data: areas,
+    loading,
+    error,
+    pagination,
+    search,
+    setPage,
+    setLimit,
+    setSearch,
+    refetch,
+  } = usePaginatedFetch("/api/areas", {
+    initialLimit: 20,
+    initialSort: { sortBy: "sequence", sortOrder: "asc" },
+    dataKey: "areas",
+  });
 
   const openCreate = () => {
     setEditing(null);
@@ -105,14 +109,14 @@ export default function AreasPage() {
     }
   };
 
-  if (loading) return <LoadingScreen />;
+  if (loading && areas.length === 0) return <LoadingScreen />;
   if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack areas-page">
       <PageHeader
         title="Delivery Areas"
-        subtitle={`${areas.length} area${areas.length !== 1 ? "s" : ""} configured for operations`}
+        subtitle={`${pagination.total} area${pagination.total !== 1 ? "s" : ""} configured for operations`}
         actions={
           <button className="btn btn-primary btn-sm" onClick={openCreate}>
             <Plus size={16} />
@@ -126,59 +130,62 @@ export default function AreasPage() {
           <SearchInput value={search} onChange={setSearch} placeholder="Search by area name, pincode, or locality..." />
         </div>
 
-        {filtered.length === 0 ? (
+        {areas.length === 0 ? (
           <div className="areas-empty-wrap">
             <EmptyState
               text={search ? "No matching areas found." : "No areas configured yet."}
               icon={MapPin}
-              action={!search ? { label: "Add First Area", onClick: openCreate } : undefined}
+              action={!search ? { label: "Add First Area", onClick: openCreate } : { label: "Clear search", onClick: () => setSearch("") }}
             />
           </div>
         ) : (
-          <div className="areas-card-grid">
-            {filtered.map((area) => (
-              <div key={area._id} className="area-card">
-                <div className="area-card-head">
-                  <div className="area-card-title-block">
-                    <h3 className="area-card-name">
-                      <span className="area-card-seq">#{area.sequence ?? 0}</span>
-                      {area.name}
-                    </h3>
-                    <StatusTag value={area.isActive ? "active" : "cancelled"} />
+          <>
+            <div className="areas-card-grid">
+              {areas.map((area) => (
+                <div key={area._id} className="area-card">
+                  <div className="area-card-head">
+                    <div className="area-card-title-block">
+                      <h3 className="area-card-name">
+                        <span className="area-card-seq">#{area.sequence ?? 0}</span>
+                        {area.name}
+                      </h3>
+                      <StatusTag value={area.isActive ? "active" : "cancelled"} />
+                    </div>
+                    <div className="area-card-actions">
+                      <Link to={`/areas/${area._id}/customers`} className="icon-button" title="Manage delivery sequence">
+                        <ListOrdered size={16} />
+                      </Link>
+                      <button className="icon-button" onClick={() => openEdit(area)} title="Edit area">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="icon-button danger" onClick={() => setDeleteConfirm(area)} title="Delete area">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="area-card-actions">
-                    <Link to={`/areas/${area._id}/customers`} className="icon-button" title="Manage delivery sequence">
-                      <ListOrdered size={16} />
-                    </Link>
-                    <button className="icon-button" onClick={() => openEdit(area)} title="Edit area">
-                      <Edit2 size={16} />
-                    </button>
-                    <button className="icon-button danger" onClick={() => setDeleteConfirm(area)} title="Delete area">
-                      <Trash2 size={16} />
-                    </button>
+
+                  <div className="area-card-body">
+                    {area.pincodes.length > 0 && (
+                      <p><strong>Pincodes:</strong> {area.pincodes.join(", ")}</p>
+                    )}
+                    {area.localities.length > 0 && (
+                      <p><strong>Localities:</strong> {area.localities.join(", ")}</p>
+                    )}
+                  </div>
+
+                  <div className="area-card-agent">
+                    <User size={14} className="area-card-agent-icon" />
+                    {area.assignedAgent ? (
+                      <span className="area-card-agent-name">{area.assignedAgent.name}</span>
+                    ) : (
+                      <em>No agent assigned</em>
+                    )}
                   </div>
                 </div>
-
-                <div className="area-card-body">
-                  {area.pincodes.length > 0 && (
-                    <p><strong>Pincodes:</strong> {area.pincodes.join(", ")}</p>
-                  )}
-                  {area.localities.length > 0 && (
-                    <p><strong>Localities:</strong> {area.localities.join(", ")}</p>
-                  )}
-                </div>
-
-                <div className="area-card-agent">
-                  <User size={14} className="area-card-agent-icon" />
-                  {area.assignedAgent ? (
-                    <span className="area-card-agent-name">{area.assignedAgent.name}</span>
-                  ) : (
-                    <em>No agent assigned</em>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            <Pagination {...pagination} onPageChange={setPage} onLimitChange={setLimit} showMeta />
+          </>
         )}
       </div>
 
@@ -198,7 +205,7 @@ export default function AreasPage() {
         <div className="area-form-stack">
           <div className="form-group">
             <label>Sequence</label>
-            <input name="sequence" type="number" min="0" value={form.sequence} onChange={handleChange} placeholder="0" />
+            <input name="sequence" type="number" inputMode="numeric" min="0" value={form.sequence} onChange={handleChange} placeholder="0" />
           </div>
           <div className="form-group">
             <label>Area Name *</label>

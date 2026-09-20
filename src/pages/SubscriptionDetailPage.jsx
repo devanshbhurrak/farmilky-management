@@ -99,7 +99,7 @@ export default function SubscriptionDetailPage() {
 
   useEffect(() => {
     if (!editModalOpen) return;
-    apiRequest("/api/products").then(r => r.json())
+    apiRequest("/api/products?limit=100").then(r => r.json())
       .then(data => setProducts(data.products || data || []))
       .catch(() => toast.error("Failed to load products"));
   }, [editModalOpen]);

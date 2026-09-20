@@ -164,36 +164,11 @@ function App() {
                               />
                             }
                           />
-                          <Route
-                            path="orders"
-                            element={
-                              <OrdersPage
-                                orders={portalData?.orders || []}
-                                onUpdate={handleOrderStatusUpdate}
-                                onRefresh={() => refreshData(true)}
-                              />
-                            }
-                          />
+                          <Route path="orders" element={<OrdersPage />} />
                           <Route path="orders/:id" element={<OrderDetailPage />} />
-                          <Route
-                            path="subscriptions"
-                            element={
-                              <SubscriptionsPage
-                                subscriptions={portalData?.subscriptions || []}
-                                onUpdate={handleSubscriptionStatusUpdate}
-                                onRefresh={() => refreshData(true)}
-                              />
-                            }
-                          />
+                          <Route path="subscriptions" element={<SubscriptionsPage />} />
                           <Route path="subscriptions/:id" element={<SubscriptionDetailPage />} />
-                          <Route 
-                            path="customers" 
-                            element={
-                              <CustomersPage 
-                                onRefresh={() => refreshData(true)} 
-                              />
-                            } 
-                          />
+                          <Route path="customers" element={<CustomersPage />} />
                           <Route path="customers/:id" element={<CustomerDetailPage />} />
                           <Route path="products" element={<ProductsPage />} />
                           <Route path="payments" element={<PaymentsPage />} />

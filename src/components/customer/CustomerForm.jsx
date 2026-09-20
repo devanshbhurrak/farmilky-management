@@ -37,6 +37,7 @@ export default function CustomerForm({ form, onChange, onSubmit, areas = [], del
           <label>Phone</label>
           <input
             type="tel"
+            inputMode="tel"
             value={form.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
             placeholder="10-digit number"
@@ -95,6 +96,7 @@ export default function CustomerForm({ form, onChange, onSubmit, areas = [], del
               <label>Delivery Sequence</label>
               <input
                 type="number"
+                inputMode="numeric"
                 min="1"
                 value={deliveryConfig.deliverySequence ?? ""}
                 onChange={(e) => onChange({ deliveryConfig: { ...deliveryConfig, deliverySequence: e.target.value } })}
@@ -167,8 +169,8 @@ export default function CustomerForm({ form, onChange, onSubmit, areas = [], del
         <div className="form-group">
           <label>Latitude <span className="form-hint">(optional GPS)</span></label>
           <input
-            type="number"
-            step="any"
+            type="text"
+            inputMode="decimal"
             value={form.address?.lat ?? ""}
             onChange={(e) => onChange({ address: { ...form.address, lat: e.target.value !== "" ? parseFloat(e.target.value) : null } })}
             placeholder="e.g. 12.9716"
@@ -177,8 +179,8 @@ export default function CustomerForm({ form, onChange, onSubmit, areas = [], del
         <div className="form-group">
           <label>Longitude <span className="form-hint">(optional GPS)</span></label>
           <input
-            type="number"
-            step="any"
+            type="text"
+            inputMode="decimal"
             value={form.address?.lng ?? ""}
             onChange={(e) => onChange({ address: { ...form.address, lng: e.target.value !== "" ? parseFloat(e.target.value) : null } })}
             placeholder="e.g. 77.5946"

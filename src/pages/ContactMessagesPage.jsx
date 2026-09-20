@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Filter } from "lucide-react";
 import { formatDate } from "../utils/format";
-import { useApiData, createApiFetch } from "../hooks/useApiData";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest } from "../api/client";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import StatusTag from "../components/ui/StatusTag";
@@ -14,37 +14,47 @@ import SearchInput from "../components/ui/SearchInput";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
-const fetchMessages = createApiFetch("/api/contact/admin/all");
-
 const STATUS_OPTIONS = ["unread", "read", "replied"];
 
 export default function ContactMessagesPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { data, loading, error, refetch } = useApiData(fetchMessages);
-  const messages = useMemo(() => data?.messages ?? [], [data?.messages]);
 
   const [statusFilter, setStatusFilter] = useState("all");
-  const [search, setSearch] = useState("");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const [selected, setSelected] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const filtered = useMemo(() => {
-    let items = messages;
-    if (statusFilter !== "all") items = items.filter((m) => m.status === statusFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      items = items.filter(
-        (m) =>
-          m.name?.toLowerCase().includes(q) ||
-          m.email?.toLowerCase().includes(q) ||
-          m.message?.toLowerCase().includes(q)
-      );
-    }
-    return items;
-  }, [messages, statusFilter, search]);
+  const {
+    data: messages,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/contact/admin/all", {
+    initialLimit: 20,
+    initialSort: { sortBy: "createdAt", sortOrder: "desc" },
+    dataKey: "messages",
+  });
+
+  const handleStatusFilter = (val) => {
+    setStatusFilter(val);
+    setFilterValue("status", val === "all" ? "" : val);
+  };
+  const handleSort = (key, dir) => setSort(key, dir);
+  const clearFilters = () => {
+    setStatusFilter("all");
+    setSearch("");
+    setFilterValue("status", "");
+  };
 
   const openDetail = (msg) => {
     setSelected(msg);
@@ -108,14 +118,16 @@ export default function ContactMessagesPage() {
     </>
   );
 
-  if (loading) return <LoadingScreen />;
+  const hasFilters = statusFilter !== "all" || !!search.trim();
+
+  if (loading && messages.length === 0) return <LoadingScreen />;
   if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack">
       <PageHeader
         title="Contact Messages"
-        subtitle={`${messages.filter((m) => m.status === "unread").length} unread message(s)`}
+        subtitle={`${pagination.total} message${pagination.total !== 1 ? "s" : ""} total`}
       />
 
       <div className="surface">
@@ -123,7 +135,7 @@ export default function ContactMessagesPage() {
           <SearchInput value={search} onChange={setSearch} placeholder="Search name, email, or message..." />
           {!isMobile && (
             <div className="desktop-filters">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
                 <option value="all">All Status</option>
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -134,26 +146,31 @@ export default function ContactMessagesPage() {
           {isMobile && (
             <button className="filter-toggle-btn" onClick={() => setIsFilterSheetOpen(true)}>
               <Filter size={16} />
-              <span>Filters</span>
+              <span>Filters{hasFilters ? " •" : ""}</span>
             </button>
           )}
         </div>
 
         <DataTable
           columns={columns}
-          data={filtered}
+          data={messages}
+          loading={loading}
           renderCard={renderMessageCard}
           onRowClick={openDetail}
           emptyText="No contact messages found."
-          defaultSortKey="createdAt"
-          defaultSortDir="desc"
+          noMatchAction={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 
       <FilterSheet isOpen={isFilterSheetOpen} onClose={() => setIsFilterSheetOpen(false)}>
         <div className="form-group">
           <label>Status</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
             <option value="all">All Status</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>{s}</option>

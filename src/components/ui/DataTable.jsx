@@ -21,13 +21,26 @@ export default function DataTable({
   emptyAction,
   noMatchAction,
   scrollable = false,
+  // Backend-controlled mode: when pagination prop is provided, DataTable becomes controlled
+  pagination,
+  onSortChange,
+  sortBy,
+  sortOrder,
+  serverSide = false,
 }) {
+  const isControlled = !!pagination || serverSide;
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [sortKey, setSortKey] = useState(defaultSortKey || columns[0]?.key);
   const [sortDir, setSortDir] = useState(defaultSortDir);
   const [page, setPage] = useState(1);
 
+  // In controlled (backend) mode, sorting is delegated to parent via onSortChange
+  const effectiveSortKey = isControlled ? (sortBy ?? sortKey) : sortKey;
+  const effectiveSortDir = isControlled ? (sortOrder ?? sortDir) : sortDir;
+
+  // Client-side only: filtering + sorting + pagination
   const filtered = useMemo(() => {
+    if (isControlled) return data || [];
     if (!data) return [];
     if (!searchQuery || !searchKeys.length) return data;
     const q = searchQuery.toLowerCase();
@@ -37,12 +50,13 @@ export default function DataTable({
         return val?.toString().toLowerCase().includes(q);
       })
     );
-  }, [data, searchQuery, searchKeys]);
+  }, [data, searchQuery, searchKeys, isControlled]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setPage(1); }, [filtered, sortKey, sortDir]);
+  useEffect(() => { if (!isControlled) setPage(1); }, [filtered, sortKey, sortDir, isControlled]);
 
   const sorted = useMemo(() => {
+    if (isControlled) return filtered;
     if (!filtered) return [];
     if (!sortable || !sortKey) return filtered;
     const col = columns.find((c) => c.key === sortKey);
@@ -57,13 +71,25 @@ export default function DataTable({
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));
     });
-  }, [filtered, sortKey, sortDir, sortable, columns]);
+  }, [filtered, sortKey, sortDir, sortable, columns, isControlled]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const paged = sorted.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = isControlled
+    ? (pagination?.totalPages ?? 1)
+    : Math.max(1, Math.ceil(sorted.length / pageSize));
+  const paged = isControlled ? (data || []) : sorted.slice((page - 1) * pageSize, page * pageSize);
 
   function handleSort(key) {
     if (!sortable) return;
+    const col = columns.find((c) => c.key === key);
+    if (col?.sortable === false) return;
+    if (isControlled && onSortChange) {
+      if (effectiveSortKey === key) {
+        onSortChange(key, effectiveSortDir === "asc" ? "desc" : "asc");
+      } else {
+        onSortChange(key, "asc");
+      }
+      return;
+    }
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
@@ -72,7 +98,8 @@ export default function DataTable({
     }
   }
 
-  if (loading) return <LoadingSkeleton rows={5} columns={columns.length} />;
+  // In backend pagination mode, keep showing existing data while loading new page (avoid flicker)
+  if (loading && (!data || data.length === 0)) return <LoadingSkeleton rows={5} columns={columns.length} />;
 
   if (!data || data.length === 0) {
     return <EmptyState text={emptyText} action={emptyAction} />;
@@ -127,14 +154,14 @@ export default function DataTable({
           <tr>
             {columns.map((col) => {
               const isSortable = sortable && col.sortable !== false;
-              const isSorted = sortKey === col.key;
+              const isSorted = effectiveSortKey === col.key;
               return (
                 <th
                   key={col.key}
                   scope="col"
                   aria-sort={
                     isSorted
-                      ? sortDir === "asc" ? "ascending" : "descending"
+                      ? effectiveSortDir === "asc" ? "ascending" : "descending"
                       : undefined
                   }
                 >
@@ -146,7 +173,7 @@ export default function DataTable({
                     >
                       {col.label}
                       {isSorted &&
-                        (sortDir === "asc"
+                        (effectiveSortDir === "asc"
                           ? <ChevronUp size={14} aria-hidden />
                           : <ChevronDown size={14} aria-hidden />)}
                     </button>
@@ -195,17 +222,28 @@ export default function DataTable({
     </div>
   );
 
+  // Helpers for pagination props
+  const paginationProps = isControlled
+    ? {
+        page: pagination.page,
+        totalPages: pagination.totalPages,
+        total: pagination.total,
+        limit: pagination.limit,
+        onPageChange: pagination.onPageChange,
+        onLimitChange: pagination.onLimitChange,
+        showMeta: true,
+      }
+    : { page, totalPages, onPageChange: setPage };
+
   if (scrollable) {
     return (
       <div className="datatable-scrollable">
         <div className="datatable-scroll-body">
           {isMobile ? renderMobileView() : renderDesktopView()}
         </div>
-        {totalPages > 1 && (
-          <div className="datatable-scroll-footer">
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        )}
+        <div className="datatable-scroll-footer">
+          <Pagination {...paginationProps} />
+        </div>
       </div>
     );
   }
@@ -213,7 +251,7 @@ export default function DataTable({
   return (
     <div>
       {isMobile ? renderMobileView() : renderDesktopView()}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination {...paginationProps} />
     </div>
   );
 }

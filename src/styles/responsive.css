@@ -129,9 +129,12 @@
     flex-wrap: nowrap;
   }
 
-  /* Detail-actions buttons — full width on mobile for easy tapping */
+  /* Detail-actions — compact column on mobile so status + edit fit top-right */
   .detail-actions {
-    width: 100%;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-1);
+    width: auto;
   }
 }
 

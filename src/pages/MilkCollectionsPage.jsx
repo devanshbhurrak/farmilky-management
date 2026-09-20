@@ -1229,28 +1229,28 @@ export default function MilkCollectionsPage() {
         <div className="form-grid">
           <label className="form-field">
             <span>Actual Qty (L)</span>
-            <input type="number" min="0" step="0.1"
+            <input type="number" inputMode="decimal" min="0" step="0.1"
               value={colEditForm.actualQty}
               onChange={(e) => setColEditForm((f) => ({ ...f, actualQty: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>Rate / Liter (₹)</span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colEditForm.ratePerLiter}
               onChange={(e) => setColEditForm((f) => ({ ...f, ratePerLiter: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>Fat %</span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colEditForm.fatContent}
               onChange={(e) => setColEditForm((f) => ({ ...f, fatContent: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>SNF %</span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colEditForm.snf}
               onChange={(e) => setColEditForm((f) => ({ ...f, snf: e.target.value }))}
             />

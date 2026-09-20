@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Filter } from "lucide-react";
 import { formatDate } from "../utils/format";
-import { useApiData, createApiFetch } from "../hooks/useApiData";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest } from "../api/client";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import StatusTag from "../components/ui/StatusTag";
@@ -14,19 +14,14 @@ import SearchInput from "../components/ui/SearchInput";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
-const fetchComplaints = createApiFetch("/api/complaints/admin/all");
-
 const STATUS_OPTIONS = ["open", "in_progress", "resolved", "closed"];
 const RELATED_OPTIONS = ["order", "subscription", "delivery", "product", "other"];
 
 export default function ComplaintsPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { data, loading, error, refetch } = useApiData(fetchComplaints);
-  const complaints = useMemo(() => data?.complaints ?? [], [data?.complaints]);
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [relatedFilter, setRelatedFilter] = useState("all");
-  const [search, setSearch] = useState("");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const [selected, setSelected] = useState(null);
@@ -34,21 +29,41 @@ export default function ComplaintsPage() {
   const [newStatus, setNewStatus] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const filtered = useMemo(() => {
-    let items = complaints;
-    if (statusFilter !== "all") items = items.filter((c) => c.status === statusFilter);
-    if (relatedFilter !== "all") items = items.filter((c) => c.relatedTo === relatedFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      items = items.filter(
-        (c) =>
-          c.subject?.toLowerCase().includes(q) ||
-          c.userId?.name?.toLowerCase().includes(q) ||
-          c.userId?.email?.toLowerCase().includes(q)
-      );
-    }
-    return items;
-  }, [complaints, statusFilter, relatedFilter, search]);
+  const {
+    data: complaints,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/complaints/admin/all", {
+    initialLimit: 20,
+    initialSort: { sortBy: "createdAt", sortOrder: "desc" },
+    dataKey: "complaints",
+  });
+
+  const handleStatusFilter = (val) => {
+    setStatusFilter(val);
+    setFilterValue("status", val === "all" ? "" : val);
+  };
+  const handleRelatedFilter = (val) => {
+    setRelatedFilter(val);
+    setFilterValue("relatedTo", val === "all" ? "" : val);
+  };
+  const handleSort = (key, dir) => setSort(key, dir);
+  const clearFilters = () => {
+    setStatusFilter("all");
+    setRelatedFilter("all");
+    setSearch("");
+    setFilterValue("status", "");
+    setFilterValue("relatedTo", "");
+  };
 
   const openDetail = (complaint) => {
     setSelected(complaint);
@@ -115,14 +130,16 @@ export default function ComplaintsPage() {
     </>
   );
 
-  if (loading) return <LoadingScreen />;
+  const hasFilters = statusFilter !== "all" || relatedFilter !== "all" || !!search.trim();
+
+  if (loading && complaints.length === 0) return <LoadingScreen />;
   if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack complaints-page">
       <PageHeader
         title="Complaints"
-        subtitle={`${complaints.filter((c) => c.status === "open").length} open issues require attention`}
+        subtitle={`${pagination.total} complaint${pagination.total !== 1 ? "s" : ""} total`}
       />
 
       <div className="surface">
@@ -130,13 +147,13 @@ export default function ComplaintsPage() {
           <SearchInput value={search} onChange={setSearch} placeholder="Search subject or customer..." />
           {!isMobile && (
             <div className="desktop-filters">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
                 <option value="all">All Status</option>
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
-              <select value={relatedFilter} onChange={(e) => setRelatedFilter(e.target.value)}>
+              <select value={relatedFilter} onChange={(e) => handleRelatedFilter(e.target.value)}>
                 <option value="all">All Categories</option>
                 {RELATED_OPTIONS.map((r) => (
                   <option key={r} value={r}>{r}</option>
@@ -147,26 +164,31 @@ export default function ComplaintsPage() {
           {isMobile && (
             <button className="filter-toggle-btn" onClick={() => setIsFilterSheetOpen(true)}>
               <Filter size={16} />
-              <span>Filters</span>
+              <span>Filters{hasFilters ? " •" : ""}</span>
             </button>
           )}
         </div>
 
         <DataTable
           columns={columns}
-          data={filtered}
+          data={complaints}
+          loading={loading}
           renderCard={renderComplaintCard}
           onRowClick={openDetail}
           emptyText="No complaints found."
-          defaultSortKey="createdAt"
-          defaultSortDir="desc"
+          noMatchAction={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 
       <FilterSheet isOpen={isFilterSheetOpen} onClose={() => setIsFilterSheetOpen(false)}>
         <div className="form-group">
           <label>Status</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
             <option value="all">All Status</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -175,7 +197,7 @@ export default function ComplaintsPage() {
         </div>
         <div className="form-group">
           <label>Category</label>
-          <select value={relatedFilter} onChange={(e) => setRelatedFilter(e.target.value)}>
+          <select value={relatedFilter} onChange={(e) => handleRelatedFilter(e.target.value)}>
             <option value="all">All Categories</option>
             {RELATED_OPTIONS.map((r) => (
               <option key={r} value={r}>{r}</option>

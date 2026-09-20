@@ -265,6 +265,7 @@ export default function OrderForm({ form, onChange, products, customers, onSubmi
                   <label>Qty</label>
                   <input
                     type="number"
+                    inputMode="numeric"
                     min="1"
                     value={item.quantity}
                     onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}

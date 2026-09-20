@@ -118,6 +118,7 @@ function ExtraProductRow({ row, allProducts, existingProductIds, onUpdate, onRem
           <span>Qty</span>
           <input
             type="number"
+            inputMode="numeric"
             min="1"
             step="1"
             className="epr-input"
@@ -133,9 +134,8 @@ function ExtraProductRow({ row, allProducts, existingProductIds, onUpdate, onRem
         <label className="epr-field">
           <span>Price (₹)</span>
           <input
-            type="number"
-            min="0"
-            step="0.01"
+            type="text"
+            inputMode="decimal"
             className="epr-input"
             value={row.price}
             onChange={(e) => onUpdate({ price: e.target.value })}

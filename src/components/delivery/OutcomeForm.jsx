@@ -48,9 +48,8 @@ export default function OutcomeForm({
           <label>Quantity delivered ({unit})</label>
           <div className="om-qty-row">
             <input
-              type="number"
-              min="0.1"
-              step="0.1"
+              type="text"
+              inputMode="decimal"
               className="om-qty-input"
               value={form.actualQuantity ?? scheduled}
               onChange={(e) => onChange({ actualQuantity: e.target.value })}

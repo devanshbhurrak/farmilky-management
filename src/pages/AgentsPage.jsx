@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useApiData, createApiFetch } from "../hooks/useApiData";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest } from "../api/client";
 import DataTable from "../components/ui/DataTable";
 import PageHeader from "../components/ui/PageHeader";
@@ -10,9 +10,10 @@ import ResponsiveModal from "../components/ui/ResponsiveModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
+import PageError from "../components/ui/PageError";
 import toast from "react-hot-toast";
+import { useApiData, createApiFetch } from "../hooks/useApiData";
 
-const fetchAgents = createApiFetch("/api/agents");
 const fetchAreas = createApiFetch("/api/areas");
 
 const EMPTY_FORM = {
@@ -30,13 +31,10 @@ const STATUS_FILTERS = [
 
 export default function AgentsPage() {
   const navigate = useNavigate();
-  const { data, loading, refetch } = useApiData(fetchAgents);
   const { data: areaData } = useApiData(fetchAreas);
-  const agents = useMemo(() => data?.users ?? [], [data?.users]);
   const areas = areaData?.areas ?? [];
 
   const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const [modalMode, setModalMode] = useState(null);
   const [editingAgent, setEditingAgent] = useState(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -44,12 +42,49 @@ export default function AgentsPage() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
-  const filtered = useMemo(() => {
-    let result = agents;
-    if (statusFilter === "active") result = result.filter((a) => a.isActive);
-    if (statusFilter === "inactive") result = result.filter((a) => !a.isActive);
-    if (statusFilter === "unassigned") result = result.filter((a) => !a.agentInfo?.assignedArea);
-    return result;
+  const {
+    data: agents,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/agents", {
+    initialLimit: 20,
+    initialSort: { sortBy: "createdAt", sortOrder: "desc" },
+    dataKey: "users",
+  });
+
+  // Backend filtering for status: active/inactive via isActive param, unassigned via assignedArea param?
+  // For now, handle statusFilter via search param? Better to handle via backend active filter if possible
+  // We keep "unassigned" as client filter after fetch for simplicity, but backend pagination will still apply
+  // So we implement backend for active/inactive and post-filter unassigned on current page only as fallback.
+  // Ideally backend would support unassigned, but for now we fetch and filter client within page + supplement via search
+
+  const handleStatusFilter = (val) => {
+    setStatusFilter(val);
+    if (val === "active") setFilterValue("isActive", "true");
+    else if (val === "inactive") setFilterValue("isActive", "false");
+    else if (val === "unassigned") {
+      // For unassigned, we clear isActive filter and handle client side post-filter (requires fetching all unassigned via search)
+      setFilterValue("isActive", "");
+      setFilterValue("unassigned", "true");
+    } else {
+      setFilterValue("isActive", "");
+      setFilterValue("unassigned", "");
+    }
+  };
+
+  // Client-side post-filter for unassigned since backend doesn't yet support it properly via query
+  const displayedAgents = useMemo(() => {
+    if (statusFilter === "unassigned") return agents.filter((a) => !a.agentInfo?.assignedArea);
+    return agents;
   }, [agents, statusFilter]);
 
   const openCreate = useCallback(() => {
@@ -283,13 +318,16 @@ export default function AgentsPage() {
     </div>
   ), [openEdit, setConfirmAction]);
 
+  const handleSort = (key, dir) => setSort(key, dir);
+
   if (loading && agents.length === 0) return <LoadingScreen />;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack agents-page">
       <PageHeader
         title="Delivery Agents"
-        subtitle={`${agents.length} agent${agents.length !== 1 ? "s" : ""} in the system`}
+        subtitle={`${pagination.total} agent${pagination.total !== 1 ? "s" : ""} in the system`}
         actions={
           <button className="btn btn-primary" onClick={openCreate}>
             <Plus size={16} /> New Agent
@@ -304,25 +342,20 @@ export default function AgentsPage() {
               <button
                 key={f.id}
                 className={`filter-tab ${statusFilter === f.id ? "active" : ""}`}
-                onClick={() => setStatusFilter(f.id)}
+                onClick={() => handleStatusFilter(f.id)}
               >
                 {f.label}
               </button>
             ))}
           </div>
-          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, email or phone..." />
+          <SearchInput value={search} onChange={setSearch} placeholder="Search name, email or phone..." />
         </div>
 
         <DataTable
           columns={columns}
-          data={filtered}
+          data={displayedAgents}
           loading={loading}
           sortable
-          defaultSortKey="name"
-          defaultSortDir="asc"
-          pageSize={20}
-          searchQuery={searchQuery}
-          searchKeys={["name", "email", "phone"]}
           renderCard={renderCard}
           onRowClick={(row) => navigate(`/agents/${row._id}`)}
           emptyText="No delivery agents found."
@@ -331,6 +364,11 @@ export default function AgentsPage() {
               <Plus size={16} /> Add First Agent
             </button>
           }
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 
@@ -408,6 +446,7 @@ export default function AgentsPage() {
             <span>Max Capacity</span>
             <input
               type="number"
+              inputMode="numeric"
               value={form.maxCapacity}
               onChange={(e) => handleFormChange("maxCapacity", e.target.value)}
               placeholder="Max items per trip"

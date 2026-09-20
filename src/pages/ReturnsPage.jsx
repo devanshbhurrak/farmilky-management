@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Filter } from "lucide-react";
-import { useApiData, createApiFetch } from "../hooks/useApiData";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import LoadingScreen from "../components/ui/LoadingScreen";
@@ -10,27 +10,49 @@ import PageHeader from "../components/ui/PageHeader";
 import DataTable from "../components/ui/DataTable";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
 import FilterSheet from "../components/ui/FilterSheet";
+import SearchInput from "../components/ui/SearchInput";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
-const fetchReturns = createApiFetch("/api/returns/admin/all");
 const STATUS_OPTIONS = ["requested", "approved", "rejected", "completed"];
 
 export default function ReturnsPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { data, loading, error, refetch } = useApiData(fetchReturns);
-  const returns = useMemo(() => data?.returns ?? [], [data?.returns]);
-
   const [statusFilter, setStatusFilter] = useState("all");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ status: "", refundAmount: "", adminNotes: "" });
   const [saving, setSaving] = useState(false);
 
-  const filtered = useMemo(() => {
-    if (statusFilter === "all") return returns;
-    return returns.filter((r) => r.status === statusFilter);
-  }, [returns, statusFilter]);
+  const {
+    data: returns,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/returns/admin/all", {
+    initialLimit: 20,
+    initialSort: { sortBy: "createdAt", sortOrder: "desc" },
+    dataKey: "returns",
+  });
+
+  const handleStatusFilter = (val) => {
+    setStatusFilter(val);
+    setFilterValue("status", val === "all" ? "" : val);
+  };
+  const handleSort = (key, dir) => setSort(key, dir);
+  const clearFilters = () => {
+    setStatusFilter("all");
+    setSearch("");
+    setFilterValue("status", "");
+  };
 
   const openDetail = (r) => {
     setSelected(r);
@@ -105,7 +127,7 @@ export default function ReturnsPage() {
         </div>
         <div className="mc-stat">
           <span className="mc-stat-label">Refund</span>
-          <span className="mc-stat-value">{r.refundAmount != null ? formatCurrency(r.refundAmount) : "\u2014"}</span>
+          <span className="mc-stat-value">{r.refundAmount != null ? formatCurrency(r.refundAmount) : "—"}</span>
         </div>
       </div>
       <div className="mc-footer">
@@ -115,21 +137,24 @@ export default function ReturnsPage() {
     </>
   );
 
-  if (loading) return <LoadingScreen />;
+  const hasFilters = statusFilter !== "all" || !!search.trim();
+
+  if (loading && returns.length === 0) return <LoadingScreen />;
   if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack returns-page">
       <PageHeader
         title="Return Requests"
-        subtitle={`${returns.filter((r) => r.status === "requested").length} requests pending review`}
+        subtitle={`${pagination.total} request${pagination.total !== 1 ? "s" : ""} total`}
       />
 
       <div className="surface">
         <div className="surface-filters">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search reason or customer..." />
           {!isMobile ? (
             <div className="desktop-filters support-filter-row">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
                 <option value="all">All Status</option>
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -139,26 +164,31 @@ export default function ReturnsPage() {
           ) : (
             <button className="filter-toggle-btn support-filter-end" onClick={() => setIsFilterSheetOpen(true)}>
               <Filter size={16} />
-              <span>Filters</span>
+              <span>Filters{hasFilters ? " •" : ""}</span>
             </button>
           )}
         </div>
 
         <DataTable
           columns={columns}
-          data={filtered}
+          data={returns}
+          loading={loading}
           renderCard={renderReturnCard}
           onRowClick={openDetail}
           emptyText="No return requests found."
-          defaultSortKey="createdAt"
-          defaultSortDir="desc"
+          noMatchAction={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 
       <FilterSheet isOpen={isFilterSheetOpen} onClose={() => setIsFilterSheetOpen(false)}>
         <div className="form-group">
           <label>Status</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}>
             <option value="all">All Status</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -220,6 +250,7 @@ export default function ReturnsPage() {
               <label>Refund Amount ({formatCurrency(0).split(" ")[0]})</label>
               <input
                 type="number"
+                inputMode="decimal"
                 value={form.refundAmount}
                 onChange={(e) => setForm((p) => ({ ...p, refundAmount: e.target.value }))}
                 placeholder="Leave blank if no refund"

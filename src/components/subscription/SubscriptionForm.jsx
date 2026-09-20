@@ -88,6 +88,7 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
           <label>Quantity per Day</label>
           <input
             type="number"
+            inputMode="numeric"
             min="1"
             value={form.quantityPerDay}
             onChange={(e) => onChange({ quantityPerDay: e.target.value })}
@@ -102,9 +103,8 @@ export default function SubscriptionForm({ form, onChange, products, customers, 
             )}
           </label>
           <input
-            type="number"
-            min="0.01"
-            step="0.01"
+            type="text"
+            inputMode="decimal"
             value={form.pricePerUnit ?? ''}
             onChange={(e) => onChange({ pricePerUnit: e.target.value !== '' ? Number(e.target.value) : null })}
             placeholder={selectedProduct ? `Default: ₹${standardPrice}` : 'Select a product first'}

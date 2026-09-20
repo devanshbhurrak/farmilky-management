@@ -37,9 +37,131 @@
 }
 .status-void::before { background: #cbd5e1; }
 
-/* ─── Page-level gap override ───────────────── */
+/* ─── Page-level layout ──────────────────────── */
 .invoices-page.view-stack {
   gap: var(--space-4);
+  min-height: calc(100vh - 120px);
+}
+
+/* ─── Header action buttons ──────────────────── */
+.inv-header-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .invoices-page .btn-label {
+    display: none;
+  }
+
+  /* Give the right side exactly enough room for two circle buttons */
+  .invoices-page .page-header-right {
+    max-width: fit-content;
+    flex-shrink: 0;
+  }
+
+  .inv-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .inv-hdr-btn {
+    width: 42px;
+    height: 42px;
+    min-height: unset;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    border-radius: 50%;
+  }
+
+  .inv-hdr-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* ─── Filter row ─────────────────────────────── */
+.inv-filter-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  width: 100%;
+}
+
+.inv-filter-row .search-input-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.inv-status-select {
+  flex-shrink: 0;
+}
+
+/* ─── Fill viewport height so pagination stays at bottom ── */
+.invoices-page .surface-card.table-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* DataTable root div */
+.invoices-page .surface-card.table-shell > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* card-list (mobile) and table-shell (desktop) grow */
+.invoices-page .surface-card.table-shell .card-list,
+.invoices-page .surface-card.table-shell .table-shell {
+  flex: 1;
+}
+
+/* pagination always at bottom */
+.invoices-page .surface-card.table-shell .pagination-bar,
+.invoices-page .surface-card.table-shell .pagination-bar--mobile {
+  flex: none;
+  margin-top: auto;
+}
+
+/* ─── Status filter pill ─────────────────────── */
+.inv-status-filter {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-soft);
+  background: var(--surface-muted);
+  display: flex;
+  align-items: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+
+.inv-status-dot { display: none; }
+
+.inv-status-filter select {
+  appearance: auto;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-weight: var(--font-weight-medium);
+}
+
+.inv-status-filter select:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 /* ─── Summary stats grid ─────────────────────── */
@@ -130,7 +252,7 @@
   justify-content: flex-end;
 }
 
-/* ─── Mobile card action row ─────────────────── */
+/* ─── Mobile card action row (legacy) ───────── */
 .inv-card-action {
   padding: var(--space-2) var(--space-3);
   border-top: 1px solid var(--border-soft);
@@ -143,6 +265,96 @@
   flex: 1;
   justify-content: center;
   min-height: var(--touch-min);
+  font-size: var(--font-size-xs);
+}
+
+/* ─── Invoice card v2 (inv2-*) ───────────────── */
+.inv2-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.inv2-card--draft          { border-left-color: #94a3b8; }
+.inv2-card--sent           { border-left-color: var(--info, #3b82f6); }
+.inv2-card--paid           { border-left-color: var(--color-primary); }
+.inv2-card--partially_paid { border-left-color: var(--warning, #f59e0b); }
+.inv2-card--overdue        { border-left-color: var(--danger-text); }
+.inv2-card--cancelled,
+.inv2-card--void           { border-left-color: #cbd5e1; }
+
+.inv2-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}
+
+.inv2-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.inv2-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.inv2-sub {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.inv2-num {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.inv2-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.inv2-due {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.inv2-due--owed  { color: var(--danger-text); }
+.inv2-due--clear { color: var(--color-primary-dark); }
+
+.inv2-actions {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border-soft);
+}
+
+.inv2-actions .btn {
+  flex: 1;
+  justify-content: center;
+  min-height: 36px;
   font-size: var(--font-size-xs);
 }
 

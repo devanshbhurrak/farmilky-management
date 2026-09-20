@@ -1,21 +1,21 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, SlidersHorizontal } from "lucide-react";
 import { formatCurrency } from "../utils/format";
-import { useApiData, createApiFetch } from "../hooks/useApiData";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest } from "../api/client";
 import DataTable from "../components/ui/DataTable";
 import PageHeader from "../components/ui/PageHeader";
 import SearchInput from "../components/ui/SearchInput";
+import FilterSheet from "../components/ui/FilterSheet";
 import RightDrawer from "../components/ui/RightDrawer";
 import BottomSheet from "../components/ui/BottomSheet";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
+import PageError from "../components/ui/PageError";
 import toast from "react-hot-toast";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-
-const fetchSuppliers = createApiFetch("/api/suppliers");
 
 const EMPTY_FORM = {
   name: "", phone: "", email: "", location: "", pincode: "",
@@ -27,33 +27,66 @@ const EMPTY_FORM = {
   notes: "",
 };
 
-const STATUS_FILTERS = [
-  { id: "all", label: "All" },
-  { id: "active", label: "Active" },
-  { id: "inactive", label: "Inactive" },
-];
+const STATUS_ALL      = "all";
+const OUTSTANDING_ALL = "all";
 
 export default function SuppliersPage() {
   const navigate = useNavigate();
-  const { data, loading, refetch } = useApiData(fetchSuppliers);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const suppliers = useMemo(() => data?.suppliers ?? [], [data?.suppliers]);
 
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [modalMode, setModalMode] = useState(null);
+  // Client-side filters on fetched records
+  const [statusFilter,      setStatusFilter]      = useState(STATUS_ALL);
+  const [outstandingFilter, setOutstandingFilter] = useState(OUTSTANDING_ALL);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const [modalMode,       setModalMode]       = useState(null);
   const [editingSupplier, setEditingSupplier] = useState(null);
-  const [form, setForm] = useState({ ...EMPTY_FORM });
-  const [saving, setSaving] = useState(false);
-  const [confirmAction, setConfirmAction] = useState(null);
-  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [form,            setForm]            = useState({ ...EMPTY_FORM });
+  const [saving,          setSaving]          = useState(false);
+  const [confirmAction,   setConfirmAction]   = useState(null);
+  const [confirmLoading,  setConfirmLoading]  = useState(false);
 
-  const filtered = useMemo(() => {
+  const {
+    data: suppliers,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    refetch,
+  } = usePaginatedFetch("/api/suppliers", {
+    initialLimit: 20,
+    initialSort: { sortBy: "createdAt", sortOrder: "desc" },
+    dataKey: "suppliers",
+  });
+
+  // Apply client-side filters on the current page's records
+  const filteredSuppliers = useMemo(() => {
     let result = suppliers;
-    if (statusFilter === "active") result = result.filter((s) => s.isActive);
-    if (statusFilter === "inactive") result = result.filter((s) => !s.isActive);
+    if (statusFilter !== STATUS_ALL) {
+      const want = statusFilter === "active";
+      result = result.filter((s) => Boolean(s.isActive) === want);
+    }
+    if (outstandingFilter !== OUTSTANDING_ALL) {
+      if (outstandingFilter === "due")   result = result.filter((s) => (s.outstandingAmount ?? 0) > 0);
+      if (outstandingFilter === "clear") result = result.filter((s) => (s.outstandingAmount ?? 0) <= 0);
+    }
     return result;
-  }, [suppliers, statusFilter]);
+  }, [suppliers, statusFilter, outstandingFilter]);
+
+  const activeFilterCount = [
+    statusFilter      !== STATUS_ALL,
+    outstandingFilter !== OUTSTANDING_ALL,
+  ].filter(Boolean).length;
+
+  function clearLocalFilters() {
+    setStatusFilter(STATUS_ALL);
+    setOutstandingFilter(OUTSTANDING_ALL);
+  }
 
   const openCreate = useCallback(() => {
     setEditingSupplier(null);
@@ -73,8 +106,8 @@ export default function SuppliersPage() {
         ? new Date(supplier.joiningDate).toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0],
       collectionSessions: supplier.collectionSessions || ["morning", "evening"],
-      defaultMorningQty: supplier.defaultMorningQty?.toString() || "",
-      defaultEveningQty: supplier.defaultEveningQty?.toString() || "",
+      defaultMorningQty:   supplier.defaultMorningQty?.toString()   || "",
+      defaultEveningQty:   supplier.defaultEveningQty?.toString()   || "",
       defaultRatePerLiter: supplier.defaultRatePerLiter?.toString() || "",
       bankDetails: supplier.bankDetails || { accountNo: "", ifscCode: "", bankName: "", holderName: "" },
       notes: supplier.notes || "",
@@ -101,39 +134,26 @@ export default function SuppliersPage() {
   }, []);
 
   const handleSave = useCallback(async () => {
-    if (!form.name || !form.phone) {
-      toast.error("Name and phone are required.");
-      return;
-    }
-    if (form.collectionSessions.length === 0) {
-      toast.error("Select at least one collection session.");
-      return;
-    }
-
+    if (!form.name || !form.phone) { toast.error("Name and phone are required."); return; }
+    if (form.collectionSessions.length === 0) { toast.error("Select at least one collection session."); return; }
     setSaving(true);
     try {
       const payload = {
-        name: form.name,
-        phone: form.phone,
-        email: form.email,
-        location: form.location,
-        pincode: form.pincode,
+        name: form.name, phone: form.phone, email: form.email,
+        location: form.location, pincode: form.pincode,
         joiningDate: form.joiningDate || null,
         collectionSessions: form.collectionSessions,
-        defaultMorningQty: form.defaultMorningQty ? parseFloat(form.defaultMorningQty) : 0,
-        defaultEveningQty: form.defaultEveningQty ? parseFloat(form.defaultEveningQty) : 0,
+        defaultMorningQty:   form.defaultMorningQty   ? parseFloat(form.defaultMorningQty)   : 0,
+        defaultEveningQty:   form.defaultEveningQty   ? parseFloat(form.defaultEveningQty)   : 0,
         defaultRatePerLiter: form.defaultRatePerLiter ? parseFloat(form.defaultRatePerLiter) : 0,
         bankDetails: form.bankDetails,
         notes: form.notes,
       };
-
-      const url = modalMode === "create" ? "/api/suppliers" : `/api/suppliers/${editingSupplier._id}`;
+      const url    = modalMode === "create" ? "/api/suppliers" : `/api/suppliers/${editingSupplier._id}`;
       const method = modalMode === "create" ? "POST" : "PUT";
-
-      const res = await apiRequest(url, { method, body: JSON.stringify(payload) });
+      const res    = await apiRequest(url, { method, body: JSON.stringify(payload) });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || "Failed to save supplier.");
-
       toast.success(modalMode === "create" ? "Supplier added." : "Supplier updated.");
       closeModal();
       refetch();
@@ -145,49 +165,39 @@ export default function SuppliersPage() {
   }, [form, modalMode, editingSupplier, closeModal, refetch]);
 
   const handleToggleStatus = useCallback(async () => {
-    if (!confirmAction || confirmAction.type !== "toggle") return;
-    if (confirmLoading) return;
+    if (!confirmAction || confirmAction.type !== "toggle" || confirmLoading) return;
     const supplier = confirmAction.supplier;
     setConfirmLoading(true);
     try {
-      const res = await apiRequest(`/api/suppliers/${supplier._id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ isActive: !supplier.isActive }),
+      const res    = await apiRequest(`/api/suppliers/${supplier._id}/status`, {
+        method: "PATCH", body: JSON.stringify({ isActive: !supplier.isActive }),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message);
       toast.success(result.message);
       setConfirmAction(null);
       refetch();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setConfirmLoading(false);
-    }
+    } catch (err) { toast.error(err.message); }
+    finally { setConfirmLoading(false); }
   }, [confirmAction, confirmLoading, refetch]);
 
   const handleDelete = useCallback(async () => {
-    if (!confirmAction || confirmAction.type !== "delete") return;
-    if (confirmLoading) return;
+    if (!confirmAction || confirmAction.type !== "delete" || confirmLoading) return;
     const supplier = confirmAction.supplier;
     setConfirmLoading(true);
     try {
-      const res = await apiRequest(`/api/suppliers/${supplier._id}`, { method: "DELETE" });
+      const res    = await apiRequest(`/api/suppliers/${supplier._id}`, { method: "DELETE" });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message);
       toast.success(result.message);
       setConfirmAction(null);
       refetch();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setConfirmLoading(false);
-    }
+    } catch (err) { toast.error(err.message); }
+    finally { setConfirmLoading(false); }
   }, [confirmAction, confirmLoading, refetch]);
 
   const supplierFormContent = (
     <div className="supplier-form">
-      {/* ── Basic Info ── */}
       <div className="supplier-form-section">
         <p className="eyebrow">Basic Information</p>
         <div className="form-grid">
@@ -218,7 +228,6 @@ export default function SuppliersPage() {
         </div>
       </div>
 
-      {/* ── Collection Settings ── */}
       <div className="supplier-form-section">
         <p className="eyebrow">Collection Settings</p>
         <div className="form-grid">
@@ -235,20 +244,19 @@ export default function SuppliersPage() {
           </div>
           <label className="form-field">
             <span>Morning Qty (L)</span>
-            <input type="number" min="0" step="0.1" value={form.defaultMorningQty} onChange={(e) => setForm((f) => ({ ...f, defaultMorningQty: e.target.value }))} placeholder="0" />
+            <input type="number" inputMode="decimal" min="0" step="0.1" value={form.defaultMorningQty} onChange={(e) => setForm((f) => ({ ...f, defaultMorningQty: e.target.value }))} placeholder="0" />
           </label>
           <label className="form-field">
             <span>Evening Qty (L)</span>
-            <input type="number" min="0" step="0.1" value={form.defaultEveningQty} onChange={(e) => setForm((f) => ({ ...f, defaultEveningQty: e.target.value }))} placeholder="0" />
+            <input type="number" inputMode="decimal" min="0" step="0.1" value={form.defaultEveningQty} onChange={(e) => setForm((f) => ({ ...f, defaultEveningQty: e.target.value }))} placeholder="0" />
           </label>
           <label className="form-field">
             <span>Rate / Liter (₹)</span>
-            <input type="number" min="0" step="0.01" value={form.defaultRatePerLiter} onChange={(e) => setForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))} placeholder="0.00" />
+            <input type="number" inputMode="decimal" min="0" step="0.01" value={form.defaultRatePerLiter} onChange={(e) => setForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))} placeholder="0.00" />
           </label>
         </div>
       </div>
 
-      {/* ── Bank Details ── */}
       <div className="supplier-form-section">
         <p className="eyebrow">Bank Details</p>
         <div className="form-grid">
@@ -271,7 +279,6 @@ export default function SuppliersPage() {
         </div>
       </div>
 
-      {/* ── Notes ── */}
       <div className="supplier-form-section">
         <label className="form-field">
           <span>Notes</span>
@@ -279,36 +286,29 @@ export default function SuppliersPage() {
         </label>
       </div>
 
-      {/* ── Save Actions ── */}
-      <div className="supplier-form-actions">
-        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-          {saving ? "Saving…" : "Save"}
-        </button>
-        {modalMode === "edit" && editingSupplier && (
-          <div className="supplier-form-actions-row">
-            <button
-              className={`btn btn-sm ${editingSupplier.isActive ? "warning" : "active"}`}
-              onClick={() => { closeModal(); setConfirmAction({ type: "toggle", supplier: editingSupplier }); }}
-            >
-              {editingSupplier.isActive ? "Deactivate" : "Activate"}
-            </button>
-            <button
-              className="btn btn-sm danger"
-              onClick={() => { closeModal(); setConfirmAction({ type: "delete", supplier: editingSupplier }); }}
-            >
-              Remove
-            </button>
-          </div>
-        )}
-      </div>
+      {modalMode === "edit" && editingSupplier && (
+        <div className="supp-edit-danger-row">
+          <button
+            className={`btn btn-sm ${editingSupplier.isActive ? "warning" : "active"}`}
+            onClick={() => { closeModal(); setConfirmAction({ type: "toggle", supplier: editingSupplier }); }}
+          >
+            {editingSupplier.isActive ? "Deactivate" : "Activate"}
+          </button>
+          <button
+            className="btn btn-sm danger"
+            onClick={() => { closeModal(); setConfirmAction({ type: "delete", supplier: editingSupplier }); }}
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
     </div>
   );
 
   const columns = useMemo(() => [
     {
-      key: "name",
-      label: "Farmer",
-      sortable: true,
+      key: "name", label: "Farmer", sortable: true,
       render: (row) => (
         <div style={{ display: "flex", flexDirection: "column" }}>
           <strong>{row.name}</strong>
@@ -317,23 +317,17 @@ export default function SuppliersPage() {
       ),
     },
     {
-      key: "location",
-      label: "Location",
-      sortable: true,
+      key: "location", label: "Location", sortable: true,
       render: (row) => row.location
         ? <span>{row.location}{row.pincode ? ` - ${row.pincode}` : ""}</span>
         : <span className="text-muted" style={{ fontStyle: "italic" }}>—</span>,
     },
     {
-      key: "defaultRatePerLiter",
-      label: "Rate / L",
-      sortable: true,
+      key: "defaultRatePerLiter", label: "Rate / L", sortable: true,
       render: (row) => <span>₹{Number(row.defaultRatePerLiter || 0).toFixed(2)}</span>,
     },
     {
-      key: "outstandingAmount",
-      label: "Outstanding",
-      sortable: true,
+      key: "outstandingAmount", label: "Outstanding", sortable: true,
       render: (row) => (
         <span className={row.outstandingAmount > 0 ? "danger-text strong-text" : undefined}>
           {formatCurrency(row.outstandingAmount)}
@@ -341,15 +335,11 @@ export default function SuppliersPage() {
       ),
     },
     {
-      key: "isActive",
-      label: "Status",
-      sortable: false,
-      render: (row) => row.isActive ? <StatusTag value="active" /> : <StatusTag value="inactive" />,
+      key: "isActive", label: "Status", sortable: false,
+      render: (row) => <StatusTag value={row.isActive ? "active" : "inactive"} />,
     },
     {
-      key: "actions",
-      label: "",
-      sortable: false,
+      key: "actions", label: "", sortable: false,
       render: (row) => (
         <div className="table-actions" onClick={(e) => e.stopPropagation()}>
           <button className="btn btn-sm" onClick={() => openEdit(row)}>Edit</button>
@@ -358,128 +348,203 @@ export default function SuppliersPage() {
     },
   ], [openEdit]);
 
-  const renderCard = useCallback((row) => (
-    <>
-      <div className="mc-head">
-        <div className="mc-identity">
-          <span className="mc-name">{row.name}</span>
-          <span className="mc-sub">{row.phone}{row.location ? ` · ${row.location}` : ""}</span>
+  const renderCard = useCallback((row) => {
+    const initials = row.name
+      .split(" ")
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+    const sessions = Array.isArray(row.collectionSessions) && row.collectionSessions.length > 0
+      ? row.collectionSessions.map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(" & ")
+      : "—";
+    return (
+      <>
+        <div className={`supp-card-top ${row.isActive ? "supp-card-top--active" : "supp-card-top--inactive"}`}>
+          <div className="supp-card-avatar">{initials}</div>
+          <div className="supp-card-identity">
+            <span className="supp-card-name">{row.name}</span>
+            <span className="supp-card-sub">{row.phone}</span>
+            {row.location && (
+              <span className="supp-card-sub">{row.location}{row.pincode ? ` · ${row.pincode}` : ""}</span>
+            )}
+          </div>
+          <div className="supp-card-meta">
+            <StatusTag value={row.isActive ? "active" : "inactive"} />
+            <button className="supplier-card-edit-btn" onClick={(e) => { e.stopPropagation(); openEdit(row); }} aria-label="Edit">
+              <Pencil size={14} />
+            </button>
+          </div>
         </div>
-        <div className="supplier-card-actions">
-          <StatusTag value={row.isActive ? "active" : "inactive"} />
-          <button className="supplier-card-edit-btn" onClick={(e) => { e.stopPropagation(); openEdit(row); }} aria-label="Edit">
-            <Pencil size={14} />
-          </button>
+        <div className="supp-card-stats">
+          <div className="supp-card-stat">
+            <span className="supp-card-stat-label">Sessions</span>
+            <span className="supp-card-stat-value">{sessions}</span>
+          </div>
+          <div className="supp-card-stat">
+            <span className="supp-card-stat-label">Rate / L</span>
+            <span className="supp-card-stat-value">₹{Number(row.defaultRatePerLiter || 0).toFixed(2)}</span>
+          </div>
+          <div className="supp-card-stat">
+            <span className="supp-card-stat-label">Outstanding</span>
+            <span className={`supp-card-stat-value ${row.outstandingAmount > 0 ? "supp-due" : "supp-clear"}`}>
+              {formatCurrency(row.outstandingAmount)}
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="mc-stats">
-        <div className="mc-stat">
-          <span className="mc-stat-label">Rate / L</span>
-          <span className="mc-stat-value">₹{Number(row.defaultRatePerLiter || 0).toFixed(2)}</span>
-        </div>
-        <div className="mc-stat">
-          <span className="mc-stat-label">Outstanding</span>
-          <span className={`mc-stat-value ${row.outstandingAmount > 0 ? "danger" : "muted"}`}>
-            {formatCurrency(row.outstandingAmount)}
-          </span>
-        </div>
-      </div>
-    </>
-  ), [openEdit]);
+      </>
+    );
+  }, [openEdit]);
 
   if (loading && suppliers.length === 0) return <LoadingScreen />;
+  if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack suppliers-page">
       <PageHeader
         title="Suppliers"
-        subtitle={`${suppliers.length} farmer${suppliers.length !== 1 ? "s" : ""} in the system`}
+        subtitle={`${pagination.total} farmer${pagination.total !== 1 ? "s" : ""} in the system`}
         actions={
           <button className="btn btn-primary" onClick={openCreate}>
-            <Plus size={16} /> Add Farmer
+            <Plus size={16} /> <span className="btn-label">Add Farmer</span>
           </button>
         }
       />
 
       <div className="surface">
         <div className="surface-filters">
-          <div className="filter-tabs">
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                className={`filter-tab ${statusFilter === f.id ? "active" : ""}`}
-                onClick={() => setStatusFilter(f.id)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search name, phone or location..." />
+          <SearchInput value={search} onChange={setSearch} placeholder="Search name, phone or location..." />
+          <button
+            className={`filter-toggle-btn${activeFilterCount > 0 ? " filter-toggle-btn--active" : ""}`}
+            onClick={() => setFilterOpen(true)}
+            type="button"
+            aria-label="Open filters"
+          >
+            <SlidersHorizontal size={15} />
+            {activeFilterCount > 0 && (
+              <span className="filter-toggle-badge">{activeFilterCount}</span>
+            )}
+          </button>
         </div>
 
         <DataTable
           columns={columns}
-          data={filtered}
+          data={filteredSuppliers}
           loading={loading}
           sortable
-          defaultSortKey="name"
-          defaultSortDir="asc"
-          pageSize={20}
-          searchQuery={searchQuery}
-          searchKeys={["name", "phone", "location", "pincode"]}
           renderCard={renderCard}
           onRowClick={(row) => navigate(`/suppliers/${row._id}`)}
-          emptyText="No suppliers found."
+          emptyText={activeFilterCount > 0 ? "No suppliers match the selected filters." : "No suppliers found."}
+          noMatchAction={activeFilterCount > 0 ? { label: "Clear filters", onClick: clearLocalFilters } : undefined}
           emptyAction={
-            <button className="btn btn-primary" onClick={openCreate}>
-              <Plus size={16} /> Add First Farmer
-            </button>
+            !activeFilterCount ? (
+              <button className="btn btn-primary" onClick={openCreate}>
+                <Plus size={16} /> Add First Farmer
+              </button>
+            ) : undefined
           }
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={(key, dir) => setSort(key, dir)}
+          serverSide
         />
       </div>
 
-      {isMobile ? (
-        <BottomSheet
-          isOpen={modalMode !== null}
-          onClose={closeModal}
-          title={modalMode === "create" ? "Add Farmer / Supplier" : "Edit Supplier"}
-        >
-          {supplierFormContent}
-        </BottomSheet>
-      ) : (
-        <RightDrawer
-          open={modalMode !== null}
-          onClose={closeModal}
-          title={modalMode === "create" ? "Add Farmer / Supplier" : "Edit Supplier"}
-          footer={
-            <div className="modal-actions">
-              {modalMode === "edit" && editingSupplier && (
-                <>
-                  <button
-                    className={`btn btn-sm ${editingSupplier.isActive ? "warning" : "active"}`}
-                    onClick={() => { closeModal(); setConfirmAction({ type: "toggle", supplier: editingSupplier }); }}
-                  >
-                    {editingSupplier.isActive ? "Deactivate" : "Activate"}
-                  </button>
-                  <button
-                    className="btn btn-sm danger"
-                    onClick={() => { closeModal(); setConfirmAction({ type: "delete", supplier: editingSupplier }); }}
-                  >
-                    Remove
-                  </button>
-                  <span className="modal-actions-sep" />
-                </>
-              )}
-              <button className="btn btn-sm" onClick={closeModal} disabled={saving}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? "Saving…" : "Save"}
+      {/* Filter sheet */}
+      <FilterSheet isOpen={filterOpen} onClose={() => setFilterOpen(false)}>
+        <div className="cust-filter-group">
+          <span className="cust-filter-label">Status</span>
+          <div className="cust-filter-options">
+            {[
+              { label: "All",      value: STATUS_ALL },
+              { label: "Active",   value: "active"   },
+              { label: "Inactive", value: "inactive" },
+            ].map(({ label, value }) => (
+              <button
+                key={value}
+                type="button"
+                className={`cust-filter-chip${statusFilter === value ? " active" : ""}`}
+                onClick={() => setStatusFilter(value)}
+              >
+                {label}
               </button>
-            </div>
-          }
-        >
-          {supplierFormContent}
-        </RightDrawer>
-      )}
+            ))}
+          </div>
+        </div>
+
+        <div className="cust-filter-group">
+          <span className="cust-filter-label">Outstanding</span>
+          <div className="cust-filter-options">
+            {[
+              { label: "All",              value: OUTSTANDING_ALL },
+              { label: "Has Due",          value: "due"           },
+              { label: "No Outstanding",   value: "clear"         },
+            ].map(({ label, value }) => (
+              <button
+                key={value}
+                type="button"
+                className={`cust-filter-chip${outstandingFilter === value ? " active" : ""}`}
+                onClick={() => setOutstandingFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="cust-filter-group">
+          <span className="cust-filter-label">Sort By</span>
+          <div className="cust-filter-options">
+            {[
+              { label: "Newest",              sortBy: "createdAt",         sortOrder: "desc" },
+              { label: "Oldest",              sortBy: "createdAt",         sortOrder: "asc"  },
+              { label: "Name A–Z",            sortBy: "name",              sortOrder: "asc"  },
+              { label: "Name Z–A",            sortBy: "name",              sortOrder: "desc" },
+              { label: "Highest Outstanding", sortBy: "outstandingAmount", sortOrder: "desc" },
+            ].map(({ label, sortBy, sortOrder }) => (
+              <button
+                key={label}
+                type="button"
+                className={`cust-filter-chip${sort.sortBy === sortBy && sort.sortOrder === sortOrder ? " active" : ""}`}
+                onClick={() => { setSort(sortBy, sortOrder); setFilterOpen(false); }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {activeFilterCount > 0 && (
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => { clearLocalFilters(); setFilterOpen(false); }}
+          >
+            Clear filters
+          </button>
+        )}
+      </FilterSheet>
+
+      {(() => {
+        const modalFooter = (
+          <div className="supp-edit-footer-primary">
+            <button className="btn btn-sm" onClick={closeModal} disabled={saving}>Cancel</button>
+            <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        );
+        return isMobile ? (
+          <BottomSheet isOpen={modalMode !== null} onClose={closeModal} title={modalMode === "create" ? "Add Farmer / Supplier" : "Edit Supplier"} footer={modalFooter}>
+            {supplierFormContent}
+          </BottomSheet>
+        ) : (
+          <RightDrawer open={modalMode !== null} onClose={closeModal} title={modalMode === "create" ? "Add Farmer / Supplier" : "Edit Supplier"} footer={modalFooter}>
+            {supplierFormContent}
+          </RightDrawer>
+        );
+      })()}
 
       {confirmAction?.type === "toggle" && (
         <ConfirmDialog

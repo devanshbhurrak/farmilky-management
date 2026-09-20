@@ -83,10 +83,9 @@ export default function DeliveryHistoryForm({ form, onChange, subscription, onSu
         <div className="form-group">
           <label>Quantity ({unit}) <span style={{ color: "var(--danger)" }}>*</span></label>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={form.actualQuantity}
-            min="0.01"
-            step="0.01"
             required
             placeholder={`Scheduled: ${scheduledQty}`}
             onChange={handleQtyChange}

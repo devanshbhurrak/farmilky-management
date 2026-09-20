@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Filter, Plus } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import StatusTag from "../components/ui/StatusTag";
@@ -12,17 +12,13 @@ import PageHeader from "../components/ui/PageHeader";
 import SearchInput from "../components/ui/SearchInput";
 import ProductForm from "../components/product/ProductForm";
 import toast from "react-hot-toast";
-import { createApiFetch, useApiData } from "../hooks/useApiData";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { categoryOptions } from "../utils/constants";
 import { apiRequest, safeParseJson } from "../api/client";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 
-const fetchProducts = createApiFetch("/api/products");
-
 export default function ProductsPage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { data, loading, error, refetch } = useApiData(fetchProducts);
-  const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [availFilter, setAvailFilter] = useState("all");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -35,24 +31,34 @@ export default function ProductsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const products = useMemo(() => {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if (data.products && Array.isArray(data.products)) return data.products;
-    return [];
-  }, [data]);
+  const {
+    data: products,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/products", {
+    initialLimit: 20,
+    initialSort: { sortBy: "createdAt", sortOrder: "desc" },
+    dataKey: "products",
+  });
 
-  const filtered = useMemo(() => {
-    let items = products;
-    if (categoryFilter !== "all") items = items.filter((p) => p.category === categoryFilter);
-    if (availFilter === "available") items = items.filter((p) => p.isAvailable);
-    else if (availFilter === "unavailable") items = items.filter((p) => !p.isAvailable);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      items = items.filter((p) => p.name.toLowerCase().includes(q));
-    }
-    return items;
-  }, [products, categoryFilter, availFilter, search]);
+  const handleCategoryChange = (val) => {
+    setCategoryFilter(val);
+    setFilterValue("category", val === "all" ? "" : val);
+  };
+  const handleAvailChange = (val) => {
+    setAvailFilter(val);
+    const map = { all: "", available: "true", unavailable: "false" };
+    setFilterValue("isAvailable", map[val] ?? "");
+  };
 
   function openCreate() {
     setEditingProduct(null);
@@ -137,7 +143,7 @@ export default function ProductsPage() {
     {
       key: "name",
       label: "Product",
-      sortable: false,
+      sortable: true,
       render: (r) => (
         <div className="avatar-cell">
           {r.image ? (
@@ -155,7 +161,7 @@ export default function ProductsPage() {
     {
       key: "price",
       label: "Price",
-      sortable: false,
+      sortable: true,
       render: (r) => <strong>{getProductPrice(r)}</strong>,
     },
     {
@@ -215,14 +221,14 @@ export default function ProductsPage() {
     <>
       <div className="form-group">
         <label>Category</label>
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+        <select value={categoryFilter} onChange={(e) => handleCategoryChange(e.target.value)}>
           <option value="all">All Categories</option>
           {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
       <div className="form-group">
         <label>Availability</label>
-        <select value={availFilter} onChange={(e) => setAvailFilter(e.target.value)}>
+        <select value={availFilter} onChange={(e) => handleAvailChange(e.target.value)}>
           <option value="all">All Availability</option>
           <option value="available">Available</option>
           <option value="unavailable">Unavailable</option>
@@ -236,7 +242,10 @@ export default function ProductsPage() {
     setCategoryFilter("all");
     setAvailFilter("all");
     setSearch("");
+    setFilterValue("category", "");
+    setFilterValue("isAvailable", "");
   };
+  const handleSort = (key, dir) => setSort(key, dir);
 
   const formContent = (
     <ProductForm
@@ -254,7 +263,7 @@ export default function ProductsPage() {
     <div className="view-stack products-page">
       <PageHeader
         title="Products"
-        subtitle={`Managing ${products.length} products in inventory`}
+        subtitle={`Managing ${pagination.total} product${pagination.total !== 1 ? "s" : ""} in inventory`}
         actions={
           <button className="btn btn-primary btn-sm" onClick={openCreate}>
             <Plus size={16} /> Add Product
@@ -272,11 +281,11 @@ export default function ProductsPage() {
           />
           {!isMobile && (
             <div className="desktop-filters">
-              <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+              <select value={categoryFilter} onChange={(e) => handleCategoryChange(e.target.value)}>
                 <option value="all">All Categories</option>
                 {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
-              <select value={availFilter} onChange={(e) => setAvailFilter(e.target.value)}>
+              <select value={availFilter} onChange={(e) => handleAvailChange(e.target.value)}>
                 <option value="all">All Availability</option>
                 <option value="available">Available</option>
                 <option value="unavailable">Unavailable</option>
@@ -296,13 +305,18 @@ export default function ProductsPage() {
 
         <DataTable
           columns={columns}
-          data={filtered}
+          data={products}
           renderCard={renderProductCard}
           onRowClick={openEdit}
           loading={loading}
-          sortable={false}
+          sortable
           emptyText="No products found."
           noMatchAction={hasFilters ? { label: "Clear filters", onClick: clearFilters } : undefined}
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Pencil, ChevronDown, SquarePen, Trash2 } from "lucide-react";
+import { Pencil, ChevronDown, SquarePen, Trash2, Phone, Mail, MapPin, Calendar, IndianRupee, BookOpen, Droplets, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
@@ -9,10 +9,11 @@ import StatusTag from "../components/ui/StatusTag";
 import LoadingScreen from "../components/ui/LoadingScreen";
 import EmptyState from "../components/ui/EmptyState";
 import PageHeader from "../components/ui/PageHeader";
-import StickyActionBar from "../components/ui/StickyActionBar";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import toast from "react-hot-toast";
 
+
+const NOW = new Date();
 
 const PAYMENT_EMPTY = {
   amount: "", fromDate: "", toDate: "",
@@ -29,10 +30,12 @@ export default function SupplierDetailPage() {
   const [activeTab, setActiveTab] = useState("collections");
 
   const [collections, setCollections] = useState([]);
-  const [collectionFilters, setCollectionFilters] = useState({ from: "", to: "" });
+  const [selectedMonth, setSelectedMonth] = useState({
+    month: NOW.getMonth() + 1,
+    year: NOW.getFullYear(),
+  });
   const [collectionsLoading, setCollectionsLoading] = useState(false);
   const [collectionTotals, setCollectionTotals] = useState({ liters: 0, amount: 0 });
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [payments, setPayments] = useState([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
@@ -83,9 +86,11 @@ export default function SupplierDetailPage() {
   const fetchCollections = useCallback(async () => {
     setCollectionsLoading(true);
     try {
-      const params = new URLSearchParams({ supplierId: id, limit: "200" });
-      if (collectionFilters.from) params.set("from", collectionFilters.from);
-      if (collectionFilters.to) params.set("to", collectionFilters.to);
+      const firstDay = new Date(selectedMonth.year, selectedMonth.month - 1, 1);
+      const lastDay  = new Date(selectedMonth.year, selectedMonth.month, 0);
+      const from = firstDay.toISOString().split("T")[0];
+      const to   = lastDay.toISOString().split("T")[0];
+      const params = new URLSearchParams({ supplierId: id, limit: "200", from, to });
       const res = await apiRequest(`/api/milk-collections?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
@@ -101,7 +106,7 @@ export default function SupplierDetailPage() {
     } finally {
       setCollectionsLoading(false);
     }
-  }, [id, collectionFilters]);
+  }, [id, selectedMonth]);
 
   const fetchPayments = useCallback(async () => {
     setPaymentsLoading(true);
@@ -143,6 +148,10 @@ export default function SupplierDetailPage() {
     if (activeTab === "payments") fetchPaymentsRef.current();
     if (activeTab === "passbook") fetchPassbook();
   }, [activeTab, fetchPassbook]);
+
+  // Re-fetch collections when month changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchCollectionsRef.current(); }, [selectedMonth]);
 
   const handleRecordPayment = useCallback(async () => {
     if (!paymentForm.fromDate || !paymentForm.toDate) {
@@ -429,6 +438,27 @@ export default function SupplierDetailPage() {
     finally { setConfirmLoading(false); }
   }, [id, confirmAction, confirmLoading, navigate]);
 
+  const isCurrentMonth =
+    selectedMonth.month === NOW.getMonth() + 1 &&
+    selectedMonth.year === NOW.getFullYear();
+
+  const monthLabel = new Date(selectedMonth.year, selectedMonth.month - 1, 1).toLocaleString("default", {
+    month: "long", year: "numeric",
+  });
+
+  function goPrevMonth() {
+    setSelectedMonth((prev) =>
+      prev.month === 1 ? { month: 12, year: prev.year - 1 } : { ...prev, month: prev.month - 1 }
+    );
+  }
+
+  function goNextMonth() {
+    if (isCurrentMonth) return;
+    setSelectedMonth((prev) =>
+      prev.month === 12 ? { month: 1, year: prev.year + 1 } : { ...prev, month: prev.month + 1 }
+    );
+  }
+
   if (loading) return <LoadingScreen />;
   if (!supplier) {
     return (
@@ -454,179 +484,175 @@ export default function SupplierDetailPage() {
         ]}
       />
 
-      {/* ── Profile Card ─────────────────────────────── */}
-      <div className="panel supplier-profile-panel">
+      {/* ── Hero ─────────────────────────────────────── */}
+      <div className="supplier-hero panel">
 
-        {/* Name row + outstanding */}
-        <div className="supplier-profile-top">
-          <div className="supplier-identity">
-            <div className="supplier-name-row">
-              <h2>{supplier.name}</h2>
+        {/* ── Identity row ── */}
+        <div className="sh-identity">
+          <div className={`sh-avatar${!supplier.isActive ? " sh-avatar--inactive" : ""}`}>
+            {supplier.name.trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+          </div>
+          <div className="sh-info">
+            <div className="sh-name-row">
+              <span className="sh-name">{supplier.name}</span>
               <StatusTag value={supplier.isActive ? "active" : "inactive"} />
-              <button className="btn btn-sm supplier-name-edit" onClick={openEdit}>
-                <Pencil size={14} /> Edit
-              </button>
             </div>
-            <div className="supplier-contact-row">
-              <span>{supplier.phone}</span>
-              {supplier.email && <span>{supplier.email}</span>}
+            <div className="sh-contact">
+              <span className="sh-contact-item"><Phone size={11} />{supplier.phone}</span>
+              {supplier.email && <span className="sh-contact-item"><Mail size={11} />{supplier.email}</span>}
               {supplier.location && (
-                <span>{supplier.location}{supplier.pincode ? ` — ${supplier.pincode}` : ""}</span>
+                <span className="sh-contact-item">
+                  <MapPin size={11} />{supplier.location}{supplier.pincode ? ` · ${supplier.pincode}` : ""}
+                </span>
               )}
               {supplier.joiningDate && (
-                <span>Since {formatDate(supplier.joiningDate)}</span>
+                <span className="sh-contact-item"><Calendar size={11} />Since {formatDate(supplier.joiningDate)}</span>
               )}
             </div>
           </div>
+          <button className="supplier-card-edit-btn sh-edit-btn" onClick={openEdit} aria-label="Edit supplier">
+            <Pencil size={14} />
+          </button>
+        </div>
 
-          <div className="supplier-outstanding">
-            <p className="eyebrow">Outstanding</p>
-            <span
-              className={`supplier-outstanding-amount ${supplier.outstandingAmount > 0 ? "danger-text" : "success-text"}`}
-            >
-              {formatCurrency(supplier.outstandingAmount)}
-            </span>
-            <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "2px", display: "block" }}>
-              Supply: {formatCurrency(supplier.supplyBalance)} · Passbook: {formatCurrency(supplier.passbookBalance)}
-            </span>
+        {/* ── Balance strip ── */}
+        <div className="sh-balance-strip">
+          <div className={`sh-balance-item sh-balance-item--outstanding${supplier.outstandingAmount > 0 ? " sh-balance-item--due" : ""}`}>
+            <span className="sh-balance-label">Outstanding</span>
+            <strong className="sh-balance-value">{formatCurrency(supplier.outstandingAmount)}</strong>
+          </div>
+          <div className="sh-balance-item">
+            <span className="sh-balance-label">Supply</span>
+            <strong className="sh-balance-value">{formatCurrency(supplier.supplyBalance)}</strong>
+          </div>
+          <div className="sh-balance-item">
+            <span className="sh-balance-label">Passbook</span>
+            <strong className="sh-balance-value">{formatCurrency(supplier.passbookBalance)}</strong>
           </div>
         </div>
 
-        {/* Defaults strip */}
-        <div className="supplier-defaults-strip">
-          <div className="supplier-default-chip">
-            <span>Rate / L</span>
-            <strong>₹{Number(supplier.defaultRatePerLiter || 0).toFixed(2)}</strong>
+        {/* ── KPI strip ── */}
+        <div className="sh-kpi-strip">
+          <div className="sh-kpi">
+            <span className="sh-kpi-label">Rate / L</span>
+            <strong className="sh-kpi-value">₹{Number(supplier.defaultRatePerLiter || 0).toFixed(2)}</strong>
           </div>
-          <div className="supplier-default-chip">
-            <span>Sessions</span>
-            <strong>{(supplier.collectionSessions || []).join(" & ") || "—"}</strong>
+          <div className="sh-kpi">
+            <span className="sh-kpi-label">Sessions</span>
+            <strong className="sh-kpi-value" style={{ textTransform: "capitalize" }}>
+              {(supplier.collectionSessions || []).join(" & ") || "—"}
+            </strong>
           </div>
           {supplier.collectionSessions?.includes("morning") && (
-            <div className="supplier-default-chip">
-              <span>Morning Qty</span>
-              <strong>{supplier.defaultMorningQty ?? 0} L</strong>
+            <div className="sh-kpi">
+              <span className="sh-kpi-label">Morning</span>
+              <strong className="sh-kpi-value">{supplier.defaultMorningQty ?? 0} L</strong>
             </div>
           )}
           {supplier.collectionSessions?.includes("evening") && (
-            <div className="supplier-default-chip">
-              <span>Evening Qty</span>
-              <strong>{supplier.defaultEveningQty ?? 0} L</strong>
+            <div className="sh-kpi">
+              <span className="sh-kpi-label">Evening</span>
+              <strong className="sh-kpi-value">{supplier.defaultEveningQty ?? 0} L</strong>
             </div>
           )}
         </div>
 
-        {/* Bank details */}
+        {/* ── Bank details ── */}
         {hasBankDetails && (
-          <div className="supplier-bank-section">
-            <p className="eyebrow">Bank Details</p>
-            <div className="supplier-bank-grid">
+          <div className="sh-bank">
+            <div className="sh-bank-row">
               {supplier.bankDetails.holderName && (
-                <div className="supplier-bank-item">
-                  <span>Holder</span>
-                  <strong>{supplier.bankDetails.holderName}</strong>
-                </div>
-              )}
-              {supplier.bankDetails.accountNo && (
-                <div className="supplier-bank-item">
-                  <span>Account No.</span>
-                  <strong>{supplier.bankDetails.accountNo}</strong>
-                </div>
-              )}
-              {supplier.bankDetails.ifscCode && (
-                <div className="supplier-bank-item">
-                  <span>IFSC</span>
-                  <strong>{supplier.bankDetails.ifscCode}</strong>
-                </div>
+                <div className="sh-bank-item"><span>Holder</span><strong>{supplier.bankDetails.holderName}</strong></div>
               )}
               {supplier.bankDetails.bankName && (
-                <div className="supplier-bank-item">
-                  <span>Bank</span>
-                  <strong>{supplier.bankDetails.bankName}</strong>
-                </div>
+                <div className="sh-bank-item"><span>Bank</span><strong>{supplier.bankDetails.bankName}</strong></div>
+              )}
+              {supplier.bankDetails.accountNo && (
+                <div className="sh-bank-item"><span>Account</span><strong>{supplier.bankDetails.accountNo}</strong></div>
+              )}
+              {supplier.bankDetails.ifscCode && (
+                <div className="sh-bank-item"><span>IFSC</span><strong>{supplier.bankDetails.ifscCode}</strong></div>
               )}
             </div>
           </div>
         )}
 
-        {/* Notes */}
+        {/* ── Notes ── */}
         {supplier.notes && (
-          <div className="supplier-notes">
-            <p className="eyebrow">Notes</p>
-            <p>{supplier.notes}</p>
-          </div>
+          <p className="sh-notes">{supplier.notes}</p>
         )}
+
+      </div>
+
+      {/* ── Month selector ───────────────────────────── */}
+      <div className="month-selector">
+        <button className="month-selector-nav" onClick={goPrevMonth} aria-label="Previous month">
+          <ChevronLeft size={16} />
+        </button>
+        <span className="month-selector-label">
+          <Calendar size={13} />
+          {monthLabel}
+          {isCurrentMonth && <span className="month-selector-current">This Month</span>}
+        </span>
+        <button className="month-selector-nav" onClick={goNextMonth} disabled={isCurrentMonth} aria-label="Next month">
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
+      {/* ── Monthly metrics ──────────────────────────── */}
+      <div className="customer-metrics">
+        <div className="customer-metric-card metric-success">
+          <div className="customer-metric-header">
+            <span className="customer-metric-label">Liters Collected</span>
+          </div>
+          <span className="customer-metric-value">
+            {Number(collectionTotals.liters).toFixed(1)} <small>L</small>
+          </span>
+        </div>
+        <div className="customer-metric-card metric-info">
+          <div className="customer-metric-header">
+            <span className="customer-metric-label">Amount Earned</span>
+          </div>
+          <span className="customer-metric-value">{formatCurrency(collectionTotals.amount)}</span>
+        </div>
       </div>
 
       {/* ── Tabs ─────────────────────────────────────── */}
-      <section className="panel detail-tabs-panel">
-        <div className="scrollable-tab-bar">
+      <div className="customer-tabs-panel">
+        <div className="customer-tabs-header" role="tablist">
           <button
-            className={`tab-pill ${activeTab === "collections" ? "active" : ""}`}
+            role="tab"
+            aria-selected={activeTab === "collections"}
+            className={`customer-tab-btn ${activeTab === "collections" ? "active" : ""}`}
             onClick={() => setActiveTab("collections")}
           >
-            Collections
+            <Droplets size={14} /> Collections
+            {collections.length > 0 && <span className="customer-tab-count">{collections.length}</span>}
           </button>
           <button
-            className={`tab-pill ${activeTab === "payments" ? "active" : ""}`}
+            role="tab"
+            aria-selected={activeTab === "payments"}
+            className={`customer-tab-btn ${activeTab === "payments" ? "active" : ""}`}
             onClick={() => setActiveTab("payments")}
           >
-            Payments
+            <IndianRupee size={14} /> Payments
+            {payments.length > 0 && <span className="customer-tab-count">{payments.length}</span>}
           </button>
           <button
-            className={`tab-pill ${activeTab === "passbook" ? "active" : ""}`}
+            role="tab"
+            aria-selected={activeTab === "passbook"}
+            className={`customer-tab-btn ${activeTab === "passbook" ? "active" : ""}`}
             onClick={() => setActiveTab("passbook")}
           >
-            Passbook
+            <BookOpen size={14} /> Passbook
           </button>
         </div>
+
+        <div className="customer-tab-body" role="tabpanel">
 
         {/* ── Collections Tab ──────────────────────── */}
         {activeTab === "collections" && (
           <div className="tab-content">
-
-            {/* Date filters */}
-            <div className="supplier-filter-toggle" onClick={() => setFiltersOpen((o) => !o)}>
-              <span>Filter by date</span>
-              <ChevronDown size={14} className={`supplier-filter-chevron ${filtersOpen ? "open" : ""}`} />
-            </div>
-            {filtersOpen && (
-              <div className="supplier-col-filters">
-                <label className="form-field">
-                  <span>From</span>
-                  <input
-                    type="date"
-                    value={collectionFilters.from}
-                    onChange={(e) => setCollectionFilters((f) => ({ ...f, from: e.target.value }))}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>To</span>
-                  <input
-                    type="date"
-                    value={collectionFilters.to}
-                    onChange={(e) => setCollectionFilters((f) => ({ ...f, to: e.target.value }))}
-                  />
-                </label>
-                <button className="btn btn-sm sc-apply-btn" onClick={fetchCollections} disabled={collectionsLoading}>
-                  {collectionsLoading ? "Loading…" : "Apply"}
-                </button>
-              </div>
-            )}
-
-            {/* Totals */}
-            {collections.length > 0 && (
-              <div className="supplier-totals-strip">
-                <div className="supplier-total-chip">
-                  <span>Total Collected</span>
-                  <strong>{Number(collectionTotals.liters).toFixed(1)} L</strong>
-                </div>
-                <div className="supplier-total-chip">
-                  <span>Total Amount</span>
-                  <strong>{formatCurrency(collectionTotals.amount)}</strong>
-                </div>
-              </div>
-            )}
 
             {collectionsLoading ? (
               <div className="tab-loading">Loading collections…</div>
@@ -634,58 +660,53 @@ export default function SupplierDetailPage() {
               <EmptyState text="No collections found for this period." />
             ) : isMobile ? (
               /* ── Mobile: collection cards ── */
-              <div className="sc-list">
-                {collections.map((c) => (
-                  <div key={c._id} className="sc-card">
-                    {/* Header: date + session + badges */}
-                    <div className="sc-card-head">
-                      <div className="sc-card-date">
-                        <strong>{formatDate(c.date)}</strong>
-                        <span className="sc-session">{c.session}</span>
-                      </div>
-                      <div className="sc-card-badges">
-                        <StatusTag value={c.status} />
-                        {c.status === "confirmed" && (c.paymentId ? <StatusTag value="paid" /> : <StatusTag value="unpaid" />)}
-                        {c.status === "pending"
-                          ? <button className="btn btn-sm active" style={{ fontSize: "11px", padding: "2px 8px" }} onClick={() => openColConfirm(c)}>Confirm</button>
-                          : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={14} /></button>
-                        }
-                      </div>
-                    </div>
-                    {/* Row 1: Actual · Fat · SNF */}
-                    <div className="sc-card-stats">
-                      <div className="sc-stat">
-                        <span>Actual</span>
-                        <strong>{c.actualQty != null ? `${c.actualQty} L` : "—"}</strong>
-                      </div>
-                      <div className="sc-stat">
-                        <span>Fat %</span>
-                        <strong>{c.fatContent != null ? c.fatContent : "—"}</strong>
-                      </div>
-                      <div className="sc-stat">
-                        <span>SNF %</span>
-                        <strong>{c.snf != null ? c.snf : "—"}</strong>
-                      </div>
-                    </div>
-                    {/* Row 2: Rate · Amount */}
-                    <div className="sc-card-stats sc-card-stats--bottom">
-                      <div className="sc-stat">
-                        <span>Rate / L</span>
-                        <strong>₹{Number(c.ratePerLiter || 0).toFixed(2)}</strong>
-                      </div>
-                      <div className="sc-stat sc-stat--amount">
-                        <span>{c.totalAmount != null ? "Amount" : "Est. Amount"}</span>
-                        <strong>
-                          {c.totalAmount != null
-                            ? formatCurrency(c.totalAmount)
-                            : c.expectedQty && c.ratePerLiter
-                              ? formatCurrency(c.expectedQty * c.ratePerLiter)
-                              : "—"}
-                        </strong>
+              <div className="sc2-list">
+                {collections.map((c) => {
+                  const isPending = c.status === "pending";
+                  const isPaid    = !!c.paymentId;
+                  const amount    = c.totalAmount != null
+                    ? formatCurrency(c.totalAmount)
+                    : c.expectedQty && c.ratePerLiter
+                      ? formatCurrency(c.expectedQty * c.ratePerLiter)
+                      : null;
+                  const qty = c.actualQty != null
+                    ? `${c.actualQty} L`
+                    : c.expectedQty != null ? `~${c.expectedQty} L` : "—";
+                  return (
+                    <div key={c._id} className={`sc2-card sc2-card--${c.status}${isPaid ? " sc2-card--paid" : ""}`}>
+                      <div className="sc2-body">
+                        <div className="sc2-left">
+                          <span className="sc2-date">{formatDate(c.date)}</span>
+                          <div className="sc2-sub">
+                            <span className={`sc2-session sc2-session--${c.session}`}>{c.session}</span>
+                            <span className="sc2-dot">·</span>
+                            <span className="sc2-meta-val">{qty}</span>
+                            <span className="sc2-dot">·</span>
+                            <span className="sc2-meta-val">{c.ratePerLiter != null ? `₹${Number(c.ratePerLiter).toFixed(2)}/L` : "—"}</span>
+                          </div>
+                        </div>
+                        <div className="sc2-right">
+                          <div className="sc2-right-top">
+                            {amount && (
+                              <span className={`sc2-amount${isPending ? " sc2-amount--est" : ""}`}>{amount}</span>
+                            )}
+                            {isPending
+                              ? <button className="sc2-confirm-btn" onClick={() => openColConfirm(c)}>Confirm</button>
+                              : <button className="supplier-card-edit-btn" onClick={() => openColEdit(c)} title="Edit"><SquarePen size={13} /></button>
+                            }
+                          </div>
+                          {!isPending && (
+                            <div className="sc2-right-bottom">
+                              <span className={`sc2-pay-badge ${isPaid ? "sc2-pay-badge--paid" : "sc2-pay-badge--unpaid"}`}>
+                                {isPaid ? "Paid" : "Unpaid"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               /* ── Desktop: scroll table ── */
@@ -758,25 +779,31 @@ export default function SupplierDetailPage() {
               <EmptyState text="No payments recorded yet." />
             ) : isMobile ? (
               /* ── Mobile: payment cards ── */
-              <div className="sc-list">
+              <div className="sc2-list">
                 {payments.map((p) => (
-                  <div key={p._id} className="sp-card">
-                    <div className="sp-card-head">
-                      <strong className="sp-amount">{formatCurrency(p.amount)}</strong>
-                      <span className="sp-method">{p.paymentMethod?.replace("_", " ")}</span>
-                    </div>
-                    <div className="sp-card-body">
-                      <div className="sp-card-period">
-                        Period: {formatDate(p.fromDate)} – {formatDate(p.toDate)}
+                  <div key={p._id} className="sp2-card">
+                    <div className="sp2-body">
+                      <div className="sp2-left">
+                        <span className="sp2-amount">{formatCurrency(p.amount)}</span>
+                        <div className="sp2-sub">
+                          <span className="sp2-method">{p.paymentMethod?.replace("_", " ")}</span>
+                          <span className="sc2-dot">·</span>
+                          <span className="sc2-meta-val">{formatDate(p.fromDate)} – {formatDate(p.toDate)}</span>
+                        </div>
                       </div>
-                      <div className="sp-card-foot">
-                        <span className="sp-meta">{p.collectionCount} collections</span>
-                        <span className="sp-meta">Paid {formatDate(p.paidAt)}</span>
-                        {p.transactionRef && <span className="sp-ref">{p.transactionRef}</span>}
+                      <div className="sp2-right">
+                        <span className="sc2-meta-val">{formatDate(p.paidAt)}</span>
+                        <div className="sp2-sub">
+                          <span className="sc2-meta-val">{p.collectionCount} collections</span>
+                          {p.transactionRef && <>
+                            <span className="sc2-dot">·</span>
+                            <span className="sc2-meta-val sp2-ref">{p.transactionRef}</span>
+                          </>}
+                        </div>
                       </div>
                     </div>
                     {p.recordedBy?.name && (
-                      <div className="sp-recorded-by">Recorded by {p.recordedBy.name}</div>
+                      <div className="sp2-by">by {p.recordedBy.name}</div>
                     )}
                   </div>
                 ))}
@@ -834,37 +861,39 @@ export default function SupplierDetailPage() {
             ) : !passbookData || passbookData.entries.length === 0 ? (
               <EmptyState text="No passbook entries yet." />
             ) : (
-              <div className="stack-list">
+              <div className="sc2-list">
                 {passbookData.entries.map((entry) => (
-                  <div key={entry._id} className="list-card">
-                    <div>
-                      <strong>{entry.description}</strong>
-                      <span>
-                        {formatDate(entry.date)}
-                        {entry.notes ? ` · ${entry.notes}` : ""}
-                        {entry.recordedBy ? ` · by ${entry.recordedBy}` : ""}
-                        {entry.isAuto ? " · auto" : entry.isSettled ? " · settled" : ""}
-                      </span>
-                    </div>
-                    <div className="card-figure" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-                      <div style={{ textAlign: "right" }}>
-                        <strong style={{ color: entry.type === "credit" ? "var(--color-primary-dark)" : "var(--danger-text)", display: "block" }}>
-                          {entry.type === "credit" ? "+" : "−"}{formatCurrency(entry.amount)}
-                        </strong>
-                        <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "capitalize" }}>
-                          {entry.category?.replace("_", " ")}
-                        </span>
+                  <div key={entry._id} className={`pb-card pb-card--${entry.type}`}>
+                    <div className="pb-body">
+                      <div className="pb-left">
+                        <span className="pb-desc">{entry.description}</span>
+                        <div className="sp2-sub">
+                          <span className="sc2-meta-val">{formatDate(entry.date)}</span>
+                          {entry.category && <>
+                            <span className="sc2-dot">·</span>
+                            <span className="sc2-meta-val" style={{ textTransform: "capitalize" }}>{entry.category.replace("_", " ")}</span>
+                          </>}
+                          {(entry.isAuto || entry.isSettled) && <>
+                            <span className="sc2-dot">·</span>
+                            <span className="sc2-meta-val">{entry.isAuto ? "auto" : "settled"}</span>
+                          </>}
+                        </div>
                       </div>
-                      {!entry.isAuto && !entry.isSettled && (
-                        <button
-                          className="supplier-card-edit-btn"
-                          onClick={() => handleDeleteAdjustment(entry._id)}
-                          disabled={deletingAdjId === entry._id}
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
+                      <div className="pb-right">
+                        <span className={`pb-amount pb-amount--${entry.type}`}>
+                          {entry.type === "credit" ? "+" : "−"}{formatCurrency(entry.amount)}
+                        </span>
+                        {!entry.isAuto && !entry.isSettled && (
+                          <button
+                            className="supplier-card-edit-btn"
+                            onClick={() => handleDeleteAdjustment(entry._id)}
+                            disabled={deletingAdjId === entry._id}
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -872,7 +901,8 @@ export default function SupplierDetailPage() {
             )}
           </div>
         )}
-      </section>
+        </div>
+      </div>
 
       {/* ── Record Payment Modal ─────────────────────── */}
       <ResponsiveModal
@@ -921,6 +951,7 @@ export default function SupplierDetailPage() {
             <span>Amount (₹) <em>*</em></span>
             <input
               type="number"
+              inputMode="decimal"
               min="0"
               step="0.01"
               value={paymentForm.amount}
@@ -981,14 +1012,9 @@ export default function SupplierDetailPage() {
           onClose={closeEdit}
           title="Edit Supplier"
           footer={
-            <div className="modal-actions">
+            <div className="supp-edit-footer-primary">
               <button className="btn btn-sm" onClick={closeEdit} disabled={saving}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? "Saving\u2026" : "Save"}</button>
-              <span className="modal-actions-sep" />
-              <button className={`btn btn-sm ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
-                {supplier.isActive ? "Deactivate" : "Activate"}
-              </button>
-              <button className="btn btn-sm danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
             </div>
           }
         >
@@ -1015,9 +1041,9 @@ export default function SupplierDetailPage() {
                     ))}
                   </div>
                 </div>
-                <label className="form-field"><span>Morning Qty (L)</span><input type="number" min="0" step="0.1" value={editForm.defaultMorningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultMorningQty: e.target.value }))} placeholder="0" /></label>
-                <label className="form-field"><span>Evening Qty (L)</span><input type="number" min="0" step="0.1" value={editForm.defaultEveningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultEveningQty: e.target.value }))} placeholder="0" /></label>
-                <label className="form-field"><span>Rate / Liter (₹)</span><input type="number" min="0" step="0.01" value={editForm.defaultRatePerLiter} onChange={(e) => setEditForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))} placeholder="0.00" /></label>
+                <label className="form-field"><span>Morning Qty (L)</span><input type="number" inputMode="decimal" min="0" step="0.1" value={editForm.defaultMorningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultMorningQty: e.target.value }))} placeholder="0" /></label>
+                <label className="form-field"><span>Evening Qty (L)</span><input type="number" inputMode="decimal" min="0" step="0.1" value={editForm.defaultEveningQty} onChange={(e) => setEditForm((f) => ({ ...f, defaultEveningQty: e.target.value }))} placeholder="0" /></label>
+                <label className="form-field"><span>Rate / Liter (₹)</span><input type="number" inputMode="decimal" min="0" step="0.01" value={editForm.defaultRatePerLiter} onChange={(e) => setEditForm((f) => ({ ...f, defaultRatePerLiter: e.target.value }))} placeholder="0.00" /></label>
               </div>
             </div>
             <div className="supplier-form-section">
@@ -1031,6 +1057,12 @@ export default function SupplierDetailPage() {
             </div>
             <div className="supplier-form-section">
               <label className="form-field"><span>Notes</span><textarea value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} rows={2} /></label>
+            </div>
+            <div className="supp-edit-danger-row">
+              <button className={`btn btn-sm ${supplier.isActive ? "warning" : "active"}`} onClick={() => { closeEdit(); setConfirmAction({ type: "toggle" }); }}>
+                {supplier.isActive ? "Deactivate" : "Activate"}
+              </button>
+              <button className="btn btn-sm danger" onClick={() => { closeEdit(); setConfirmAction({ type: "delete" }); }}>Remove</button>
             </div>
           </div>
         </ResponsiveModal>
@@ -1053,28 +1085,28 @@ export default function SupplierDetailPage() {
         <div className="form-grid">
           <label className="form-field">
             <span>Actual Qty (L) <em>*</em></span>
-            <input type="number" min="0" step="0.1"
+            <input type="number" inputMode="decimal" min="0" step="0.1"
               value={colConfirmForm.actualQty}
               onChange={(e) => setColConfirmForm((f) => ({ ...f, actualQty: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>Rate / Liter (₹) <em>*</em></span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colConfirmForm.ratePerLiter}
               onChange={(e) => setColConfirmForm((f) => ({ ...f, ratePerLiter: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>Fat %</span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colConfirmForm.fatContent}
               onChange={(e) => setColConfirmForm((f) => ({ ...f, fatContent: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>SNF %</span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colConfirmForm.snf}
               onChange={(e) => setColConfirmForm((f) => ({ ...f, snf: e.target.value }))}
             />
@@ -1124,7 +1156,7 @@ export default function SupplierDetailPage() {
           </label>
           <label className="form-field">
             <span>Amount (₹) <em>*</em></span>
-            <input type="number" min="0" step="0.01" value={adjForm.amount}
+            <input type="number" inputMode="decimal" min="0" step="0.01" value={adjForm.amount}
               onChange={(e) => setAdjForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
           </label>
           <label className="form-field">
@@ -1163,28 +1195,28 @@ export default function SupplierDetailPage() {
         <div className="form-grid">
           <label className="form-field">
             <span>Actual Qty (L)</span>
-            <input type="number" min="0" step="0.1"
+            <input type="number" inputMode="decimal" min="0" step="0.1"
               value={colEditForm.actualQty}
               onChange={(e) => setColEditForm((f) => ({ ...f, actualQty: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>Rate / Liter (₹)</span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colEditForm.ratePerLiter}
               onChange={(e) => setColEditForm((f) => ({ ...f, ratePerLiter: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>Fat %</span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colEditForm.fatContent}
               onChange={(e) => setColEditForm((f) => ({ ...f, fatContent: e.target.value }))}
             />
           </label>
           <label className="form-field">
             <span>SNF %</span>
-            <input type="number" min="0" step="0.01"
+            <input type="number" inputMode="decimal" min="0" step="0.01"
               value={colEditForm.snf}
               onChange={(e) => setColEditForm((f) => ({ ...f, snf: e.target.value }))}
             />
@@ -1227,14 +1259,6 @@ export default function SupplierDetailPage() {
         />
       )}
 
-      <StickyActionBar>
-        <button className="btn btn-secondary" onClick={openEdit}>
-          <Pencil size={16} /> Edit Supplier
-        </button>
-        <button className="btn btn-primary" onClick={() => setAdjOpen(true)}>
-          Add Adjustment
-        </button>
-      </StickyActionBar>
     </div>
   );
 }

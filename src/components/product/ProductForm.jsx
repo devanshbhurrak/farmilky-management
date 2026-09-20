@@ -43,9 +43,8 @@ export default function ProductForm({ form, onChange, onSubmit }) {
         <div className="form-group">
           <label>Price</label>
           <input
-            type="number"
-            step="0.01"
-            min="0.01"
+            type="text"
+            inputMode="decimal"
             value={form.price}
             onChange={(e) => onChange({ price: e.target.value })}
             placeholder="0.00"
@@ -56,6 +55,7 @@ export default function ProductForm({ form, onChange, onSubmit }) {
           <label>Stock (optional)</label>
           <input
             type="number"
+            inputMode="numeric"
             value={form.stock}
             onChange={(e) => onChange({ stock: e.target.value })}
             placeholder="Available units"
@@ -100,7 +100,7 @@ export default function ProductForm({ form, onChange, onSubmit }) {
               <div className="form-group variant-form-group">
                 <label>Quantity</label>
                 <input
-                  type="number" min="0" placeholder="e.g. 1, 500"
+                  type="number" inputMode="numeric" min="0" placeholder="e.g. 1, 500"
                   value={v.quantity}
                   onChange={e => onChange({ variants: (form.variants || []).map((x, j) => j === i ? {...x, quantity: e.target.value} : x) })}
                 />
@@ -116,7 +116,7 @@ export default function ProductForm({ form, onChange, onSubmit }) {
               <div className="form-group variant-form-group">
                 <label>Price</label>
                 <input
-                  type="number" step="0.01" min="0" placeholder="0.00"
+                  type="text" inputMode="decimal" placeholder="0.00"
                   value={v.price}
                   onChange={e => onChange({ variants: (form.variants || []).map((x, j) => j === i ? {...x, price: e.target.value} : x) })}
                 />
@@ -124,7 +124,7 @@ export default function ProductForm({ form, onChange, onSubmit }) {
               <div className="form-group variant-form-group">
                 <label>Discounted Price</label>
                 <input
-                  type="number" step="0.01" min="0" placeholder="Leave blank for no discount"
+                  type="text" inputMode="decimal" placeholder="Leave blank for no discount"
                   value={v.discountedPrice ?? ''}
                   onChange={e => onChange({ variants: (form.variants || []).map((x, j) => j === i ? {...x, discountedPrice: e.target.value} : x) })}
                 />
@@ -132,7 +132,7 @@ export default function ProductForm({ form, onChange, onSubmit }) {
               <div className="form-group variant-form-group">
                 <label>Stock</label>
                 <input
-                  type="number" min="0" placeholder="100"
+                  type="number" inputMode="numeric" min="0" placeholder="100"
                   value={v.stock}
                   onChange={e => onChange({ variants: (form.variants || []).map((x, j) => j === i ? {...x, stock: e.target.value} : x) })}
                 />

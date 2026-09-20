@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import { Plus, Pencil, Trash2, IndianRupee, TrendingUp, Hash, Filter, X } from "lucide-react";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { useApiData, createApiFetch } from "../hooks/useApiData";
 import { apiRequest } from "../api/client";
 import { expenseCategoryOptions, expensePaymentMethodOptions } from "../utils/constants";
@@ -12,7 +13,6 @@ import ResponsiveModal from "../components/ui/ResponsiveModal";
 import SearchInput from "../components/ui/SearchInput";
 import toast from "react-hot-toast";
 
-// ─── Constants ─────────────────────────────────────
 const EMPTY_FORM = {
   amount: "",
   category: "miscellaneous",
@@ -42,14 +42,12 @@ const PAYMENT_METHOD_LABELS = {
   other: "Other",
 };
 
-const fetchExpenses = createApiFetch("/api/expenses");
 const fetchSummary = createApiFetch("/api/expenses/summary");
 
 function formatCurrency(val) {
   return `₹${Number(val || 0).toLocaleString("en-IN")}`;
 }
 
-// Inline chip — avoids StatusTag's limitation of using the raw value as display text
 function CategoryChip({ category }) {
   return (
     <span className={`exp-category-chip exp-cat-${category}`}>
@@ -58,63 +56,107 @@ function CategoryChip({ category }) {
   );
 }
 
-// ─── Page Component ─────────────────────────────────
 export default function ExpensesPage() {
-  // Filters
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Build filter params object — stable identity when values unchanged
-  const filterParams = useMemo(() => {
-    const p = {};
-    if (startDate) p.startDate = startDate;
-    if (endDate) p.endDate = endDate;
-    if (categoryFilter) p.category = categoryFilter;
-    if (search) p.search = search;
-    return p;
-  }, [startDate, endDate, categoryFilter, search]);
-
-  // Data fetching
-  const { data, loading, error, refetch } = useApiData(
-    () => fetchExpenses(filterParams),
-    true
-  );
+  // Summary with same filters (no pagination)
+  const [summaryParams, setSummaryParams] = useState({});
   const { data: summary, refetch: refetchSummary } = useApiData(
-    () => fetchSummary(filterParams),
+    () => fetchSummary(summaryParams),
     true
   );
 
-  // Re-fetch when filters change (skip the initial mount — immediate=true handles that)
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    refetch();
-    refetchSummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterParams]);
+  const {
+    data: expenses,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    setFilterValue,
+    refetch,
+  } = usePaginatedFetch("/api/expenses", {
+    initialLimit: 20,
+    initialSort: { sortBy: "date", sortOrder: "desc" },
+    dataKey: "expenses",
+  });
 
-  const expenses = data?.expenses ?? [];
-  const totalAmount = data?.totalAmount ?? 0;
-  const count = data?.count ?? 0;
+  // Keep summary in sync with paginated filters + search
+  const syncSummary = useCallback((nextFilters, nextSearch) => {
+    const p = {};
+    if (nextFilters?.startDate) p.startDate = nextFilters.startDate;
+    if (nextFilters?.endDate) p.endDate = nextFilters.endDate;
+    if (nextFilters?.category) p.category = nextFilters.category;
+    setSummaryParams((prev) => {
+      const merged = { ...prev };
+      if (nextSearch !== undefined) {
+        if (nextSearch) merged.search = nextSearch;
+        else delete merged.search;
+      }
+      if (nextFilters) {
+        if (nextFilters.startDate !== undefined) {
+          if (nextFilters.startDate) merged.startDate = nextFilters.startDate;
+          else delete merged.startDate;
+        }
+        if (nextFilters.endDate !== undefined) {
+          if (nextFilters.endDate) merged.endDate = nextFilters.endDate;
+          else delete merged.endDate;
+        }
+        if (nextFilters.category !== undefined) {
+          if (nextFilters.category) merged.category = nextFilters.category;
+          else delete merged.category;
+        }
+      }
+      return merged;
+    });
+  }, []);
 
-  const topCategory = useMemo(() => {
+  const handleStartDate = (val) => {
+    setStartDate(val);
+    setFilterValue("startDate", val);
+    syncSummary({ startDate: val });
+  };
+  const handleEndDate = (val) => {
+    setEndDate(val);
+    setFilterValue("endDate", val);
+    syncSummary({ endDate: val });
+  };
+  const handleCategory = (val) => {
+    setCategoryFilter(val);
+    setFilterValue("category", val);
+    syncSummary({ category: val });
+  };
+  const handleSearch = (val) => {
+    setSearch(val);
+    syncSummary(undefined, val);
+  };
+  const handleSort = (key, dir) => setSort(key, dir);
+
+  const totalAmount = expenses.reduce ? 0 : 0; // will use pagination summary differently
+  // Backend returns totalAmount separately; need to capture it from response.
+  // usePaginatedFetch doesn't expose extra fields like totalAmount.
+  // We'll fetch totalAmount via a separate effect or use pagination total.
+  // Instead, we can derive from payload via a small hack: refetch returns data with totalAmount in last fetch.
+  // Simpler: compute from summary grandTotal
+  const computedTotal = summary?.grandTotal ?? 0;
+
+  const topCategory = (() => {
     if (!summary?.byCategory?.length) return "—";
     return CATEGORY_LABELS[summary.byCategory[0]._id] || summary.byCategory[0]._id;
-  }, [summary]);
+  })();
 
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
 
-  // Delete state
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -195,9 +237,12 @@ export default function ExpensesPage() {
     setStartDate("");
     setEndDate("");
     setCategoryFilter("");
+    setFilterValue("startDate", "");
+    setFilterValue("endDate", "");
+    setFilterValue("category", "");
+    setSummaryParams({});
   };
 
-  // Desktop table columns
   const columns = [
     {
       key: "date",
@@ -260,7 +305,6 @@ export default function ExpensesPage() {
     },
   ];
 
-  // Mobile card renderer
   const renderCard = (e) => (
     <>
       <div className="mc-head">
@@ -296,12 +340,11 @@ export default function ExpensesPage() {
     </>
   );
 
-  if (loading) return <LoadingScreen />;
+  if (loading && expenses.length === 0) return <LoadingScreen />;
   if (error) return <PageError message={error} onRetry={refreshAll} />;
 
   return (
     <div className="view-stack expenses-page">
-      {/* Header */}
       <PageHeader
         title="Expenses"
         subtitle="Track and manage business expenses"
@@ -313,7 +356,6 @@ export default function ExpensesPage() {
         }
       />
 
-      {/* Summary cards */}
       <div className="exp-stats-row">
         <div className="exp-stat-card">
           <div className="exp-stat-icon">
@@ -321,7 +363,7 @@ export default function ExpensesPage() {
           </div>
           <div>
             <span className="exp-stat-label">Total Spent</span>
-            <span className="exp-stat-value">{formatCurrency(totalAmount)}</span>
+            <span className="exp-stat-value">{formatCurrency(computedTotal)}</span>
           </div>
         </div>
         <div className="exp-stat-card">
@@ -330,7 +372,7 @@ export default function ExpensesPage() {
           </div>
           <div>
             <span className="exp-stat-label">Entries</span>
-            <span className="exp-stat-value">{count}</span>
+            <span className="exp-stat-value">{pagination.total}</span>
           </div>
         </div>
         <div className="exp-stat-card">
@@ -344,14 +386,12 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {/* Filters + Table */}
       <div className="surface">
         <div className="surface-filters">
-          {/* Search — always visible */}
           <div className="exp-search-row">
             <SearchInput
               value={search}
-              onChange={setSearch}
+              onChange={handleSearch}
               placeholder="Search descriptions…"
             />
             <button
@@ -364,7 +404,6 @@ export default function ExpensesPage() {
             </button>
           </div>
 
-          {/* Collapsible filter panel */}
           {showFilters && (
             <div className="exp-filter-panel">
               <div className="exp-filter-grid">
@@ -373,7 +412,7 @@ export default function ExpensesPage() {
                   <input
                     type="date"
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={(e) => handleStartDate(e.target.value)}
                     className="exp-date-input"
                   />
                 </div>
@@ -382,7 +421,7 @@ export default function ExpensesPage() {
                   <input
                     type="date"
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    onChange={(e) => handleEndDate(e.target.value)}
                     className="exp-date-input"
                   />
                 </div>
@@ -390,7 +429,7 @@ export default function ExpensesPage() {
                   <label className="exp-filter-label">Category</label>
                   <select
                     value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    onChange={(e) => handleCategory(e.target.value)}
                     className="exp-category-select"
                   >
                     <option value="">All Categories</option>
@@ -412,12 +451,17 @@ export default function ExpensesPage() {
         <DataTable
           columns={columns}
           data={expenses}
+          loading={loading}
           renderCard={renderCard}
           emptyText="No expenses found. Tap 'Add Expense' to record one."
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 
-      {/* Add / Edit Modal */}
       <ResponsiveModal
         open={showModal}
         onClose={() => setShowModal(false)}
@@ -500,7 +544,6 @@ export default function ExpensesPage() {
         </div>
       </ResponsiveModal>
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         open={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}

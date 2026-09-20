@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ChevronRight, ChevronLeft, Mail, Phone, MapPin, Edit2, Calendar, IndianRupee, BookOpen, ShoppingBag, Repeat2, Truck, ArrowLeftRight, QrCode, MessageCircle, Package, Banknote, SlidersHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { apiRequest, safeParseJson } from "../api/client";
@@ -14,7 +14,6 @@ import OrderForm from "../components/order/OrderForm";
 import CustomerForm from "../components/customer/CustomerForm";
 import PageError from "../components/ui/PageError";
 import PageHeader from "../components/ui/PageHeader";
-import StickyActionBar from "../components/ui/StickyActionBar";
 import toast from "react-hot-toast";
 
 function getInitials(name = "") {
@@ -94,7 +93,7 @@ export default function CustomerDetailPage() {
   useEffect(() => { fetchPassbook(); }, [fetchPassbook]);
 
   useEffect(() => {
-    apiRequest("/api/areas")
+    apiRequest("/api/areas?limit=100")
       .then((r) => r.json())
       .then((data) => setAreas(data.areas || []))
       .catch(() => {});
@@ -102,7 +101,7 @@ export default function CustomerDetailPage() {
 
   useEffect(() => {
     if (modalType === "subscription" || modalType === "order") {
-      apiRequest("/api/products")
+      apiRequest("/api/products?limit=100")
         .then((r) => r.json())
         .then((data) => setProducts(data.products || data || []))
         .catch(() => toast.error("Failed to load products"));
@@ -387,9 +386,10 @@ export default function CustomerDetailPage() {
       }
 
       toast.success(`${modalType.charAt(0).toUpperCase() + modalType.slice(1)} saved!`);
+      const needsPassbookRefresh = modalType === "payment" || modalType === "adjustment";
       setModalType(null);
       fetchCustomer();
-      if (modalType === "payment" || modalType === "adjustment") fetchPassbook();
+      if (needsPassbookRefresh) fetchPassbook();
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -491,13 +491,12 @@ export default function CustomerDetailPage() {
           <div className="payment-amount-wrap">
             <span className="payment-currency">₹</span>
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               className="payment-amount-input"
               value={form?.amount || ""}
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
               placeholder="0"
-              min="0"
-              step="0.01"
               autoFocus
             />
           </div>
@@ -605,13 +604,12 @@ export default function CustomerDetailPage() {
           <div className="payment-amount-wrap">
             <span className="payment-currency">₹</span>
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               className="payment-amount-input"
               value={form?.amount || ""}
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
               placeholder="0"
-              min="0"
-              step="0.01"
               autoFocus
             />
           </div>
@@ -700,22 +698,10 @@ export default function CustomerDetailPage() {
   return (
     <div className="customer-detail-page view-stack">
       <PageHeader
-        title={user.name}
-        subtitle={user.phone || user.email}
         breadcrumb={[
           { label: "Customers", path: "/customers" },
           { label: user.name },
         ]}
-        actions={
-          <div className="detail-actions">
-            <StatusTag value={user.isActive ? "active" : "inactive"} />
-            <div className="detail-actions-buttons">
-              <button className="btn btn-secondary btn-sm" onClick={() => setModalType("edit")}>
-                <Edit2 size={14} /> Edit
-              </button>
-            </div>
-          </div>
-        }
       />
 
       {/* Hero profile panel */}
@@ -932,15 +918,6 @@ export default function CustomerDetailPage() {
           )}
         </div>
       </div>
-
-      <StickyActionBar>
-        <button className="btn btn-secondary" onClick={() => setModalType("edit")}>
-          <Edit2 size={16} /> Edit Customer
-        </button>
-        <button className="btn btn-primary" onClick={() => setModalType("subscription")}>
-          <Repeat2 size={16} /> New Subscription
-        </button>
-      </StickyActionBar>
 
       {/* Modal */}
       <ResponsiveModal

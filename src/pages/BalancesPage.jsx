@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeftRight } from "lucide-react";
 import { formatCurrency, todayLocal } from "../utils/format";
@@ -8,15 +8,9 @@ import PageSkeleton from "../components/ui/PageSkeleton";
 import PageError from "../components/ui/PageError";
 import ResponsiveModal from "../components/ui/ResponsiveModal";
 import SearchInput from "../components/ui/SearchInput";
-import { useApiData } from "../hooks/useApiData";
+import { usePaginatedFetch } from "../hooks/usePaginatedFetch";
 import { apiRequest, safeParseJson } from "../api/client";
 import toast from "react-hot-toast";
-
-async function fetchCustomersWithBalance() {
-  const res = await apiRequest("/api/user/admin/all");
-  const data = await res.json();
-  return (data.users || []).filter(u => u.accountBalance !== 0);
-}
 
 function PaymentFormFields({ payModal, payForm, setPayForm }) {
   return (
@@ -37,7 +31,7 @@ function PaymentFormFields({ payModal, payForm, setPayForm }) {
       )}
       <div className="form-group">
         <label>Amount Collected (Rs)</label>
-        <input type="number" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} />
+        <input type="text" inputMode="decimal" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} />
       </div>
       <div className="form-group">
         <label>Date</label>
@@ -82,7 +76,7 @@ function AdjustmentFormFields({ adjForm, setAdjForm }) {
       <div className="form-row">
         <div className="form-group">
           <label>Amount (₹)</label>
-          <input type="number" value={adjForm.amount} onChange={(e) => setAdjForm({ ...adjForm, amount: e.target.value })} min="0" step="0.01" />
+          <input type="text" inputMode="decimal" value={adjForm.amount} onChange={(e) => setAdjForm({ ...adjForm, amount: e.target.value })} />
         </div>
         <div className="form-group">
           <label>Date</label>
@@ -98,8 +92,25 @@ function AdjustmentFormFields({ adjForm, setAdjForm }) {
 }
 
 export default function BalancesPage() {
-  const { data, loading, error, refetch } = useApiData(fetchCustomersWithBalance);
-  const [search, setSearch] = useState("");
+  const {
+    data: users,
+    loading,
+    error,
+    pagination,
+    search,
+    sort,
+    setPage,
+    setLimit,
+    setSearch,
+    setSort,
+    refetch,
+  } = usePaginatedFetch("/api/user/admin/all", {
+    initialLimit: 20,
+    initialFilters: { role: "customer", balance: "nonzero" },
+    initialSort: { sortBy: "accountBalance", sortOrder: "desc" },
+    dataKey: "users",
+  });
+
   const [payModal, setPayModal] = useState(null);
   const [payForm, setPayForm] = useState({ amount: "", transactionId: "", notes: "", date: todayLocal() });
   const [paying, setPaying] = useState(false);
@@ -108,22 +119,10 @@ export default function BalancesPage() {
   const [adjForm, setAdjForm] = useState({ adjType: "credit_adjustment", amount: "", notes: "", date: todayLocal() });
   const [adjusting, setAdjusting] = useState(false);
 
-  const filteredUsers = useMemo(() => {
-    if (!data) return [];
-    return data.filter((u) =>
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase()) ||
-      u.phone?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [data, search]);
+  const totalOutstanding = users.reduce((sum, u) => sum + (u.accountBalance > 0 ? u.accountBalance : 0), 0);
+  const totalAdvance = Math.abs(users.reduce((sum, u) => sum + (u.accountBalance < 0 ? u.accountBalance : 0), 0));
 
-  const totalOutstanding = useMemo(() => {
-    return filteredUsers.reduce((sum, u) => sum + (u.accountBalance > 0 ? u.accountBalance : 0), 0);
-  }, [filteredUsers]);
-
-  const totalAdvance = useMemo(() => {
-    return Math.abs(filteredUsers.reduce((sum, u) => sum + (u.accountBalance < 0 ? u.accountBalance : 0), 0));
-  }, [filteredUsers]);
+  const handleSort = (key, dir) => setSort(key, dir);
 
   async function handleRecordPayment(e) {
     if (e) e.preventDefault();
@@ -217,14 +216,14 @@ export default function BalancesPage() {
     },
   ];
 
-  if (loading) return <PageSkeleton />;
+  if (loading && users.length === 0) return <PageSkeleton />;
   if (error) return <PageError message={error} onRetry={refetch} />;
 
   return (
     <div className="view-stack invoices-page">
       <PageHeader
         title="Outstanding Balances"
-        subtitle={`Total Debt: ${formatCurrency(totalOutstanding)} | Total Advances: ${formatCurrency(totalAdvance)}`}
+        subtitle={`Total Debt: ${formatCurrency(totalOutstanding)} | Total Advances: ${formatCurrency(totalAdvance)} · ${pagination.total} customer${pagination.total !== 1 ? "s" : ""}`}
       />
 
       <div className="surface">
@@ -234,7 +233,8 @@ export default function BalancesPage() {
 
         <DataTable
           columns={columns}
-          data={filteredUsers}
+          data={users}
+          loading={loading}
           emptyText="No customers with outstanding balances found."
           renderCard={(u) => (
             <>
@@ -263,11 +263,14 @@ export default function BalancesPage() {
               </div>
             </>
           )}
-          pageSize={20}
+          pagination={{ ...pagination, onPageChange: setPage, onLimitChange: setLimit }}
+          sortBy={sort.sortBy}
+          sortOrder={sort.sortOrder}
+          onSortChange={handleSort}
+          serverSide
         />
       </div>
 
-      {/* ── Payment modal ── */}
       <ResponsiveModal
         open={!!payModal}
         onClose={() => setPayModal(null)}
@@ -284,7 +287,6 @@ export default function BalancesPage() {
         <PaymentFormFields payModal={payModal} payForm={payForm} setPayForm={setPayForm} />
       </ResponsiveModal>
 
-      {/* ── Adjustment modal ── */}
       <ResponsiveModal
         open={!!adjModal}
         onClose={() => setAdjModal(null)}

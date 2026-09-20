@@ -522,7 +522,7 @@ export default function CustomInvoiceModal({ open, onClose }) {
               <label>Phone <span className="ci-optional">(optional)</span></label>
               <input
                 type="tel"
-                inputMode="numeric"
+                inputMode="tel"
                 value={form.customerPhone}
                 onChange={e => setField("customerPhone", e.target.value)}
                 placeholder="e.g. 9876543210"
