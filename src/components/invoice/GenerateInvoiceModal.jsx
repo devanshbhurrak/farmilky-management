@@ -49,10 +49,20 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
       setNotes("");
       return;
     }
-    apiRequest("/api/user/admin/all")
-      .then(r => r.json())
-      .then(d => setCustomers((d.users || []).filter(u => u.role === "customer")))
-      .catch(() => {});
+    // Fetch all customers with pagination to ensure none are missed
+    (async () => {
+      try {
+        let all = [], page = 1, totalPages = 1;
+        while (page <= totalPages) {
+          const r = await apiRequest(`/api/user/admin/all?role=customer&isActive=true&skipEnrichment=true&limit=100&page=${page}`);
+          const d = await r.json();
+          all = all.concat(d.users || []);
+          totalPages = d.totalPages || 1;
+          page++;
+        }
+        setCustomers(all);
+      } catch {}
+    })();
   }, [open]);
 
   // When month/year changes, clamp the end date to stay within the new month
@@ -74,10 +84,16 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
   }
 
   const filteredCustomers = useMemo(() => {
-    const q = customerSearch.toLowerCase();
-    return customers.filter(c =>
-      !q || c.name?.toLowerCase().includes(q) || c.phone?.includes(q)
-    ).slice(0, 8);
+    const q = customerSearch.trim().toLowerCase();
+    if (!q) return [];
+    // Split query into words so "Ram Ku" matches "Ram Kumar"
+    const words = q.split(/\s+/).filter(Boolean);
+    return customers.filter(c => {
+      const name = (c.name || "").toLowerCase();
+      const phone = c.phone || "";
+      const email = (c.email || "").toLowerCase();
+      return words.every(w => name.includes(w) || phone.includes(w) || email.includes(w));
+    }).slice(0, 15);
   }, [customers, customerSearch]);
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
@@ -254,7 +270,7 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
                     onChange={e => setCustomerSearch(e.target.value)}
                     autoComplete="off"
                   />
-                  {customerSearch && filteredCustomers.length > 0 && (
+                  {filteredCustomers.length > 0 && (
                     <div className="gen-customer-dropdown">
                       {filteredCustomers.map(c => (
                         <button
@@ -269,7 +285,7 @@ export default function GenerateInvoiceModal({ open, onClose, onSuccess }) {
                       ))}
                     </div>
                   )}
-                  {customerSearch && filteredCustomers.length === 0 && (
+                  {customerSearch.trim() && filteredCustomers.length === 0 && (
                     <div className="gen-customer-empty">No matching customers</div>
                   )}
                 </div>
