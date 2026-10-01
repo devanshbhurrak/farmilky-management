@@ -271,6 +271,18 @@ export default function InvoiceDetailPage() {
         </div>
       )}
 
+      {/* Paid banner */}
+      {isPaid && (
+        <div className="inv-paid-banner">
+          <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+          <span>
+            <strong>Payment Received</strong>
+            {invoice.paidAt ? ` — Paid on ${formatDate(invoice.paidAt)}` : ""}
+            . Thank you for your prompt payment!
+          </span>
+        </div>
+      )}
+
       {/* ── INVOICE DOCUMENT ── */}
       <div className="inv-doc">
 
@@ -356,7 +368,7 @@ export default function InvoiceDetailPage() {
             {invoice.previousBalance !== 0 && (
               <div className="inv-ledger-row">
                 <span>Previous Balance B/F</span>
-                <span style={{ color: invoice.previousBalance > 0 ? "var(--danger)" : "var(--color-primary)", fontWeight: "var(--font-weight-bold)" }}>
+                <span className={invoice.previousBalance > 0 ? "inv-amount-debit" : "inv-amount-credit"} style={{ fontWeight: "var(--font-weight-bold)" }}>
                   {formatCurrency(invoice.previousBalance)}
                 </span>
               </div>
@@ -368,22 +380,22 @@ export default function InvoiceDetailPage() {
             {invoice.orderCredits > 0 && (
               <div className="inv-ledger-row">
                 <span>Order Credits</span>
-                <span style={{ color: "var(--color-primary)" }}>({formatCurrency(invoice.orderCredits)})</span>
+                <span className="inv-amount-credit">({formatCurrency(invoice.orderCredits)})</span>
               </div>
             )}
             <div className="inv-ledger-row">
               <span>Payments Received</span>
-              <span style={{ color: "var(--color-primary)" }}>({formatCurrency(invoice.totalPayments)})</span>
+              <span className="inv-amount-credit">({formatCurrency(invoice.totalPayments)})</span>
             </div>
             {invoice.totalAdjustments !== 0 && (
               <div className="inv-ledger-row">
                 <span>Adjustments</span>
-                <span>{formatCurrency(invoice.totalAdjustments)}</span>
+                <span className={invoice.totalAdjustments < 0 ? "inv-amount-credit" : "inv-amount-debit"}>{formatCurrency(invoice.totalAdjustments)}</span>
               </div>
             )}
             <div className="inv-ledger-row inv-ledger-total">
               <span>Net Amount Due</span>
-              <span style={{ color: invoice.netAmountDue <= 0 ? "var(--color-primary)" : "var(--danger)" }}>
+              <span className={invoice.netAmountDue <= 0 ? "inv-amount-settled" : "inv-amount-due"}>
                 {formatCurrency(invoice.netAmountDue)}
               </span>
             </div>
@@ -430,8 +442,8 @@ export default function InvoiceDetailPage() {
                       <td style={{ textAlign: "right" }}>{p.totalQuantity} {p.unit}</td>
                       <td style={{ textAlign: "right" }}>₹{p.avgRate?.toFixed(2)}/{p.unit}</td>
                       <td style={{ textAlign: "right", fontWeight: "var(--font-weight-bold)" }}>{formatCurrency(p.totalAmount)}</td>
-                      <td style={{ textAlign: "right", color: "var(--color-primary)" }}>{formatCurrency(p.paidAmount)}</td>
-                      <td style={{ textAlign: "right", fontWeight: "var(--font-weight-bold)", color: p.outstandingAmount > 0 ? "var(--danger)" : "var(--color-primary)" }}>
+                      <td className="inv-amount-credit" style={{ textAlign: "right" }}>{formatCurrency(p.paidAmount)}</td>
+                      <td className={p.outstandingAmount > 0 ? "inv-amount-debit" : "inv-amount-credit"} style={{ textAlign: "right", fontWeight: "var(--font-weight-bold)" }}>
                         {formatCurrency(p.outstandingAmount)}
                       </td>
                     </tr>
@@ -443,10 +455,10 @@ export default function InvoiceDetailPage() {
                     <td style={{ textAlign: "right", fontWeight: "var(--font-weight-extrabold)" }}>
                       {formatCurrency(invoice.productSummary.reduce((s, p) => s + p.totalAmount, 0))}
                     </td>
-                    <td style={{ textAlign: "right", fontWeight: "var(--font-weight-extrabold)", color: "var(--color-primary)" }}>
+                    <td className="inv-amount-credit" style={{ textAlign: "right", fontWeight: "var(--font-weight-extrabold)" }}>
                       {formatCurrency(invoice.productSummary.reduce((s, p) => s + p.paidAmount, 0))}
                     </td>
-                    <td style={{ textAlign: "right", fontWeight: "var(--font-weight-extrabold)", color: invoice.netAmountDue > 0 ? "var(--danger)" : "var(--color-primary)" }}>
+                    <td className={invoice.netAmountDue > 0 ? "inv-amount-due" : "inv-amount-settled"} style={{ textAlign: "right", fontWeight: "var(--font-weight-extrabold)" }}>
                       {formatCurrency(invoice.productSummary.reduce((s, p) => s + p.outstandingAmount, 0))}
                     </td>
                   </tr>
@@ -476,7 +488,6 @@ export default function InvoiceDetailPage() {
                       <th>Description</th>
                       <th style={{ textAlign: "right" }}>Qty</th>
                       <th style={{ textAlign: "right" }}>Amount</th>
-                      <th style={{ textAlign: "right" }}>Type</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -491,14 +502,11 @@ export default function InvoiceDetailPage() {
                             </span>
                           )}
                         </td>
-                        <td style={{ textAlign: "right" }}>{item.quantity != null ? item.quantity : "—"}</td>
-                        <td style={{ textAlign: "right", color: item.entryType === "credit" ? "var(--color-primary)" : "var(--text-primary)" }}>
-                          {formatCurrency(item.amount)}
-                        </td>
                         <td style={{ textAlign: "right" }}>
-                          <span className={`inv-entry-badge ${item.entryType === "credit" ? "inv-entry-cr" : "inv-entry-dr"}`}>
-                            {item.entryType === "credit" ? "CR" : "DR"}
-                          </span>
+                          {item.quantity != null ? `${item.quantity}${item.unit ? " " + item.unit : ""}` : "—"}
+                        </td>
+                        <td className={item.entryType === "credit" ? "inv-amount-credit" : "inv-amount-debit"} style={{ textAlign: "right", fontWeight: "var(--font-weight-medium)" }}>
+                          {item.entryType === "credit" ? "+" : "−"}{formatCurrency(item.amount)}
                         </td>
                       </tr>
                     ))}
@@ -513,8 +521,22 @@ export default function InvoiceDetailPage() {
           <div className="inv-doc-notes">{invoice.notes}</div>
         )}
 
-        {/* Payment Info */}
-        {(() => {
+        {/* Payment Info / Thank-you */}
+        {isPaid ? (
+          <div className="inv-doc-payment">
+            <div className="inv-doc-section-title">PAYMENT STATUS</div>
+            <div className="inv-thankyou-card">
+              <span className="inv-thankyou-icon">🎉</span>
+              <p className="inv-thankyou-title">Thank You!</p>
+              {invoice.paidAt && (
+                <p className="inv-thankyou-date">Paid on {formatDate(invoice.paidAt)}</p>
+              )}
+              <p className="inv-thankyou-msg">
+                This invoice has been fully settled. We appreciate your timely payment. — Farmilky Team
+              </p>
+            </div>
+          </div>
+        ) : (() => {
           const upiId   = import.meta.env.VITE_UPI_ID   || "";
           const upiName = import.meta.env.VITE_UPI_NAME || "Farmilky";
           const amt     = invoice.netAmountDue > 0 ? invoice.netAmountDue : 0;

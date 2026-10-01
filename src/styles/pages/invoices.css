@@ -550,6 +550,19 @@
 }
 
 /* ─── Banners ─────────────────────────────────── */
+.inv-paid-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: #f0f7f3;
+  border: 1px solid #b8d9c7;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: #1a4731;
+  font-weight: var(--font-weight-medium);
+}
+
 .inv-replaced-banner {
   padding: var(--space-3) var(--space-4);
   background: var(--warning-bg);
@@ -652,9 +665,55 @@
 
 .inv-settled-note {
   font-size: var(--font-size-xs);
-  color: var(--success-text);
+  color: #1e6642;
   margin: 0;
   font-weight: var(--font-weight-bold);
+}
+
+/* ─── Document-scoped amount colours ─────────────
+   Softer than the global --danger / --color-primary
+   UI vars, which are too vivid for a printed document. */
+.inv-amount-debit   { color: #b91c1c; }
+.inv-amount-credit  { color: #1e6642; }
+.inv-amount-due     { color: #9a1c1c; }
+.inv-amount-settled { color: #1a5c38; }
+
+/* ─── Paid thank-you card (replaces payment section) ── */
+.inv-thankyou-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  background: #f4fbf7;
+  border: 1px dashed #b8d9c7;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.inv-thankyou-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.inv-thankyou-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
+  color: #1a4731;
+  margin: 0;
+}
+
+.inv-thankyou-date {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.inv-thankyou-msg {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 320px;
 }
 
 /* ─── Collapsible log toggle ─────────────────── */
@@ -1088,7 +1147,7 @@
 
 /* Left box: green header bar */
 .inv-info-box-header {
-  background: #2d6a4f;
+  background: #3d7a5c;
   color: #ffffff;
   font-size: 10px;
   font-weight: var(--font-weight-extrabold);
@@ -1136,7 +1195,7 @@
   font-size: var(--font-size-sm);
 }
 .inv-info-value--bold  { font-weight: var(--font-weight-bold); }
-.inv-info-value--green { color: var(--color-primary); font-weight: var(--font-weight-bold); }
+.inv-info-value--green { color: #1e6642; font-weight: var(--font-weight-bold); }
 
 /* ── Generic doc section ─────────────────────── */
 .inv-doc-section {
@@ -1144,20 +1203,21 @@
   border-bottom: 1px solid var(--border-soft);
 }
 
-/* Full-width green bar section titles (matches reference image) */
+/* Section title — subtle tinted label, not a heavy colour block */
 .inv-doc-section-title {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  background: #2d6a4f;
-  color: #ffffff;
+  background: #f0f7f3;
+  color: #1a4731;
+  border-left: 3px solid #3d7a5c;
   font-size: 10px;
   font-weight: var(--font-weight-extrabold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 5px var(--space-3);
   margin-bottom: var(--space-3);
-  border-radius: 2px;
+  border-radius: 0 3px 3px 0;
 }
 
 /* Toggle button for collapsible sections */
@@ -1189,8 +1249,9 @@
 
 /* ── Product / Milk Summary table ────────────── */
 .inv-product-table thead th {
-  background: #2d6a4f !important;
-  color: #ffffff !important;
+  background: #f0f7f3 !important;
+  color: #1a4731 !important;
+  border-bottom: 2px solid #b8d9c7 !important;
   padding: var(--space-2) var(--space-3);
   border: none;
   font-size: var(--font-size-xs);
@@ -1199,13 +1260,13 @@
 }
 
 .inv-product-table thead tr {
-  background: #2d6a4f;
+  background: #f0f7f3;
 }
 
 .inv-table-total-row td {
-  background: #f0faf4;
+  background: #f6faf7;
   font-weight: var(--font-weight-extrabold);
-  border-top: 2px solid #9ecfb4;
+  border-top: 1px solid #c4dfd0;
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-sm);
 }
